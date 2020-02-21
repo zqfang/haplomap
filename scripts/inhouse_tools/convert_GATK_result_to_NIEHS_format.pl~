@@ -1,0 +1,168 @@
+#!/usr/bin/perl -I/home/mzheng/mzheng-data/perl_prog/hus6 -I/home/mzheng/mzheng-data/perl_prog/common
+
+use strict;
+use FileHandle;
+use Time::Local;
+
+##### filtering parameters
+my $qualCutoffForSamtools = 50;
+my $cutoffForPLscoreForNonHomozygousAlt = 20;
+
+my @strains = ("129P2", "129S1", "129S5", "AKR", "A_J", "B10", "BTBR", "BUB", "B_C", "C3H", "C57BL10J", "C57BL6NJ", "C57BRcd", "C57LJ", "C58", "CBA", "CEJ", "DBA", "DBA1J", "FVB", "ILNJ", "KK", "LGJ", "LPJ", "MAMy", "MRL", "NOD", "NON", "NUJ", "NZB", "NZO", "NZW", "PJ", "PLJ", "RFJ", "RHJ", "RIIIS", "SEA", "SJL", "SMJ", "ST", "SWR"); ### strains included in the VCF file in the exact order
+
+my $inputFile = "/home/mzheng/NGS/combined_results/20160524/combined_gVCF/recal.SNP.vcf";
+my $outputFolder = "/home/mzheng/NGS/combined_results/20160524/";
+
+my @parts;
+my @parts1;
+my @parts2;
+my @parts3;
+
+my @alts;
+my ($i, $s, $line, $BTind, $PLind, $ref, $alt, $lineCount, $isGooSNP, $numOfAlt, $index, $minScore);
+
+my ($totalVariant, $totalInterested, $numNonPass, $numINDEL) = (0, 0, 0, 0);
+
+my @chr = (10..19, 1..9, "X");
+my %chr = ();
+for($i = 0; $i < scalar(@chr); $i++)
+{
+    $chr{"$chr[$i]"} = 1;
+}
+
+my %nucleotide = ();
+$nucleotide{"A"} = 1; $nucleotide{"C"} = 1; $nucleotide{"G"} = 1; $nucleotide{"T"} = 1;
+
+my $time1 = time();
+my $inputVCF = new FileHandle;
+$inputVCF->open("< $inputFile") or die "$inputFile can't be read\n";
+
+$lineCount = 0;
+while(1)
+{
+    $line = <$inputVCF>;
+    last if !$line;
+    chomp($line); chop($line) if $line =~ /\r/;
+    next if !$line;
+
+    next if(substr($line, 0, 1) eq "\#"); ### these are description lines;
+
+    $lineCount++; print "line: $lineCount\n" if $lineCount % 100000 == 0;
+
+    last if $lineCount > 200000;
+
+    $totalVariant++;
+
+    @parts = split /\t/, $line;
+    die "format not recognized\n" if (scalar(@parts) != scalar(@strains) + 9);
+    next if !exists($chr{$parts[0]}); ### not an interested Chr;
+
+    $totalInterested++;
+    if($parts[6] ne "PASS")
+    {### does not pass the GATK filter, which is for SNP only!
+	$numNonPass++;
+	next;
+    }
+
+    ### first, get the ref/alternative alleles
+    $ref = $parts[3];
+    if(length($ref) > 1)
+    {### an INDEL
+	$numINDEL++;
+	next;
+    }
+
+    $alt = $parts[4];
+    @alts = split(/,/, $alt);
+    $numOfAlt = scalar($alt);
+    
+###find the entries for GT & PL
+    if($parts[8] eq 'GT:AD:DP:GQ:PL')
+    {
+	$GTind = 0;
+	$PLind = 4;
+    }else
+    {
+	if($parts[8] eq 'GT:AD:DP:GQ:PGT:PID:PL')
+	{
+	    $GTind = 0;
+	    $PLind = 6;
+	}else
+	{
+	    @parts2 = split (/\:/, $parts[8]);
+	    $GTind = -1; $PLind = -1;
+	    for($i = 0; $i < scalar(@parts2); $i++)
+	    {
+		$GTind = $i if($parts2[$i] eq "GT");
+		$PLind = $i if($parts2[$i] eq "PL");
+	    }
+	    die "GT or PL not found for line:\n$line\n" if $GTind == -1 || $PLind == -1;
+	}
+    }
+
+    @hasAlt = (0) x scalar(@alts);
+    for($s = 0; $s < scalar(@strains); $s++)
+    {## identify the allele for each strain
+	@parts2 = split(/\:/, $parts[$s + 9]);
+	die "content for GT or PL not found properly:\n$line\n" if(!$parts2[$GTind] || !$parts2[$PLind]);
+	@parts4 = split(/\//, $parts2[$GTind]);
+	die "improper GT: $parts[$GTind]\n$line\n" if scalar(@parts4) != 2;
+	if($parts4[0] != $parts4[1])
+	{## not a good SNP
+	    $alleles[$s] = -1;
+	    next;
+	}
+	## now this is supposed to be a homogyzous call. Check whether the call is of good quality
+	$index = ($parts4[0] + 1) * ($parts4[0] + 2) / 2 - 1;
+	@parts3 = split(/,/, $parts2[$PLind]);
+	die "improper PL found: $parts2[$PLind]\n$line\n" if scalar(@parts3) != ($numOfAlt + 1) * ($numOfAlt + 2) / 2;
+	$minScore = 10000000000;
+	for($i = 0; $i < scalar(@parts3); $i++)
+	{
+	    next if $i == $index;
+	    if($parts3[$i] - $parts3[$index] < $minScore)
+	    {
+		$minScore = $parts3[$i] - $parts3[$index];
+	    }
+	}
+	if($minScore >= $cutoffForPLscoreForNonHomozygousAlt)
+	{## this is a good call
+	    $alleles[$s] = $parts4[0];
+	    if($parts4[0] > 0)
+	    {
+		$hasAlt[$parts4[0]] = 1;
+	    }
+	}else
+	{
+	    $alleles[$s] = -1;
+	}
+    }
+
+    $numGoodAlt = 0;
+    $theGoodAlt = -1;
+    for($s = 0; $s < scalar(@hasAlt); $s++)
+    {
+	if($hasAlt[$s] == 1)
+	{
+	    $numGoodAlt++;
+	    $theGoodAlt = $s;
+	}
+    }
+    if($numGoodAlt == 1)
+    {
+	die "internal error: the good Alt not found properly" if $theGoodAlt == -1;
+	if(!exists($nucleotide{$alts[$theGoodAlt]}))
+	{## not SNP
+	    $numINDEL++;
+	}
+
+    }
+    
+}
+
+close($inputVCF);
+
+print "total: $totalVariant, interested: $totalInterested, low-qual: $numNonPass, indels: $numINDEL\n";
+
+
+
