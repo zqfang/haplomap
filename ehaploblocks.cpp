@@ -18,18 +18,15 @@
 // This version of the code changed the block finding significantly.  It finds all maximum-length blocks
 // for 2,3,4,5 haplotypes from a given position, and doesn't worry about scores.
 
-
-
 #include <getopt.h>
-
-#include "haploLib.h"
-
+#include <unistd.h>
 #include <cstring>
-
+#include "haploLib.h"
 //for file lock to execute things in order
 #include <fcntl.h>
 #include <cerrno>
 #include <cstdio>
+
 
 // For setting initial datastructure sizes
 const int approxNumSNPs = 8000000;
@@ -132,7 +129,7 @@ public:
     exit(1);
     if (this != &si) {
       if (frozen) {
-	cerr << "Assignment of frozen SNPInfo:" << this << endl;
+	        cerr << "Assignment of frozen SNPInfo:" << this << endl;
       }
       name = si.name;
       chrIdx = si.chrIdx;
@@ -170,7 +167,6 @@ public:
 // but we don't know the size to statically allocate it.
 
 class HaploBlock {
-
 public:
   int start;		     // Index in snpVec of first SNP in block.
   int size;	   // number of good SNPs in block
@@ -536,15 +532,15 @@ void readAlleleInfoCompact(char *fname)
     string::iterator end = alleleStr.end();
     for (string::iterator it = alleleStr.begin(); it < end; it++) {
       if ('?'== *it) {
-	numDefined--;
-      }
+	        numDefined--; //remove strains if SNP is '?'  
+      }  
     }
 
     if (numDefined >= (totalStrains+1)/2) {
       SNPInfo * pSNPInfo = new SNPInfo(snpName, chrIdx, pos);
       if (!pSNPInfo) {
-	cerr << "Fatal error: Could not allocation SNPInfo for " << snpName << "\n";
-	abort();
+	        cerr << "Fatal error: Could not allocation SNPInfo for " << snpName << "\n";
+	        abort();
       }
       
       // Insert a blank SNPEntry in the table with snpName
@@ -622,22 +618,22 @@ bool goodSNP(char * alleles, SNPInfo * SNPInfo)
       // allele is defined.
       numDefined++;
 
-      if ('?' == firstAllele) {
-	// allele is first defined one.
-	firstAllele = allele;
+      if ('?' == firstAllele) {   
+          // allele is first defined one.
+          firstAllele = allele;
       }
       else if (allele != firstAllele) {
-	// This defined allele is different from first one.
-	polymorphic = true;
-	if ('?' == secondAllele) {
-	  // just two alleles.
-	  secondAllele = allele;
-	}
-	else if (allele != secondAllele) {
-	  // cout << "Eliminating SNP because more than two alleles:\t" << snpInfo << endl;
-	  return false;
-	}
-	// else allele defined, firstAllele & secondAllele defined, allele == secondAllele
+          // This defined allele is different from first one.
+          polymorphic = true;
+          if ('?' == secondAllele) {
+            // just two alleles.
+            secondAllele = allele;
+          }
+          else if (allele != secondAllele) {
+            // cout << "Eliminating SNP because more than two alleles:\t" << snpInfo << endl;
+            return false;
+          }
+	       // else allele defined, firstAllele & secondAllele defined, allele == secondAllele
       }
       // else allele defined, firstAllele defined, allele == firstAllele
       // do nothing
@@ -809,16 +805,17 @@ void filterAndSortSNPs()
   // FIXME: delete snpInfo's as we go through this?  
   for (hash_map<string, SNPInfo *>::iterator it = snpMap.begin(); it != snpMap.end(); it++) {
     SNPInfo * pSNPInfo = (*it).second;
-
+    
+    // goodSNP: no 'D', exactly two distinct alleles, and > minDefinedStrain elsewhere  >= 50% of alleles.
     if (goodSNP(pSNPInfo->alleles, pSNPInfo)) {
       // Initialize pattern (had to wait until all alleles were read)
       bool qMarks = allelesToPattern(pSNPInfo->alleles, pSNPInfo->pattern);
       pSNPInfo->qMarks = qMarks;
       pair<PatternSet::iterator, bool> p = patternUniqueTable.insert(pSNPInfo->pattern);
       if (!p.second) {
-	// it was already there, so we didn't add it.
-	free(pSNPInfo->pattern);
-	pSNPInfo->pattern = *(p.first);
+        // it was already there, so we didn't add it.
+        free(pSNPInfo->pattern);
+        pSNPInfo->pattern = *(p.first);
       }
       pSNPInfo->frozen = true;
 
@@ -847,7 +844,7 @@ void filterAndSortSNPs()
 // astr is allele string.  It is assumed not to have any 'D's at this point.
 // Pattern is a pointer to a char array of length at least numStrains, which is
 // written into.
-// Returns true iff pattern contains ?s
+// Returns true if pattern contains ?s
 // FIXME: By convention, destination should be first.
 // OBSOLETE: Returns number of haplotypes.
 // FIXME: could uniquify pattern by hashing.  EASY!
@@ -978,7 +975,7 @@ void mergePattern(char *merge, int blockstart, int blocksize, int str2)
     char *pat = (*snpIt)->pattern;
     char & chr1 = merge[snpOffset];
     char chr2 = pat[str2];
-    if ('?' == chr1) {
+    if ('?' == chr1) { 
       chr1 = chr2;		// updates merged (chr1 is ref)
     }
   }
@@ -1029,21 +1026,21 @@ int combinePatternNoQs(char *combined, int blockstart, int blocksize, int haploL
     for(int i = 0; i < numStrains; i++) {
       if(combined[i]!='?') continue; //because this has been assigned already;
       if(firstInClass==-1) {
-	firstInClass = i;
-	combined[i] = curClass;
-	numAssigned++;
-	continue;
+          firstInClass = i;
+          combined[i] = curClass;
+          numAssigned++;
+          continue;
       }
       combined[i] = curClass;
       numAssigned++;
       for(vector<SNPInfo *>::iterator snpIt = blockBeginIt; snpIt != blockEndIt; snpIt++){      
-	int index = snpIt - blockBeginIt;
-	char* pat = (*snpIt)->pattern;
-	if(pat[i]!=pat[firstInClass]) {
-	  combined[i] = '?';
-	  numAssigned--;
-	  break;
-	}
+          int index = snpIt - blockBeginIt;
+          char* pat = (*snpIt)->pattern;
+          if(pat[i]!=pat[firstInClass]) {
+            combined[i] = '?';
+            numAssigned--;
+            break;
+          }
       }
     }
     if(firstInClass==-1) {
@@ -1085,7 +1082,7 @@ int combinePatterns(char *combined, int blockstart, int blocksize, int haploLimi
     }
   }
 
-  // Build vector of counts of defined entries in each column.
+  // Build vector of counts of defined entries in each column (each column is SNPs for each strain).
   // Flag columns consisting of all '?' -- there is no point in assigning a haplotype
   // to these, since they can be in any.
   //  vector<bool> unconstrained(numStrains, true); // this is too slow.
@@ -1117,8 +1114,8 @@ int combinePatterns(char *combined, int blockstart, int blocksize, int haploLimi
       char *pat = (*snpIt)->pattern;
       char strchr = pat[str1];
       if (strchr != '?') {
- 	combined[str1] = '\000';
-	numDefVec[str1]++;
+        combined[str1] = '\000';
+        numDefVec[str1]++;
       }
     }
   }
@@ -1671,7 +1668,7 @@ HaploBlock * findMaximalBlock(int blockstart, int haploSize, int minSize)
 
     if (0 == numHaplo) {
       if (traceFBB) {
-	cout << "    Too many haplotypes " << endl;
+	        cout << "    Too many haplotypes " << endl;
       }
       break;
     }
@@ -1687,7 +1684,8 @@ HaploBlock * findMaximalBlock(int blockstart, int haploSize, int minSize)
     if (traceFBB) {
       cout << "   Cannot reduce block size due to minSize " << minSize << endl;
     }
-    return false;
+    //return false;
+    return NULL;
   }
 
   // Binary search for exact maximum block size.
@@ -1756,35 +1754,35 @@ void findAllMaximalBlocks(int haploLimit)
   for (int haploSize = 2; haploSize <= haploLimit; haploSize++) {
     HaploBlock *prevSavedBlock = NULL;
 
-    for (int blockstart = 0; blockstart < snpVec.size(); blockstart++) {
+    for (size_t blockstart = 0; blockstart < snpVec.size(); blockstart++) {
       // Only try sizes that aren't going to be subsumed!
       if (NULL != prevSavedBlock) {
-	// Don't bother searching a block unless it will extend beyond previous saved block.
-	minSize = prevSavedBlock->size - (blockstart - prevSavedBlock->start) + 1;
-	if (minSize < 1) {
-	  minSize = 1;
-	}
+        // Don't bother searching a block unless it will extend beyond previous saved block.
+        minSize = prevSavedBlock->size - (blockstart - prevSavedBlock->start) + 1;
+        if (minSize < 1) {
+          minSize = 1;
+        }
       }
       else {
-	minSize = 1;
+	        minSize = 1;
       }
-      
+      // minSize here is stride, that's how many step to move forward from prevSavedBlock
       HaploBlock *pHaploBlock = findMaximalBlock(blockstart, haploSize, minSize);
       
       if (NULL == pHaploBlock) {
       }
       else if (prevSavedBlock!=NULL && pHaploBlock->size <= prevSavedBlock->size - (blockstart - prevSavedBlock->start)) {
-	if (traceChooseBlocks) {
-	  cout << "Block " << *pHaploBlock << "  is subsumed by previous saved block " << *prevSavedBlock << endl;
-	}
-	delete pHaploBlock;
+        if (traceChooseBlocks) {
+          cout << "Block " << *pHaploBlock << "  is subsumed by previous saved block " << *prevSavedBlock << endl;
+        }
+        delete pHaploBlock;
       }
       else {
-	if (traceChooseBlocks) {
-	  cout << "Saving block " << *pHaploBlock << endl;
-	}
-	chosenHaploBlocks.push_back(pHaploBlock);
-	prevSavedBlock = pHaploBlock;
+        if (traceChooseBlocks) {
+          cout << "Saving block " << *pHaploBlock << endl;
+        }
+        chosenHaploBlocks.push_back(pHaploBlock);
+        prevSavedBlock = pHaploBlock;
       }
     }
   }
@@ -2285,8 +2283,7 @@ int acquireLock() {
   int result;
   // *** Disable locking
   return 0;
-  while(result = open("output.lck", O_WRONLY | O_CREAT | O_EXCL, S_IRUSR|S_IWUSR) < 0 
-	&& errno==EEXIST) {
+  while (result = open("output.lck", O_WRONLY | O_CREAT | O_EXCL, S_IRUSR|S_IWUSR) < 0 && errno==EEXIST) {
     sleep(1);
   }
   if (result<0) { //oh noes
@@ -2335,7 +2332,7 @@ void writeBlockSNPs(char *fname, int minBlockSNPs)
     exit(1);
   }
   
-  for (int snpIdx = 0; snpIdx < snpVec.size(); snpIdx++) {
+  for (size_t snpIdx = 0; snpIdx < snpVec.size(); snpIdx++) {
     SNPInfo * pSNPInfo = snpVec[snpIdx];
     string chrName = chromosomes.eltOf(pSNPInfo->chrIdx);
     snpOut << chrName << "\t" << pSNPInfo->position << "\t"
@@ -2439,8 +2436,7 @@ Options *parseOptions(int argc, char** argv)
     "    -g --genes_file <name of SNPs-to-genes file>\n"
     "    -o --blocks_file  <output file with haplotype blocks>\n"
     "    -p --blockSNPs_file  <output file with SNPs for blocks>\n"
-    "    -m --min_block_SNPs\n" 
-;
+    "    -m --min_block_SNPs\n" ;
 
 
   while (1) {

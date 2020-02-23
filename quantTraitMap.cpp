@@ -3,11 +3,8 @@
 // FIXME: Add tracing of block info.
 
 #include <getopt.h>
-
 #include <cstring>
-
 #include "haploLib.h"
-
 #include <gsl/gsl_cdf.h>
 
 const char *HAPLOCOLORS[] = {"red", "blue", "green", "orange", "violet", "yellow"};
