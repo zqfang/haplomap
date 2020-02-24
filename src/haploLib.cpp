@@ -93,7 +93,7 @@ ostream & showPattern(const char *pattern, size_t len)
 // But this was expedient.
 void readStrains(char *fname)
 {
-  ColumnReader rdr(fname, "\t");
+  ColumnReader rdr(fname, (char*)"\t");
 
   int numtoks;
   while ((numtoks = rdr.getLine()) >= 0) {

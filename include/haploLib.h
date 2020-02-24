@@ -14,14 +14,14 @@
 #include <iterator>
 #include <algorithm>
 #include <cmath>
-#include <ext/hash_set>
+//#include <ext/hash_set>
 #include <ext/functional>
 //#include <hash_map>
 
 #include <time.h>
 
 #include "util.h"
-#include "hash_string.h"
+//#include "hash_string.h"
 #include "dynum.h"
 #include "indexcomparator.h"
 #include "ColumnReader.h"

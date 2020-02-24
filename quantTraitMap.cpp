@@ -4,8 +4,9 @@
 
 #include <getopt.h>
 #include <cstring>
-#include "haploLib.h"
+#include <unordered_map>
 #include <gsl/gsl_cdf.h>
+#include "haploLib.h"
 
 const char *HAPLOCOLORS[] = {"red", "blue", "green", "orange", "violet", "yellow"};
 
@@ -19,7 +20,7 @@ int numHaplotypes(char *pattern); // forward decl.
 int interestingChanges(const map<string, string> & geneCodingMap);
 
 // Maps gene names to a string of A's, M's, and P's
-hash_map<string, string> geneExprMap(40000);
+unordered_map<string, string> geneExprMap(40000);
 
 void upcase(string &str)
 {
@@ -279,7 +280,7 @@ public:
 
 
 // Globals
-hash_map<string, GeneSummary *> geneTable; // for gene-oriented interface
+unordered_map<string, GeneSummary *> geneTable; // for gene-oriented interface
 
 vector<BlockSummary *> blocks;	// global vector of all blocks.
 
@@ -294,7 +295,7 @@ void filterGoTerms(char* fname, vector<string> terms) {
   vector<string>::iterator endT = terms.end();
   while ((numtoks = rdr.getLine()) >= 0) {
     string geneName = rdr.getToken(0);
-    hash_map<string, GeneSummary *>::iterator it = geneTable.find(geneName);
+    unordered_map<string, GeneSummary *>::iterator it = geneTable.find(geneName);
     if(it == geneTable.end()) {
       continue;
     }
@@ -595,7 +596,7 @@ void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
       for (vector<string>::iterator git = rdr.begin()+7; git != rdr.end(); git+=2) {
 	// *(git+1) is codon for gene name (*git).  Convert from string to bool using cond expr.
 	pLastBlock->geneIsCodingMap[*git] = *(git+1); 
-	hash_map<string, GeneSummary *>::iterator entIt = geneTable.find(*git);
+	unordered_map<string, GeneSummary *>::iterator entIt = geneTable.find(*git);
 	
 	if (entIt == geneTable.end()) {
 	  // create new entry.
@@ -747,7 +748,7 @@ void writeGeneSums(bool isCategorical, char * outputFileName,
   vector<GeneSummary *> genes;
   genes.reserve(geneTable.size());
   transform(geneTable.begin(), geneTable.end(), back_inserter(genes),
-	    select2nd<hash_map<string, GeneSummary *>::value_type>());
+	    select2nd<unordered_map<string, GeneSummary *>::value_type>());
   sort(genes.begin(), genes.end(), gcomp);
 
   // write them out.
@@ -1252,7 +1253,7 @@ int main(int argc, char **argv)
   
   beginPhase("sorting blocks in gene table");
   // Pass to sort block vectors in the gene table.
-  for (hash_map<string, GeneSummary *>::iterator git = geneTable.begin();
+  for (unordered_map<string, GeneSummary *>::iterator git = geneTable.begin();
        git != geneTable.end();
        git++) {
     vector<BlockSummary *> &gBlocks = (*git).second->blocks;

@@ -26,20 +26,22 @@
 #include <fcntl.h>
 #include <cerrno>
 #include <cstdio>
-
+#include <unordered_set>
+#include <unordered_map>
 
 // For setting initial datastructure sizes
 const int approxNumSNPs = 8000000;
 
 // debug/trace flags
-// int  debugSNPMax = 1000;	// just do the first debugSNPMax SNPs. (-1 == all SNPs)
+//int  debugSNPMax = 1000;	// just do the first debugSNPMax SNPs. (-1 == all SNPs)
 int  debugSNPMax = -1;
 
 bool traceFBB = false;
-// bool traceFBB = true;
+//bool traceFBB = true;
 bool traceCombinePatterns = false;
+//bool traceCombinePatterns = true;
 bool traceChooseBlocks = false;
-// bool traceChooseBlocks = true;
+//bool traceChooseBlocks = true;
 bool traceWriteHTML = false;
 
 bool useFastFBB = true;
@@ -234,8 +236,8 @@ typedef vector<string> strvec;	// vector of strings data type.
 Dynum<string> chromosomes;
 
 // Makes it easy to look up SNP info using SNP name.
-hash_map<string, SNPInfo *> snpMap(approxNumSNPs/2);
-
+//hash_map<string, SNPInfo *> snpMap(approxNumSNPs/2);
+unordered_map<string, SNPInfo *> snpMap(approxNumSNPs/2);
 // vector of all good SNPs in order of chromosome, position.
 vector <SNPInfo *> snpVec;
 
@@ -287,8 +289,8 @@ struct PatternEq
   }
 };
 
-typedef hash_set<char*, PatternHash, PatternEq> PatternSet;
-
+//typedef hash_set<char*, PatternHash, PatternEq> PatternSet;
+typedef unordered_set<char*, PatternHash, PatternEq> PatternSet;
 PatternSet patternUniqueTable;
 
 
@@ -397,9 +399,10 @@ void readPerlegenSNPvsmgene(const char *fname)
     }
 
     // Insert a blank SNPEntry in the table with snpName
-    pair<hash_map<string, SNPInfo *>::iterator, bool> snpLookup =
-      snpMap.insert(pair<string, SNPInfo *>(snpName, pSNPInfo));
-    
+    // pair<hash_map<string, SNPInfo *>::iterator, bool> snpLookup =
+    //   snpMap.insert(pair<string, SNPInfo *>(snpName, pSNPInfo));
+     pair<unordered_map<string, SNPInfo *>::iterator, bool> snpLookup =
+      snpMap.insert(pair<string, SNPInfo *>(snpName, pSNPInfo));   
     // The file has multiple entries when there are multiple genes.  Just insert
     // the first, and don't check for duplicates.
     // if (!snpLookup.second) {
@@ -429,7 +432,8 @@ void readPerlegenAlleleInfo(char *fname)
     string alleleStr = rdr.getToken(2);
     string SNPName = rdr.getToken(3);
 
-    hash_map<string, SNPInfo *>::iterator fit = snpMap.find(SNPName);
+    // hash_map<string, SNPInfo *>::iterator fit = snpMap.find(SNPName);
+    unordered_map<string, SNPInfo *>::iterator fit = snpMap.find(SNPName);
     if (fit == snpMap.end()) {
       // SNP name was not defined.  Warn and continue.
       //      cerr << "Warning: Undefined SNP name: " << SNPName << endl;
@@ -477,8 +481,14 @@ void writeAlleleInfoCompact(char *fname)
   cs << endl;
   // iterate over hash table writing the rest of the strains.
   // not "pattern" and "used", though.
-  hash_map<string, SNPInfo *>::iterator send = snpMap.end();
-  for (hash_map<string, SNPInfo *>::iterator sit = snpMap.begin(); sit != send; sit++) {
+  // hash_map<string, SNPInfo *>::iterator send = snpMap.end();
+  unordered_map<string, SNPInfo *>::iterator send = snpMap.end();
+  // for (hash_map<string, SNPInfo *>::iterator sit = snpMap.begin(); sit != send; sit++) {
+  //   SNPInfo * pSNPInfo = sit->second;
+  //   cs << pSNPInfo->name << "\t" << chromosomes.eltOf(pSNPInfo->chrIdx) << "\t"
+  //      << pSNPInfo->position << "\t" << pSNPInfo->alleles << endl;
+  // }
+    for (unordered_map<string, SNPInfo *>::iterator sit = snpMap.begin(); sit != send; sit++) {
     SNPInfo * pSNPInfo = sit->second;
     cs << pSNPInfo->name << "\t" << chromosomes.eltOf(pSNPInfo->chrIdx) << "\t"
        << pSNPInfo->position << "\t" << pSNPInfo->alleles << endl;
@@ -544,7 +554,9 @@ void readAlleleInfoCompact(char *fname)
       }
       
       // Insert a blank SNPEntry in the table with snpName
-      pair<hash_map<string, SNPInfo *>::iterator, bool> snpLookup =
+  //     pair<hash_map<string, SNPInfo *>::iterator, bool> snpLookup =
+	// snpMap.insert(pair<string, SNPInfo *>(snpName, pSNPInfo));
+        pair<unordered_map<string, SNPInfo *>::iterator, bool> snpLookup =
 	snpMap.insert(pair<string, SNPInfo *>(snpName, pSNPInfo));
       
       if (!snpLookup.second) {
@@ -575,7 +587,8 @@ void readSNPGeneNames(char *fname)
 
     // cout << " geneName = " << geneName << endl;
 
-    hash_map<string, SNPInfo *>::iterator fit = snpMap.find(snpName);
+    // hash_map<string, SNPInfo *>::iterator fit = snpMap.find(snpName);
+    unordered_map<string, SNPInfo *>::iterator fit = snpMap.find(snpName);
     if (fit == snpMap.end()) {
       // SNP name was not defined.  Warn and continue.
       //      cerr << "Warning: Undefined SNP name: " << snpName << endl;
@@ -677,9 +690,10 @@ void readChromosomeInfo(char *fname)
       abort();
     }
 
-    pair<hash_map<string, SNPInfo *>::iterator, bool> snpLookup =
+    // pair<hash_map<string, SNPInfo *>::iterator, bool> snpLookup =
+    //   snpMap.insert(pair<string, SNPInfo*>(snpName, pSNPInfo));
+    pair<unordered_map<string, SNPInfo *>::iterator, bool> snpLookup =
       snpMap.insert(pair<string, SNPInfo*>(snpName, pSNPInfo));
-
     if (!snpLookup.second) {
       cerr << "WARNING: Duplicate SNP names?" << snpName << endl;
     }
@@ -803,7 +817,9 @@ void filterAndSortSNPs()
 
   ++snpCount;
   // FIXME: delete snpInfo's as we go through this?  
-  for (hash_map<string, SNPInfo *>::iterator it = snpMap.begin(); it != snpMap.end(); it++) {
+  // for (hash_map<string, SNPInfo *>::iterator it = snpMap.begin(); it != snpMap.end(); it++) 
+  for (unordered_map<string, SNPInfo *>::iterator it = snpMap.begin(); it != snpMap.end(); it++)
+  {
     SNPInfo * pSNPInfo = (*it).second;
     
     // goodSNP: no 'D', exactly two distinct alleles, and > minDefinedStrain elsewhere  >= 50% of alleles.
@@ -975,8 +991,8 @@ void mergePattern(char *merge, int blockstart, int blocksize, int str2)
     char *pat = (*snpIt)->pattern;
     char & chr1 = merge[snpOffset];
     char chr2 = pat[str2];
-    if ('?' == chr1) { 
-      chr1 = chr2;		// updates merged (chr1 is ref)
+    if ('?' == chr1) {  
+      chr1 = chr2;		// updates merge (chr1 is ref), if merge == ?, set to str2 pattern 
     }
   }
 }
@@ -1036,7 +1052,8 @@ int combinePatternNoQs(char *combined, int blockstart, int blocksize, int haploL
       for(vector<SNPInfo *>::iterator snpIt = blockBeginIt; snpIt != blockEndIt; snpIt++){      
           int index = snpIt - blockBeginIt;
           char* pat = (*snpIt)->pattern;
-          if(pat[i]!=pat[firstInClass]) {
+          if(pat[i]!=pat[firstInClass]) // each one compared to the first pattern in blocks
+          {      
             combined[i] = '?';
             numAssigned--;
             break;
@@ -1082,7 +1099,7 @@ int combinePatterns(char *combined, int blockstart, int blocksize, int haploLimi
     }
   }
 
-  // Build vector of counts of defined entries in each column (each column is SNPs for each strain).
+  // Build vector of counts of defined entries in each column.
   // Flag columns consisting of all '?' -- there is no point in assigning a haplotype
   // to these, since they can be in any.
   //  vector<bool> unconstrained(numStrains, true); // this is too slow.
@@ -1162,38 +1179,38 @@ int combinePatterns(char *combined, int blockstart, int blocksize, int haploLimi
       int str1 = *stoIt1;
       // skip strains that have already been assigned permanent ECs
       if (combined[str1] == eqclass) {
-	// All other strains will be compared with this.
-	if (firstStrainInEC < 0) {
-	  firstStrainInEC = str1;
-	  mergePattern(merge, blockstart, blocksize, str1);
-	}
-	else {
-	  // if incompatible, assign EC+1.  Otherwise, leave at current level.
-	  if (strainsAreCompatible(merge, blockstart, blocksize, str1)) {
-	    // merge into combined column
-	    if(qMarks) {
-	      mergePattern(merge, blockstart, blocksize, str1);
-	    }
-	  }
-	  else {
-	    numHaplo = ++combined[str1]+1; // WORRY: c++ ordering?
-	    if (numHaplo > haploLimit) {
-	      free(merge);
+          // All other strains will be compared with this.
+          if (firstStrainInEC < 0) {
+            firstStrainInEC = str1;
+            mergePattern(merge, blockstart, blocksize, str1);
+          }
+          else {
+            // if incompatible, assign EC+1.  Otherwise, leave at current level.
+            if (strainsAreCompatible(merge, blockstart, blocksize, str1)) {
+              // merge into combined column
+              if(qMarks) {
+                mergePattern(merge, blockstart, blocksize, str1);
+              }
+            }
+            else {
+              numHaplo = ++combined[str1]+1; // WORRY: c++ ordering?
+              if (numHaplo > haploLimit) {
+                free(merge);
 
-	      /* if(!qMarks&&(test!=0&&!eqPatterns(combined, combinedTest))) {
-		cout << "should be"; showPattern(combined);
-		cout << endl;
-		showPattern(combinedTest);
-		cout << "from" << endl;
-		showBlock(blockstart, blocksize);
-		cout << "Returned " << test << " and limit is " << haploLimit << endl;
-		cout << endl;
-	      }
-	      free(combinedTest);*/
-	      return 0;
-	    }
-	  }
-	}
+                    /* if(!qMarks&&(test!=0&&!eqPatterns(combined, combinedTest))) {
+                cout << "should be"; showPattern(combined);
+                cout << endl;
+                showPattern(combinedTest);
+                cout << "from" << endl;
+                showBlock(blockstart, blocksize);
+                cout << "Returned " << test << " and limit is " << haploLimit << endl;
+                cout << endl;
+                    }
+                    free(combinedTest);*/
+                return 0;
+	             }
+	           }
+	          }
       }
     }
     // FIXME: This well-intended early exit did not take account of strvec reorder!
@@ -1639,7 +1656,6 @@ HaploBlock * findMaximalBlock(int blockstart, int haploSize, int minSize)
 
   char * pattern = (char *) malloc(numStrains);
   memset(pattern, '?', numStrains);
-
   // Try progressively larger blocks until blocksize is definitely too big.
 
   for (blocksize = minSize;  blocksize <= maxSize; blocksize *= 2) {
@@ -2571,7 +2587,7 @@ int main(int argc, char** argv)
   minDefined = (numStrains+1)/2; // half of strains must be defined (rounded up).
 
   beginPhase();
-  filterAndSortSNPs();
+  filterAndSortSNPs(); // remove 'D's 
   endPhase("filtering and sorting SNPs", chr);
   
   if (opts->non_overlapping) {

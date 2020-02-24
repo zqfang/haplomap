@@ -14,7 +14,8 @@
 #include <ostream>
 
 #include <vector>
-#include <ext/hash_map>
+//#include <ext/hash_map>
+#include <unordered_map>
 
 using namespace std;
 using namespace __gnu_cxx;
@@ -22,7 +23,7 @@ using namespace __gnu_cxx;
 template <typename EltType> 
 class Dynum {
 
-  typedef hash_map<EltType,  int> _E2IMap;
+  typedef unordered_map<EltType,  int> _E2IMap;
 
   _E2IMap _elt_to_idx;
   vector<EltType> _idx_to_elt;

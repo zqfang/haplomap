@@ -8,7 +8,7 @@
 // Annoyingly, the gnu C++ library does not supply a standard hash function for strings.
 // So this is it.
 
-#include <ext/hash_map>
+//#include <ext/hash_map>
 
 namespace __gnu_cxx {
 template<> struct hash< std::string >                                                       
