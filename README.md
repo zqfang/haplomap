@@ -18,28 +18,29 @@ cmake ..
 make
 ```
 
-3. Alternatively, edit the Makefile, set -L /path/to/gsl/lib -I /path/to/gsl/include.  
-e.g.
-```bash
-g++ $(CFLAGS) -c \
-    -L${HOME}/program/gsl/program/gsl/lib -l gsl -l gslcblas \
-    -I${HOME}/program/gsl/program/gsl/include -I./include \
-    quantTraitMap.cpp
-```
-the run the Makefile
-```bash
-cd haplomap
-make eblocks
-make ghmap
-```
-
 ## Dependency 
 
 Ubuntu 18.04.2 LTS
 * GSL 2.6
 * GCC 7.4.0
 
+## Useage
+e.g.
+```bash
+# find haplotypes
+eblocks -a ${HOME}/data/SNPS/chr18.txt \
+        -g ${HOME}/data/gene_coding.txt \
+        -s ${HOME}/TMPDATA/test_strains.txt \
+        -p ${HOME}/TMPDATA/test.haploblocks.txt \
+        -o ${HOME}/TMPDATA/test.SNPs.hb.txt
 
-### Some tips
+# statistical testing with trait data
+ghmap -p ${HOME}/data/compact_gene_expr.txt \
+      -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
+      -o ${HOME}/TMPDATA/test.final.ouput.txt
+```
+
+### Some Questions
 1. If SNPs pattern has 'D' (deletion) in all input strains, drop this SNP 
+2. Strain file: column1 -> name, column2 -> abbrv
 
