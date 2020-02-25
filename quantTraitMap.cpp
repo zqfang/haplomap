@@ -86,6 +86,7 @@ public:
   float effect;
   int numHaplo;
   int numInteresting;
+  map<string, string> geneIsInteresting; // gene name -> codon change, by gene BY
   map<string, string> geneIsCodingMap;	// gene name -> coding bit
   // constructor
   BlockSummary(char *chrnm, int num, int start, int size,
@@ -93,6 +94,45 @@ public:
     : chrName(chrnm), blockIdx(num), blockStart(start), blockSize(size),
       chrBegin(chrbeg), chrEnd(chrend), pattern(pat), isIgnored(false),
       FStat(INFINITY), pvalue(1.0), effect(0.0), numHaplo(-1),numInteresting(-1){};
+
+  string updateCodonScore( string str ){
+	int count = 0;
+	size_t pos = 0;
+	size_t endpos = 0;
+	while( true ) {
+		pos = str.find("<", pos + 1);
+		if(pos == string::npos) break;
+		endpos = str.find(">",pos+1);
+		int aa1 = str[pos - 1] - 'A';
+		int aa2 = str[endpos + 5] - 'A';
+		if(AACLASSES[aa1] != AACLASSES[aa2]) {
+			count++;
+			int X = 'X' - 'A';
+			if(aa1==X || aa2 == X){// stop codon
+				return "stop_codon";
+			}
+		}
+	}
+	if ( str.find("SPLICE_SITE")!=string::npos )
+	{
+		return "splicing";
+	}
+	if ( count > 0 ){
+		return "significant_codon_change";
+	}
+	return "non_significant_codon_change";
+  }
+
+  friend void updateGeneIsInteresting(BlockSummary *pb) { // BY
+	for (map<string, string>::iterator giit = pb->geneIsCodingMap.begin(); giit != pb->geneIsCodingMap.end(); giit++)  
+	{
+		if (giit->second == "0" || giit->second == "1" ){
+			pb->geneIsInteresting[giit->first] = "no_codon_change";
+			continue;
+		}
+		pb->geneIsInteresting[giit->first] = pb->updateCodonScore(giit->second); 
+	} 
+  }
 
   // print a line of the blocks file.
   // blockIdx	blockStart	blockSize	chromosome	begin	end	pattern	pval	effect	genename genehascoding ...
@@ -107,13 +147,42 @@ public:
     writeSortedPattern(os, pb->pattern, strOrderVec);
 
     os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) << "\t" << pb->effect;
+    updateGeneIsInteresting(pb);
 
     // gene names and coding bits
     map<string, string> & geneIsCodingMap = pb->geneIsCodingMap;
-    for (map<string, string>::iterator giit = geneIsCodingMap.begin(); giit != geneIsCodingMap.end(); giit++) {
-      os << "\t" << (*giit).first << "\t" << (*giit).second;
+    for (map<string, string>::iterator giit = geneIsCodingMap.begin(); giit != geneIsCodingMap.end(); giit++)  {///EDITED BY
+      os << "\t" << (*giit).first << "\t" << (*giit).second << "\t" << pb->geneIsInteresting[(*giit).first];  
     }
     os << endl;
+
+  }
+ // BY addition, output as such:
+ // gene	codon_flag	pattern	pval	effect	chromosome	begin	end	blockIdx	blockStart	blockSize	expression
+  friend void showGeneBlockByBlock(ostream &os, bool isCategorical, BlockSummary *pb, vector<int>& strOrderVec) {
+      updateGeneIsInteresting(pb);
+      map<string, string> & geneIsCodingMap = pb->geneIsCodingMap;
+      map<string, string>::iterator giit = geneIsCodingMap.begin();
+      if ( giit == geneIsCodingMap.end() ) { // no genes in this block 
+          os << "None\tNone\t";
+	  writeSortedPattern(os, pb->pattern, strOrderVec);
+	  os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) << "\t" << pb->effect << "\t" << pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd << "\t" << pb->blockIdx << pb->blockStart << "\t" << pb->blockSize << endl;
+      }
+      else {
+	      for (map<string, string>::iterator giit = geneIsCodingMap.begin(); giit != geneIsCodingMap.end(); giit++)  {
+                  os << (*giit).first << "\t" << pb->geneIsInteresting[(*giit).first] << "\t";
+                  writeSortedPattern(os, pb->pattern, strOrderVec);
+                  os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) << "\t" << pb->effect << "\t" << pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd << "\t" << pb->blockIdx << pb->blockStart << "\t" << pb->blockSize;
+	          string gname = (*giit).first;
+                  upcase(gname);
+	          if (geneExprMap.find(gname) == geneExprMap.end()) {
+		         os << "\t-------------" << endl;
+                  }
+	          else{
+                     os << "\t" << geneExprMap[gname] << endl;
+	          }
+             }
+      }
   }
 
   // Return true iff pval is above cutoff or FStat is below it.
@@ -129,6 +198,16 @@ public:
       }
     }
   }
+
+  friend void showGeneBlockByBlocks(ostream &os, bool isCategorical, vector<BlockSummary *>& blocks, float cutoff, vector<int>& strOrderVec) {
+	for (unsigned i = 0; i < blocks.size(); i++) 
+	{
+		if (!isCutoff(isCategorical, cutoff, blocks[i])) 
+		{
+			showGeneBlockByBlock(os, isCategorical, blocks[i], strOrderVec);
+		}
+	}
+   } 
 };
 
 
@@ -272,7 +351,6 @@ public:
   {
     BlockSummary *pb1 = pg1->blocks[0];
     BlockSummary *pb2 = pg2->blocks[0];
-    
     return bcomp(pb1, pb2);
   };
   
@@ -386,6 +464,9 @@ public:
 
   bool isCategorical;
   bool filterCoding;
+  bool haploBlocks;
+  bool geneBlocks;
+  bool geneByBlocks;
   float pvalueCutoff;
   char *datasetName;
   char *phenotypeFileName;
@@ -397,7 +478,7 @@ public:
   char *goTermFile;
   char *goFilter;
   // constructor
-  Options() : isCategorical(false), filterCoding(false), pvalueCutoff(0.05),
+  Options() : isCategorical(false), filterCoding(false), haploBlocks(false), geneBlocks(false), pvalueCutoff(0.05),
 	      datasetName((char*)"Unnamed_dataset"), phenotypeFileName(NULL),
 	      blocksFileName(NULL), outputFileName(NULL), geneName(NULL), 
 	      equalFile(NULL), goTermFile(NULL), goFilter(NULL){ };
@@ -416,6 +497,9 @@ Options *parseOptions(int argc, char** argv)
     {"verbose",			no_argument,		0,			'v'}, 
     {"categorical",		no_argument,		0,			'c'}, 
     {"filter_coding",		no_argument,		0,			'f'},
+    {"haploblocks",		no_argument,		0,			'k'},
+    {"gene_block",		no_argument,		0,			'm'},
+    {"gene_block_by_block",		no_argument,		0,			'a'},
     {"pvalue_cutoff",		no_argument,		0,			'l'}, 
     {"name",			required_argument,	0, 			'n'},
     {"phenotypes_file",		required_argument,	0, 			'p'},
@@ -432,7 +516,7 @@ Options *parseOptions(int argc, char** argv)
   while (1) {
     
     int option_index = 0;
-    c = getopt_long (argc, argv, "cfhvn:p:b:l:o:g:e:q:t:i:", long_options, &option_index);
+    c = getopt_long (argc, argv, "cfkmahvn:p:b:l:o:g:e:q:t:i:", long_options, &option_index);
     
     /* Detect the end of the options. */
     if (c == -1) {
@@ -451,6 +535,21 @@ Options *parseOptions(int argc, char** argv)
       break;
     }
 
+    case 'k': {
+      opts->haploBlocks = true;
+      break;
+    }
+
+    case 'm': {
+	opts->geneBlocks = true;
+	break;
+    }
+
+    case 'a': {
+	opts->geneByBlocks = true;
+	break;
+    }
+
     case 'l': {
       opts->pvalueCutoff = atof(optarg);
       break;
@@ -461,6 +560,9 @@ Options *parseOptions(int argc, char** argv)
 	"    -v --verbose\n" 
 	"    -n --name <name of dataset>\n"
 	"    -f --filter out non-coding blocks\n"
+	"    -k --haploblocks\n"
+	"    -m --output gene and haplotype block\n"
+	"    -a --output gene and haplotype block sort by block\n"
 	"    -p --phenotypes_file <file with phenotype data>\n"
 	"    -o --output_file <output file name>" 
 	"    -c --categorical\n"
@@ -567,7 +669,7 @@ Options *parseOptions(int argc, char** argv)
 void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
 {
   ColumnReader rdr(fname, (char*)"\t");
-
+  
   int numtoks;
   while ((numtoks = rdr.getLine()) >= 0) {
     // file has "Chromosome\tBlockNum\tBlockstartSNPnum\tSize\tChrbegin\tChrend\tPattern\tgene1\tcodon1\t...\n"
@@ -643,7 +745,143 @@ void sortStrainsByPheno(vector< vector<float> >& phenvec, vector<int> &strOrderV
 
 
 // Write summaries of the blocks.  The CGI script will read this and render it nicely in
-// HTML.  
+// HTML.
+void showGeneBlockSums(ostream &os, bool isCategorical, vector<BlockSummary *>& blocks, float cutoff, vector<int>& strOrderVec, vector<GeneSummary *> genesList ) {
+	vector<string> genesOver; // all genes that have been already printed 
+	for (unsigned i = 0; i < blocks.size(); i++) 
+	{
+		if (!isCutoff(isCategorical, cutoff, blocks[i])) 
+		{
+			BlockSummary *pb = blocks[i];
+			map<string, string> & geneIsCodingMap = pb->geneIsCodingMap;
+			map<string, string>::iterator giit = geneIsCodingMap.begin();
+			if ( geneIsCodingMap.size() == 0 ){ // no genes in this block 
+				updateGeneIsInteresting(pb);
+				os << "None\tNone\t";
+				writeSortedPattern(os, pb->pattern, strOrderVec);
+				os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) << "\t" << pb->effect << "\t" << pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd << "\t" << pb->blockIdx << pb->blockStart << "\t" << pb->blockSize << endl;
+			}
+			else { 
+				for (; giit != geneIsCodingMap.end(); giit++) {	
+					string gname = giit->first;
+					if ( find( genesOver.begin(), genesOver.end(), gname ) != genesOver.end() ) {
+						continue;		      
+					}
+					genesOver.push_back(gname);
+					for ( vector<GeneSummary *>::iterator git = genesList.begin(); git != genesList.end(); git++ ) 
+					{
+						if ((*git)->name == gname) {
+							for ( unsigned j = 0; j < ((*git)->blocks).size(); j++ ){
+								BlockSummary *pb_t = (*git)->blocks[j];
+								updateGeneIsInteresting(pb_t);
+								os << gname << "\t" << pb_t->geneIsInteresting[gname] << "\t";
+								writeSortedPattern(os, pb_t->pattern, strOrderVec);
+								os << "\t" << (isCategorical ? pb_t->FStat : pb_t->pvalue) << "\t" << pb_t->effect << "\t" << pb_t->chrName << "\t" << pb_t->chrBegin << "\t" << pb_t->chrEnd << "\t" << pb_t->blockIdx << pb_t->blockStart << "\t" << pb_t->blockSize;
+								string upname = gname;
+								upcase(upname);
+								if (geneExprMap.find(upname) == geneExprMap.end()) {
+									os << "\t-------------" << endl;
+								}
+								else {
+									os << "\t" << geneExprMap[upname] << endl;
+								}
+							}
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+ 
+
+
+
+
+// BY ADDITION
+void writeGeneBlockSums( bool isCategorical, char * outputFileName, char *datasetName, vector< vector<float> >& phenvec, vector<BlockSummary *>& blocks, float pvalueCutoff) {
+	ofstream blockout(outputFileName); 
+	if (!blockout.is_open()) {
+		cout << "Open of file \"" << outputFileName << "\" failed: ";
+		perror("");
+		exit(1);
+	}
+	// Datasetname
+	blockout << datasetName << endl;
+	// sort strains by phenvec value
+	vector<int> strOrderVec(numStrains); // will contain strain indices.
+	sortStrainsByPheno(phenvec, strOrderVec);
+
+	// output strain names.
+	vector<int>::iterator stoEnd1 = strOrderVec.end();
+	for (vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++) {
+		int str1 = *stoIt1;
+		blockout << strainAbbrevs.eltOf(str1);
+		if (stoIt1+1 < stoEnd1) {
+			blockout << "\t";
+		}
+	}
+	blockout << endl;
+
+	// output phenotype values.
+	for (vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++) {
+		int str1 = *stoIt1;
+		blockout << phenvec[str1][0];
+		if (stoIt1+1 < stoEnd1) {
+			blockout << "\t";
+		}
+	}
+	blockout << endl;
+
+	GenesComparator gcomp(isCategorical);
+	vector<GeneSummary *> genes;
+	genes.reserve(geneTable.size());
+	transform(geneTable.begin(), geneTable.end(), back_inserter(genes), select2nd<hash_map<string, GeneSummary *>::value_type>());
+	sort(genes.begin(), genes.end(), gcomp);
+	showGeneBlockSums(blockout, isCategorical,  blocks, pvalueCutoff, strOrderVec, genes);
+} 
+
+
+void writeGeneBlockByBlocks( bool isCategorical, char * outputFileName, char *datasetName, vector< vector<float> >& phenvec, vector<BlockSummary *>& blocks, float pvalueCutoff) {
+	ofstream blockout(outputFileName); 
+	if (!blockout.is_open()) {
+		cout << "Open of file \"" << outputFileName << "\" failed: ";
+		perror("");
+		exit(1);
+	}
+	// Datasetname
+	blockout << datasetName << endl;
+	// sort strains by phenvec value
+	vector<int> strOrderVec(numStrains); // will contain strain indices.
+	sortStrainsByPheno(phenvec, strOrderVec);
+
+	// output strain names.
+	vector<int>::iterator stoEnd1 = strOrderVec.end();
+	for (vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++) {
+		int str1 = *stoIt1;
+		blockout << strainAbbrevs.eltOf(str1);
+		if (stoIt1+1 < stoEnd1) {
+			blockout << "\t";
+		}
+	}
+	blockout << endl;
+
+	// output phenotype values.
+	for (vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++) {
+		int str1 = *stoIt1;
+		blockout << phenvec[str1][0];
+		if (stoIt1+1 < stoEnd1) {
+			blockout << "\t";
+		}
+	}
+	blockout << endl;
+
+	showGeneBlockByBlocks(blockout, isCategorical,  blocks, pvalueCutoff, strOrderVec);
+} 
+
+ 
 void writeBlockSums(bool isCategorical, char * outputFileName, 
 		    char *datasetName, vector< vector<float> >& phenvec,
 		    vector<BlockSummary *>& blocks, float pvalueCutoff)
@@ -758,7 +996,6 @@ void writeGeneSums(bool isCategorical, char * outputFileName,
 
     if((*git)->isIgnored) continue; //simply don't write these genes
     BlockSummary *pBestBlock = (*git)->blocks[0];
-
     if (isCategorical) {
       if (pBestBlock->FStat < cutoff) {
 	break;
@@ -794,7 +1031,7 @@ void writeGeneSums(bool isCategorical, char * outputFileName,
 	    if((*blit)->geneIsCodingMap[gname] != "0") {//if the gene had SNPs marked as NON_SYNONYMOUS_CODING, with <->, or as SPLICE_SITE, isCoding is true 
 	      isCoding = true;
 	    }
-	    hasInteresting |= ((*blit)->geneIsCodingMap[gname].find("<->")!=string::npos);//has a major amino acid change
+        hasInteresting |= ((*blit)->numInteresting > 0);//has a major amino acid change 
         hasSpliceChange |= (((*blit)->geneIsCodingMap[gname]).find("SPLICE_SITE")!=string::npos);//if "SPLICE_SITE" was in there that means that the gene had a splice change
       }
     }
@@ -803,10 +1040,10 @@ void writeGeneSums(bool isCategorical, char * outputFileName,
     int codingCode = -1;
     if(isCoding) codingCode = 0;
     if(hasInteresting) codingCode = 1;
-    if (hasSpliceChange) codingCode = 2;
-
+    if (hasSpliceChange) codingCode = 2;//if this is true, will overwrite codingCode=1
+	updateGeneIsInteresting( pBestBlock);
     if ((isCoding || !filterCoding)||hasSpliceChange) {
-      genesout << gname << "\t" << codingCode << "\t";
+      genesout << gname << "\t" << pBestBlock->geneIsInteresting[(*git)->name] << "\t";
       writeSortedPattern(genesout, pBestBlock->pattern, strOrderVec);
       genesout << "\t" << (isCategorical ? pBestBlock->FStat : pBestBlock->pvalue) << "\t" << pBestBlock->effect;
       genesout << "\t" << pBestBlock->chrName << "\t" << pBestBlock->chrBegin << "\t" << pBestBlock->chrEnd;
@@ -849,14 +1086,17 @@ int numHaplotypes(char *pattern)
   return numHap+1;
 }
 
-int countInStr(string str, string pattern){
+/* Returns a score that represents the interestingness of codon changes*/
+int scoreChanges(string str){
   int count = 0;
   size_t pos = 0;
+  size_t endpos = 0;
   while(true) {
-    pos = str.find(pattern, pos + 1);
+    pos = str.find("<", pos + 1);
     if(pos == string::npos) break;
+    endpos = str.find(">",pos+1);
     int aa1 = str[pos - 1] - 'A';
-    int aa2 = str[pos + 7] - 'A';
+    int aa2 = str[endpos + 5] - 'A';
     if(AACLASSES[aa1] != AACLASSES[aa2]) {
       count++;
       int X = 'X' - 'A';
@@ -871,8 +1111,7 @@ int interestingChanges(const map<string, string> & geneCodingMap) {
   for(map<string, string>::const_iterator git = geneCodingMap.begin(); 
       git != geneCodingMap.end(); git++) {
     if(git->second=="0" || git->second=="1") continue;
-    changeCount+=countInStr(git->second, "<->");
-    changeCount+=countInStr(git->second, "SPLICE_SITE");
+    changeCount+=scoreChanges(git->second);
   }
   return changeCount;
 }
@@ -906,7 +1145,6 @@ void filterEqualBlocks(vector<int> equalRegions)
       for(unsigned int i = 0; i < equalRegions.size(); i++) {
 	if(allele == -1){
 	  allele = pBlock->pattern[equalRegions[i]];
-	  //cout << allele << endl;
 	  continue;
 	}
 	keep &= (allele==(pBlock->pattern)[equalRegions[i]]);
@@ -1055,12 +1293,14 @@ void ANOVA(vector< vector<float> >& phenvec, char* pattern, float &FStat, float 
       numDefined++;
       addVectors(sumDefined,phen);
       haploNum[hap]++;
+      
       addVectors(haploMean[hap],phen); // temporarily, the total, not mean.
     }
   }
 
   for (int hap = 0; hap < numHaplo; hap++) {
-    scaleVector(haploMean[hap], 1.0/haploNum[hap]);
+    scaleVector(haploMean[hap], 1.0/haploNum[hap]); // get the mean
+
   }
   
   if (traceFStat) {
@@ -1085,6 +1325,7 @@ void ANOVA(vector< vector<float> >& phenvec, char* pattern, float &FStat, float 
       vector<float> resid = phenvec[str1];
       subtractVectors(resid, haploMean[hap]);
       float tmpdot = dotVectors(resid, resid);
+
       SSW += tmpdot;
     }
   }
@@ -1180,6 +1421,7 @@ int main(int argc, char **argv)
   readBlockSummary(opts->blocksFileName, opts->geneName, opts->goTermFile);
   endPhase();
 
+
   vector< vector<float> > phenvec(numStrains);
 
   beginPhase("reading phenotype file");
@@ -1222,6 +1464,7 @@ int main(int argc, char **argv)
   beginPhase("computing ANOVA p-values");
   for (unsigned blkIdx = 0; blkIdx < blocks.size(); blkIdx++) {
     BlockSummary * pBlock = blocks[blkIdx];
+    //cout << "Block: " << pBlock->chrName << "\t" << pBlock->blockIdx << endl;
     if (pBlock->isIgnored) {
       if (traceFStat) {
 	cout << "Block: " << pBlock->chrName << "\t" << pBlock->blockIdx << "\tINGORED" << endl;
@@ -1261,13 +1504,12 @@ int main(int argc, char **argv)
   }
   endPhase();
 
+  // If haploBlocks flag is set, generate a blocks-oriented results file instead a gene-oriented file.
   // This is a bit of a hack.  If geneName is provided on command line, this generates a block-oriented
   // results file, in the format of nhaplomap.pl, for display when someone clicks on a gene in the
   // gene-oriented html (or if * was specified for gene name)
   // Otherwise, it generates the gene-oriented html.
-  // This program can no longer do the full block-oriented html, but that's easy to put back (or put
-  // under control of yet another flag, if we want to have both).
-  if (opts->geneName) {
+  if (opts->geneName || opts->haploBlocks) {
     beginPhase("writing block-oriented results file for gene.");
     if (opts->isCategorical) {
       // Find FStat cutoff
@@ -1281,6 +1523,12 @@ int main(int argc, char **argv)
     else {
       writeBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
     }
+  }
+  else if ( opts->geneBlocks ) {
+	writeGeneBlockSums( opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
+  }
+  else if (opts->geneByBlocks){
+	writeGeneBlockByBlocks( opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
   }
   else {
     beginPhase("writing gene-oriented results file.");

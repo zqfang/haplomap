@@ -10,13 +10,16 @@ CFLAGS=-Wall -ggdb -O2 -m64
 # *** Unfortunately, optimizing phmap with more than -0 seems to trigger
 # a weird bug.
 
-clean:
-	rm *.o bin/eblocks bin/ghmap
+VPATH=include:src
+GSL_PATH=/cluster/u/byoo1/jobs/HBCGM/peltz_code/HBCGM/gsl-2.5/local/lib # CHANGE THIS TO YOUR LOCAL
 
-ColumnReader.o:    include/ColumnReader.h  src/ColumnReader.cpp
+clean:    
+	rm *.o eblocks ghmap
+
+ColumnReader.o:    ColumnReader.h  ColumnReader.cpp
 	g++ $(CFLAGS) src/ColumnReader.cpp -c
 
-haploLib.o:     src/haploLib.cpp include/ColumnReader.h include/dynum.h include/util.h
+haploLib.o:     haploLib.cpp ColumnReader.h dynum.h util.h
 	g++ $(CFLAGS) src/haploLib.cpp -c
 
 # current
@@ -37,7 +40,7 @@ quantTraitMap.o:	quantTraitMap.cpp include/haploLib.h include/ColumnReader.h inc
 
 
 ghmap:	quantTraitMap.o ColumnReader.o haploLib.o
-	g++ $(CFLAGS) quantTraitMap.o ColumnReader.o haploLib.o -l stdc++ -L/home/fangzq/program/gsl/lib -l gsl -l gslcblas -o bin/ghmap
+	g+ $(CFLAGS) quantTraitMap.o ColumnReader.o haploLib.o -l stdc++ -L$(GSL_PATH) -l gsl -l gslcblas -o ghmap
 
 # geneNames.o:	geneNames.cpp include/ColumnReader.h include/util.h
 # 	g++ $(CFLAGS) geneNames.cpp -c

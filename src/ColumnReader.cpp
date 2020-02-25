@@ -4,7 +4,7 @@
 
 // General-purpose function to read a file consisting of single-character-delimited columns.
 
-#include "ColumnReader.h"
+#include "../include/ColumnReader.h"
 
 ColumnReader::ColumnReader(const char * fname, char *delimiters) {
   _in.open(fname);
