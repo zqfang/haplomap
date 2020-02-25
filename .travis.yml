@@ -15,7 +15,7 @@ before_script:
   - wget ftp://ftp.gnu.org/gnu/gsl/gsl-2.6.tar.gz
   - tar -xvzf gsl-2.6.tar.gz 
   - cd gsl-2.6
-  - sudo ./configure --prefix=${TRAVIS_BUILD_DIR}/gsl
+  - ./configure --prefix=${TRAVIS_BUILD_DIR}/gsl
   - make && make install
   
 script:
