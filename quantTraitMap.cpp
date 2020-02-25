@@ -838,7 +838,7 @@ void writeGeneBlockSums( bool isCategorical, char * outputFileName, char *datase
 	GenesComparator gcomp(isCategorical);
 	vector<GeneSummary *> genes;
 	genes.reserve(geneTable.size());
-	transform(geneTable.begin(), geneTable.end(), back_inserter(genes), select2nd<hash_map<string, GeneSummary *>::value_type>());
+	transform(geneTable.begin(), geneTable.end(), back_inserter(genes), select2nd<unordered_map<string, GeneSummary *>::value_type>());
 	sort(genes.begin(), genes.end(), gcomp);
 	showGeneBlockSums(blockout, isCategorical,  blocks, pvalueCutoff, strOrderVec, genes);
 } 

@@ -2295,16 +2295,16 @@ int writeChrBlockSummary(ofstream &os, size_t blkIdx, int minBlockSNPs)
 int acquireLock() {
   int result;
   //*** Disable locking
-  return 0;
-  while (result = open("output.lck", O_WRONLY | O_CREAT | O_EXCL, S_IRUSR|S_IWUSR) < 0 && errno==EEXIST) {
-    sleep(1);
-  }
-  if (result<0) { //oh noes
-    cerr << "error in acquiring file lock to write output" << endl;
-    perror("");
-    exit(1);
-  }
-  return result;
+   return 0;
+  // while (result = open("output.lck", O_WRONLY | O_CREAT | O_EXCL, S_IRUSR|S_IWUSR) < 0 && errno==EEXIST) {
+  //   sleep(1);
+  // }
+  // if (result<0) { //oh noes
+  //   cerr << "error in acquiring file lock to write output" << endl;
+  //   perror("");
+  //   exit(1);
+  // }
+  // return result;
 }
 
 void releaseLock(int fid) {
