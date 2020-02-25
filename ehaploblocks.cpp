@@ -18,11 +18,11 @@
 // This version of the code changed the block finding significantly.  It finds all maximum-length blocks
 // for 2,3,4,5 haplotypes from a given position, and doesn't worry about scores.
 
-
+#include <iostream>
 
 #include <getopt.h>
 
-#include "haploLib.h"
+#include "include/haploLib.h"
 
 #include <cstring>
 
@@ -30,6 +30,8 @@
 #include <fcntl.h>
 #include <cerrno>
 #include <cstdio>
+
+using namespace std;
 
 // For setting initial datastructure sizes
 const int approxNumSNPs = 8000000;
@@ -300,24 +302,6 @@ PatternSet patternUniqueTable;
  * Functions and Methods				  	 *
  *****************************************************************/
 
-void showSNPVec(vector<SNPInfo *>& snpv) {
-  // print the results
-  cout << "Total number of SNPs = " << snpVec.size() << endl;
-  for (unsigned i = 0; i < snpVec.size(); i++) {
-    cout << *snpv[i] << endl;
-  }
-}
-
-void showBlock(int blockstart, int blocksize) {
-  vector<SNPInfo *>::iterator blockBeginIt = snpVec.begin()+blockstart;
-  vector<SNPInfo *>::iterator blockEndIt = blockBeginIt+blocksize;
-  
-  for(vector<SNPInfo *>::iterator snpIt = blockBeginIt; snpIt != blockEndIt; snpIt++){
-    showPattern((*snpIt)->pattern);
-    cout << endl;
-  }
-}
-
 // print a SNPInfo
 ostream &operator<<(ostream &os, const SNPInfo &s) { 
   os << s.name << ", chromosome = " << chromosomes.eltOf(s.chrIdx)
@@ -403,7 +387,7 @@ void readPerlegenSNPvsmgene(const char *fname)
     // Insert a blank SNPEntry in the table with snpName
     pair<hash_map<string, SNPInfo *>::iterator, bool> snpLookup =
       snpMap.insert(pair<string, SNPInfo *>(snpName, pSNPInfo));
-    
+ 
     // The file has multiple entries when there are multiple genes.  Just insert
     // the first, and don't check for duplicates.
     // if (!snpLookup.second) {
@@ -509,7 +493,6 @@ void readAlleleInfoCompact(char *fname)
   while ((numtoks = rdr.getLine()) >= 0) {
 
     string snpName = rdr.getToken(0);
-
     // HACK:  if snp name ends with "_incon", remove that suffix before
     // looking it up in the gene name mapping.  This was Ming's way of annotating
     // SNPs that were inconsistent between the Sanger and Perlegen SNPs.
@@ -524,7 +507,7 @@ void readAlleleInfoCompact(char *fname)
     int chrIdx = chromosomes.addElementIfNew(chr);
     int pos = atoi(rdr.getToken(2).c_str());
     string alleleStr = rdr.getToken(3);
-
+    
     if (totalStrains < 0) {
       totalStrains = alleleStr.size();
     }
@@ -564,6 +547,7 @@ void readAlleleInfoCompact(char *fname)
 	char alleleChr = alleleStr[aStrIdx];
 	pSNPInfo->setAllele(strIdx, alleleChr);      
       }
+     //cout << pSNPInfo->alleles << "\t" << snpName << endl;
     }
   }
 }
@@ -591,9 +575,9 @@ void readSNPGeneNames(char *fname)
     // rest of line is alternating gene names/codons
     
     for (vector<string>:: iterator rit = rdr.begin()+1; rit != rdr.end(); rit+=2) {
-      // Store "<->" in the map even if there is already something there.
+      // Store "<" in the map even if there is already something there.
       if(pSNPInfo->geneCodonMap.find(*rit)==pSNPInfo->geneCodonMap.end()
-	 || (*(rit+1)).find("<->")!=string::npos) {
+	 || (*(rit+1)).find("<")!=string::npos) {
 	pSNPInfo->geneCodonMap[*rit] = *(rit+1);
       }
     }
@@ -613,7 +597,6 @@ bool goodSNP(char * alleles, SNPInfo * SNPInfo)
   
   for (int i = 0; i < numStrains; i++) {
     char allele = alleles[i];
-
     if (allele == 'D') {
       // cout << "  Eliminating SNP because of gap:\t" << snpInfo << endl;
       return false;		// has a gap, exclude it.
@@ -621,7 +604,6 @@ bool goodSNP(char * alleles, SNPInfo * SNPInfo)
     if ('?' != allele) {
       // allele is defined.
       numDefined++;
-
       if ('?' == firstAllele) {
 	// allele is first defined one.
 	firstAllele = allele;
@@ -634,7 +616,7 @@ bool goodSNP(char * alleles, SNPInfo * SNPInfo)
 	  secondAllele = allele;
 	}
 	else if (allele != secondAllele) {
-	  // cout << "Eliminating SNP because more than two alleles:\t" << snpInfo << endl;
+	   //cout << "Eliminating SNP because more than two alleles:\t" << snpInfo << endl;
 	  return false;
 	}
 	// else allele defined, firstAllele & secondAllele defined, allele == secondAllele
@@ -809,7 +791,6 @@ void filterAndSortSNPs()
   // FIXME: delete snpInfo's as we go through this?  
   for (hash_map<string, SNPInfo *>::iterator it = snpMap.begin(); it != snpMap.end(); it++) {
     SNPInfo * pSNPInfo = (*it).second;
-
     if (goodSNP(pSNPInfo->alleles, pSNPInfo)) {
       // Initialize pattern (had to wait until all alleles were read)
       bool qMarks = allelesToPattern(pSNPInfo->alleles, pSNPInfo->pattern);
@@ -821,7 +802,6 @@ void filterAndSortSNPs()
 	pSNPInfo->pattern = *(p.first);
       }
       pSNPInfo->frozen = true;
-
       snpVec.push_back(pSNPInfo);
       goodSNPCount++;
     }
@@ -1049,7 +1029,6 @@ int combinePatternNoQs(char *combined, int blockstart, int blocksize, int haploL
     if(firstInClass==-1) {
       //showPattern(combined);
       //cout << "from" << endl;
-      //showBlock(blockstart, blocksize);
       //cout << endl;
       return curClass;
     }
@@ -1158,7 +1137,6 @@ int combinePatterns(char *combined, int blockstart, int blocksize, int haploLimi
   for (int eqclass = 0; eqclass < haploLimit; eqclass++) {
     int firstStrainInEC = -1;
     memset(merge, '?', blocksize);
-
     // FIXME:  This doesn't need to start at beginning.  At least EQCLASS have already been
     // assigned.
     for (vector<int>::iterator stoIt1 = strOrderVec.begin() + eqclass; stoIt1 < stoEnd; stoIt1++) {
@@ -1168,7 +1146,7 @@ int combinePatterns(char *combined, int blockstart, int blocksize, int haploLimi
 	// All other strains will be compared with this.
 	if (firstStrainInEC < 0) {
 	  firstStrainInEC = str1;
-	  mergePattern(merge, blockstart, blocksize, str1);
+	  mergePattern(merge, blockstart, blocksize, str1); //READ
 	}
 	else {
 	  // if incompatible, assign EC+1.  Otherwise, leave at current level.
@@ -1188,7 +1166,6 @@ int combinePatterns(char *combined, int blockstart, int blocksize, int haploLimi
 		cout << endl;
 		showPattern(combinedTest);
 		cout << "from" << endl;
-		showBlock(blockstart, blocksize);
 		cout << "Returned " << test << " and limit is " << haploLimit << endl;
 		cout << endl;
 	      }
@@ -1216,7 +1193,6 @@ int combinePatterns(char *combined, int blockstart, int blocksize, int haploLimi
     cout << endl;
     showPattern(combinedTest);
     cout << "from" << endl;
-    showBlock(blockstart, blocksize);
     cout << "Returned " << test << " instead of " << numHaplo << endl;
     cout << "limit is " << haploLimit << endl;
     cout << endl;
@@ -1453,8 +1429,7 @@ void findBestBlockFast(HaploBlock &bestBlock, int blockstart, int haploLimit, in
 
   int prevNumHaplo = 0;		// for monotonicity check
 
-  for (int blocksize = 2;  blocksize <= maxSize; blocksize *= 2) {
-
+  for (int blocksize = 2;  blocksize <= maxSize; blocksize *= 2 ) {
     int numHaplo = combinePatterns(tryBlock.pattern, blockstart, blocksize, haploLimit);
 
     // If coloring were exact, adding more SNPs to block would never reduce number of haplotypes.
@@ -1543,9 +1518,9 @@ bool blockIsTooBig(int blockstart, int blocksize, int chrIdx, int firstLoc)
 // Allocates and returns the haplolock with the right pattern.
 // If it returns true, pHaploBlock is properly filled in with pattern, size, etc.
 // Otherwise, pHaploBlock is not written. 
-bool fmbBinSearch(HaploBlock *pHaploBlock, int blockstart, int minSize, int blocksize, int haploSize, int chrIdx, int firstLoc)
+bool fmbBinSearch(HaploBlock *pHaploBlock, int blockstart, int minSize, int blocksize, int haploSize, int chrIdx, int firstLoc )
 {
-
+  //cout << blockstart << "\t" << minSize << "\t" << blocksize << "\t" << haploSize << "\t" << chrIdx << "\t" << firstLoc << endl;
   if (blocksize < minSize) {
     return false;
   }
@@ -1626,8 +1601,7 @@ HaploBlock * findMaximalBlock(int blockstart, int haploSize, int minSize)
     cout << "findMaximalBlock(" << blockstart << ", " << haploSize << ", " << minSize << ")" << endl;
   }
 
-  int maxSize = snpVec.size() - blockstart - 1;
-
+  int maxSize = snpVec.size() - blockstart;
   if (maxSize < minSize) {
     return NULL;
   }
@@ -1642,11 +1616,9 @@ HaploBlock * findMaximalBlock(int blockstart, int haploSize, int minSize)
 
   char * pattern = (char *) malloc(numStrains);
   memset(pattern, '?', numStrains);
-
   // Try progressively larger blocks until blocksize is definitely too big.
 
-  for (blocksize = minSize;  blocksize <= maxSize; blocksize *= 2) {
-
+    for (blocksize = minSize;  blocksize <= maxSize; blocksize *= 2 ) {
     if (traceFBB) {
       cout << "  Trying block size " << blocksize << endl;
     }
@@ -1654,9 +1626,7 @@ HaploBlock * findMaximalBlock(int blockstart, int haploSize, int minSize)
     if (blockIsTooBig(blockstart, blocksize, chrIdx, firstLoc)) {
       break;
     }
-
     int numHaplo = combinePatterns(pattern, blockstart, blocksize, haploSize);
-
     // If coloring were exact, adding more SNPs to block would never reduce number of haplotypes.
     // However, coloring is approximate, and this algorithm can produce seriously suboptimal results
     // if the assumed monotonicity does not hold.  So this generates a warning.
@@ -1667,7 +1637,6 @@ HaploBlock * findMaximalBlock(int blockstart, int haploSize, int minSize)
       cout << pattern << endl;
       cout << "Prev haplotypes: " << prevNumHaplo << ", cur haplotypes: " << numHaplo << endl;
     }
-    prevNumHaplo = numHaplo;
 
     if (0 == numHaplo) {
       if (traceFBB) {
@@ -1675,8 +1644,10 @@ HaploBlock * findMaximalBlock(int blockstart, int haploSize, int minSize)
       }
       break;
     }
+    prevNumHaplo = numHaplo;
   }
   free(pattern);
+
 
   // Loop only exits if blocksize is too big, so it's too big when we get here.
   // Make sure it won't go past end of SNPs.
@@ -1694,8 +1665,15 @@ HaploBlock * findMaximalBlock(int blockstart, int haploSize, int minSize)
   HaploBlock *pHaploBlock = new HaploBlock();
   pHaploBlock->start = 0;
   pHaploBlock->size = 0;
+  int testBlock;
+  if (blocksize == maxSize){ 
+	testBlock = blocksize;
+  }
+  else {
+	testBlock = blocksize - 1;
+  }
 
-  if (!fmbBinSearch(pHaploBlock, blockstart, minSize, blocksize-1, haploSize, chrIdx, firstLoc)) {
+  if (!fmbBinSearch(pHaploBlock, blockstart, minSize, testBlock, haploSize, chrIdx, firstLoc)) {
     // There is no block with the right number of haplotypes.
     delete pHaploBlock;
     pHaploBlock = NULL;
@@ -1705,7 +1683,10 @@ HaploBlock * findMaximalBlock(int blockstart, int haploSize, int minSize)
       cout << "Maximal block: " << *pHaploBlock << endl;
     }
   }
-
+  //if(pHaploBlock != NULL){
+  //showPattern(pHaploBlock->pattern);
+  //cout << "\t" << pHaploBlock->start << "\t" << pHaploBlock->size  <<  endl;
+  //}
   return pHaploBlock;
 }
 
@@ -1749,10 +1730,10 @@ void findCompoundBlocks(int haploLimit)
 
 // For each haplotype size, find the maximal length blocks.
 // *** Add trace functions.
-void findAllMaximalBlocks(int haploLimit)
+void findAllMaximalBlocks(int haploLimit, int minSNPBlocks )
 {
   // Loop over haplotype numbers
-  int minSize = 1;
+  int minSize = 1; //minSNPBlocks;
   for (int haploSize = 2; haploSize <= haploLimit; haploSize++) {
     HaploBlock *prevSavedBlock = NULL;
 
@@ -1762,18 +1743,18 @@ void findAllMaximalBlocks(int haploLimit)
 	// Don't bother searching a block unless it will extend beyond previous saved block.
 	minSize = prevSavedBlock->size - (blockstart - prevSavedBlock->start) + 1;
 	if (minSize < 1) {
-	  minSize = 1;
+	//if (minSize < minSNPBlocks) {
+	  minSize = 1; //minSNPBlocks;
 	}
       }
       else {
-	minSize = 1;
+	minSize = 1; //minSNPBlocks;
       }
-      
       HaploBlock *pHaploBlock = findMaximalBlock(blockstart, haploSize, minSize);
       
       if (NULL == pHaploBlock) {
       }
-      else if (prevSavedBlock!=NULL && pHaploBlock->size <= prevSavedBlock->size - (blockstart - prevSavedBlock->start)) {
+      else if (prevSavedBlock!=NULL && pHaploBlock->size <= prevSavedBlock->size - (blockstart - prevSavedBlock->start)) { // don't let the new block to be contained in the previous block, previous end - current start is less than the size of the current block (size of the current block = current start - current end), assumes previous start is always before current start - BY
 	if (traceChooseBlocks) {
 	  cout << "Block " << *pHaploBlock << "  is subsumed by previous saved block " << *prevSavedBlock << endl;
 	}
@@ -2210,13 +2191,15 @@ void writeBlockGeneNames(ofstream &os, HaploBlock *pHB)
     map<string, string> &geneCodonMap = pSNPInfo->geneCodonMap;
     //ofstream debug_log;
     //debug_log.open("debug.log",ios::app);
+
     for (map<string, string>::iterator gcit = geneCodonMap.begin(); gcit != geneCodonMap.end(); gcit++) {
+		//cout << (*gcit).first << "\t" << gcit->first << "\t" << (*gcit).second << "\t" << pSNPInfo->position << endl;
       if(geneIsCodingMap[(*gcit).first]=="") {
         //debug_log << "The first time: " << gcit->first << " " << gcit->second << endl;	
 	    if((*gcit).second.find("NON_SYNONYMOUS_CODING")!=string::npos) {
 	      geneIsCodingMap[(*gcit).first] = "1";
 	    }
-	    else if ((*gcit).second.find("<->")!=string::npos ||(*gcit).second.find("SPLICE_SITE")!=string::npos){
+	    else if ((*gcit).second.find("<")!=string::npos ||(*gcit).second.find("SPLICE_SITE")!=string::npos){
 	      geneIsCodingMap[(*gcit).first] = (*gcit).second;
 	    }
 	    else {
@@ -2229,7 +2212,7 @@ void writeBlockGeneNames(ofstream &os, HaploBlock *pHB)
 	      if(geneIsCodingMap[(*gcit).first]=="0") geneIsCodingMap[(*gcit).first] = "1";
 	      //continue;
         }  
-        if ((*gcit).second.find("<->")!=string::npos || (*gcit).second.find("SPLICE_SITE")!=string::npos) {
+        if ((*gcit).second.find("<")!=string::npos || (*gcit).second.find("SPLICE_SITE")!=string::npos) {
           //debug_log << "splice site in" << gcit->first << endl;
 	      if(geneIsCodingMap[(*gcit).first]=="0" || geneIsCodingMap[(*gcit).first]=="1") {
 	        geneIsCodingMap[(*gcit).first] = (*gcit).second;
@@ -2268,12 +2251,21 @@ int writeChrBlockSummary(ofstream &os, size_t blkIdx, int minBlockSNPs)
 
       SNPInfo * pFirstSNP = snpVec[pHB->start];
       SNPInfo * pLastSNP = snpVec[pHB->start + pHB->size -1];
-      
+
+      int qs = 0;
+      for(int i = pHB->start; i < (pHB->start + pHB->size); i++ )
+      {
+          if (snpVec[i]->qMarks){ 
+               qs = 1;
+               break;
+          }
+      }
       os << chrName << "\t" << blkIdx << "\t" << pHB->start << "\t"
 	 << pHB->size << "\t" << pFirstSNP->position << "\t"
 	 << pLastSNP->position << "\t";
       showPattern(os, pHB->pattern);
       writeBlockGeneNames(os, pHB);
+      //os << "\t" << qs;
       os << endl;
     }
   }
@@ -2283,24 +2275,24 @@ int writeChrBlockSummary(ofstream &os, size_t blkIdx, int minBlockSNPs)
 
 int acquireLock() {
   int result;
-  // *** Disable locking
+  //*** Disable locking
   return 0;
-  while(result = open("output.lck", O_WRONLY | O_CREAT | O_EXCL, S_IRUSR|S_IWUSR) < 0 
-	&& errno==EEXIST) {
-    sleep(1);
-  }
-  if (result<0) { //oh noes
-    cerr << "error in acquiring file lock to write output" << endl;
-    perror("");
-    exit(1);
-  }
-  return result;
+  // while(result = open("output.lck", O_WRONLY | O_CREAT | O_EXCL, S_IRUSR|S_IWUSR) < 0 
+  // 	&& errno==EEXIST) {
+  //   sleep(1);
+  // }
+  // if (result < 0) { //oh noes
+  //   cerr << "error in acquiring file lock to write output" << endl;
+  //   perror("");
+  //   exit(1);
+  // }
+  // return result;
 }
 
 void releaseLock(int fid) {
-  //cout << close(fid) << endl;
+  // close(fid);
   return;
-  unlink("output.lck");
+  //  unlink("output.lck");
 }
 
 void writeBlockSummary(char *fileName, int minBlockSNPs)
@@ -2547,61 +2539,58 @@ Options *parseOptions(int argc, char** argv)
 // Main for nhaploblocks
 int main(int argc, char** argv)
 {
-
   Options *opts = parseOptions(argc, argv);
  
-  beginPhase();
+  beginPhase("reading strains");
   readStrains(opts->strainsFileName);
-  endPhase("reading strains", "?");
+  endPhase();
   numStrains = relevantStrains.size();
-
   // Can't do this earlier because numStrains is used in constructor.
   snpVec.reserve(approxNumSNPs);
 
   // FIXME: Add option for "compact SNP file"
-  beginPhase();
+  beginPhase("reading compact alleles file");
   readAlleleInfoCompact(opts->allelesFileName);
-  endPhase("reading compact alleles file", "?");
+  endPhase();
   string chr = chromosomes.eltOf(0);
   // if no gene names file specified, don't read it, omit gene names.
   if (opts->genesFileName) {
-    beginPhase();
+    beginPhase("reading SNP gene names file");
     // FIXME: make this an option.
     // readAlleleInfoCompact(opts->geneNamesFile);
     readSNPGeneNames(opts->genesFileName);
-    endPhase("reading SNP gene names file", chr);
+    endPhase();
   }
 
   minDefined = (numStrains+1)/2; // half of strains must be defined (rounded up).
 
-  beginPhase();
+  beginPhase("filtering and sorting SNPs");
   filterAndSortSNPs();
-  endPhase("filtering and sorting SNPs", chr);
-  
-  if (opts->non_overlapping) {
-    // Old method (non-overlapping blocks).
-    beginPhase();
+  endPhase();
+
+if (opts->non_overlapping) {
+    beginPhase("finding compound blocks");
     findCompoundBlocks(haploLimit);
-    endPhase("finding compound blocks", chr);
-    
-    beginPhase();
+    endPhase();
+
+    beginPhase("choosing non-overlapping blocks");
     chooseBlocks();
-    endPhase("choosing non-overlapping blocks", chr);
+    endPhase();
   }
-  else {
+  else {  
     // Current method (overlapping blocks ok).
-    beginPhase();
-    findAllMaximalBlocks(haploLimit);  
-    endPhase("finding maximal blocks", chr);
-  }
+    beginPhase("finding maximal blocks");
+    findAllMaximalBlocks(haploLimit, opts->minBlockSNPs);  
+    endPhase();
+	}
 
   // showBlocksSNPs(chosenHaploBlocks);
-  beginPhase();
+  beginPhase("writing block summary");
   writeBlockSummary(opts->blocksFileName, opts->minBlockSNPs);
-  endPhase("writing block summary", chr);
-  beginPhase();
+  endPhase();
+  beginPhase("writing block SNPs");
   writeBlockSNPs(opts->blockSNPsFileName, opts->minBlockSNPs);
-  endPhase("writing block SNPs", chr);
+  endPhase();
 
   if (verbose) {
     updateStats();
