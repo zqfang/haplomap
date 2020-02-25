@@ -11,7 +11,15 @@ e.g.
 make && make install
 ```
 
-2. edit `CMakeLists.txt`, set GSL header and lib path, then
+2. edit `CMakeLists.txt`, set GSL header and lib path, 
+
+```cmake
+set(GSL_INCLUDE /path/to/gsl/include)
+set(GSL_LIBS /path/to/gsl/lib)
+```
+
+
+3. build
 ```bash
 mkdir build && cd build
 cmake ..
@@ -24,7 +32,7 @@ Ubuntu 18.04.2 LTS
 * GSL 2.6
 * GCC 7.4.0
 
-## Useage
+## Usage
 e.g.
 ```bash
 # find haplotypes
@@ -42,5 +50,5 @@ ghmap -p ${HOME}/data/compact_gene_expr.txt \
 
 ### Some Questions
 1. If SNPs pattern has 'D' (deletion) in all input strains, drop this SNP 
-2. Strain file: column1 -> name, column2 -> abbrv
+2. Strain file: column1 -> name, column2 -> abbrev
 
