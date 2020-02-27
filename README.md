@@ -43,12 +43,13 @@ eblocks -a ${HOME}/data/SNPS/chr18.txt \
         -o ${HOME}/TMPDATA/test.SNPs.hb.txt
 
 # statistical testing with trait data
-ghmap -p ${HOME}/data/compact_gene_expr.txt \
+ghmap -p ${HOME}/data/test_traits.txt \
       -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
-      -o ${HOME}/TMPDATA/test.final.ouput.txt
+      -o ${HOME}/TMPDATA/test.final.output.txt
 ```
 
 ### Some Questions
-1. If SNPs pattern has 'D' (deletion) in all input strains, drop this SNP 
+1. If a SNP has 'D' (deletion) in any input strains, drop this SNP. 
 2. Strain file: column1 -> name, column2 -> abbrev
+3. Trait file:  column1 -> name, column2 -> value
 

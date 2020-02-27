@@ -12,14 +12,14 @@ install:
 - export CXX="g++-4.8"
 
 before_script:
-  - wget ftp://ftp.gnu.org/gnu/gsl/gsl-2.6.tar.gz
+  - wget http://ftp.wayne.edu/gnu/gsl/gsl-2.6.tar.gz
   - tar -xvzf gsl-2.6.tar.gz 
   - cd gsl-2.6
   - ./configure --prefix=${TRAVIS_BUILD_DIR}/gsl
   - make && make install
   
 script:
-  - LD_LIBRARY_PATH=${TRAVIS_BUILD_DIR}/gsl/lib:$LD_LIBRARY_PATH 
+  - export LD_LIBRARY_PATH=${TRAVIS_BUILD_DIR}/gsl/lib:$LD_LIBRARY_PATH 
   - mkdir -p build && cd build
   - cmake ..
   - make 
