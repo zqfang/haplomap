@@ -2,6 +2,8 @@
 # HBCGM
 haplotype-based computational genetic mapping  
 
+![CXX Projects](https://github.com/zqfang/haplomap/workflows/CXX%20Projects/badge.svg)
+
 ## Installation
 
 1. Install GSL and export the lib path  
