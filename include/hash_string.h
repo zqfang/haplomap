@@ -9,7 +9,7 @@
 // So this is it.
 
 //#include <ext/hash_map>
-
+#include <string>
 namespace __gnu_cxx
 {
 template <>

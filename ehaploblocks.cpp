@@ -900,6 +900,7 @@ void filterAndSortSNPs()
         pSNPInfo->pattern = *(p.first);
       }
       pSNPInfo->frozen = true;
+      //if (!qMarks) // debug here
       snpVec.push_back(pSNPInfo);
       goodSNPCount++;
     }

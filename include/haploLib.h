@@ -47,3 +47,4 @@ void beginPhase();
 void beginPhase(const char *msg);
 void endPhase();
 void endPhase(const char *msg, string chr);
+

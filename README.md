@@ -1,6 +1,6 @@
 
 # HBCGM
-haplotype-based computational genetic mapping
+haplotype-based computational genetic mapping  
 
 ## Installation
 
