@@ -22,7 +22,7 @@ jobs:
     # Runs a single command using the runners shell
     - name: Install gcc, cmake
       run: |
-        apt-get install -qq g++-4.8 cmake
+        sudo apt-get install -qq g++-4.8 cmake
         export CXX="g++-4.8"
 
     # Runs a set of commands using the runners shell
