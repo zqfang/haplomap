@@ -1,7 +1,7 @@
 import os
 ############################# Required ###################################
 # set output directory 
-WORKSPACE = "/data/bases/shared/haplomap/test_20200324"
+WORKSPACE = "/data/bases/shared/haplomap/test_results_20200324"
 workdir: WORKSPACE
 
 # MPD trait ids 
@@ -22,7 +22,7 @@ SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
 ## trait ids
 with open(TRAIT_IDS, 'r') as t:
     IDS = t.read().strip().split()
-    
+
 CHROMOSOMES = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
 # output files
 HBCGM =  expand("MPD_{ids}/chr{chrm}.HBCGM.txt", ids=IDS, chrm=CHROMOSOMES)
@@ -58,8 +58,8 @@ rule eblocks:
         gene_anno = GENE_ANNO,
         strains = "MPD_{ids}/strain.{ids}.txt",
     output: 
-        hb="MPD_{ids}/{chrm}.hblocks.txt",
-        snphb="MPD_{ids}/{chrm}.snp.hblocks.txt"
+        hb = protected("MPD_{ids}/{chrm}.hblocks.txt"),
+        snphb = temp("MPD_{ids}/{chrm}.snp.hblocks.txt")
     params:
         smkdir = SNAKEMAKE_DIR
     log: "logs/MPD_{ids}.{chrm}.eblocks.log"
@@ -74,7 +74,7 @@ rule ghmap:
         hb = "MPD_{ids}/{chrm}.hblocks.txt",
         trait = "MPD_{ids}/trait.{ids}.txt"
     output: 
-         "MPD_{ids}/{chrm}.HBCGM.txt"
+         "MPD_{ids}/{chrm}.results.txt"
     params:
         smkdir = SNAKEMAKE_DIR
     log: "logs/MPD_{ids}.{chrm}.ghmap.log"
