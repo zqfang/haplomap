@@ -1,5 +1,5 @@
 
-name: CXX Projects
+name: Haplomap
 
 # events but only for the dev branch
 on:
@@ -38,12 +38,15 @@ jobs:
         sudo make install
         export LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/gsl/lib:$LD_LIBRARY_PATH 
 
-    - name: Run test 
+    - name: CMake build 
       run: |
         cd ${GITHUB_WORKSPACE}     
         mkdir -p build && cd build
         cmake ..
         make 
-        cd bin
+        
+    - name: Testing
+      run: |
+        cd ${GITHUB_WORKSPACE}/build/bin
         ./eblocks --version
         ./ghmap --version
