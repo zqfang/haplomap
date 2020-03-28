@@ -1,5 +1,8 @@
 build
-bin/*
+gsl
+bin
 *.o
+*.ipynb
 src/*.o
 .vscode
+.snakemake

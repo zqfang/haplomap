@@ -1,6 +1,8 @@
 
 # HBCGM
-haplotype-based computational genetic mapping
+haplotype-based computational genetic mapping  
+
+![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 
 ## Installation
 
@@ -43,12 +45,23 @@ eblocks -a ${HOME}/data/SNPS/chr18.txt \
         -o ${HOME}/TMPDATA/test.SNPs.hb.txt
 
 # statistical testing with trait data
-ghmap -p ${HOME}/data/compact_gene_expr.txt \
+ghmap -p ${HOME}/data/test_traits.txt \
       -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
-      -o ${HOME}/TMPDATA/test.final.ouput.txt
+      -o ${HOME}/TMPDATA/test.final.output.txt
 ```
 
+### Snakemake pipeline  
+1. Prepare MPD trait id file. Each id per row
+2. Edit the required file path in `haplomap.smk`
+3. run
+```shell
+# modify the file path in haplomap and run with 24 cores
+snakemake -s haplomap.smk -p -j 24  
+```
+
+
 ### Some Questions
-1. If SNPs pattern has 'D' (deletion) in all input strains, drop this SNP 
-2. Strain file: column1 -> name, column2 -> abbrev
+1. If a SNP has 'D' (deletion) in any input strains, drop this SNP. 
+2. Strain file: column1 -> abbrev, column2 -> fullname
+3. Trait file:  column1 -> abbrev, column2 -> value
 

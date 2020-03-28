@@ -10,18 +10,19 @@
 using namespace std;
 using namespace __gnu_cxx;
 
-
 // Function object for sorting an array of indices based on another array of values.
 
 // *** Need to make this into a template
 
 template <typename sortType, typename lss>
-struct IndexComparator : public binary_function<sortType, sortType, bool>  {
-  vector <sortType> * _pCmpVec;
+struct IndexComparator : public binary_function<sortType, sortType, bool>
+{
+  vector<sortType> *_pCmpVec;
 
-  IndexComparator(vector<sortType> * pcmpVec) :  _pCmpVec(pcmpVec) { };
+  IndexComparator(vector<sortType> *pcmpVec) : _pCmpVec(pcmpVec){};
 
-  bool operator()(const int &a, const int &b) {
+  bool operator()(const int &a, const int &b)
+  {
     //    cout << "Compare a = " << a << "(" << (*_pCmpVec)[a] << ") vs. ";
     //    cout << "b = " << b << "(" << (*_pCmpVec)[b] << ")" << " -> ";
     // bool result = ((*_pCmpVec)[a] > (*_pCmpVec)[b]);
@@ -30,7 +31,6 @@ struct IndexComparator : public binary_function<sortType, sortType, bool>  {
     return result;
   };
 };
-
 
 // Usage:
 
@@ -47,7 +47,5 @@ struct IndexComparator : public binary_function<sortType, sortType, bool>  {
 
 //   stable_sort(strOrderVec.begin(), strOrderVec.end(), idxCompare);
 
-
 #else
 #endif
-
