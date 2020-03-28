@@ -2,7 +2,7 @@
 # HBCGM
 haplotype-based computational genetic mapping  
 
-![CXX Projects](https://github.com/zqfang/haplomap/workflows/CXX%20Projects/badge.svg)
+![CXX Projects](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 
 ## Installation
 

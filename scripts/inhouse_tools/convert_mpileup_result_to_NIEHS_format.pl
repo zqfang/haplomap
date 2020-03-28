@@ -8,19 +8,17 @@ use Time::Local;
 my $qualCutoffForSamtools = 50;
 my $cutoffForPLscoreForNonHomozygousAlt = 20;
 
-# my @strains = ("B10", "BTBR", "BUB", "CEJ", "DBA1J", "FVB", "KK", "NON", "NUJ", "NZB", "NZW", "RFJ", "RHJ", "RIIIS", "SJL", 
-# 	       "129P2", "129S1", "129S5", "A_J", "AKR", "B_C", "C3H", "C57BL10J", "C57BL6NJ", "C57BRcd", "C57LJ", "C58", 
-# 	       "CBA", "DBA", "ILNJ", "LGJ", "LPJ", "MAMy", "MRL", "NOD", "NZO", "PJ", "PLJ", "SEA", "SMJ", "ST", "SWR");
+my @strains = ("B10", "BTBR", "BUB", "CEJ", "DBA1J", "FVB", "KK", "NON", "NUJ", "NZB", "NZW", "RFJ", "RHJ", "RIIIS", "SJL", 
+	       "129P2", "129S1", "129S5", "A_J", "AKR", "B_C", "C3H", "C57BL10J", "C57BL6NJ", "C57BRcd", "C57LJ", "C58", 
+	       "CBA", "DBA", "ILNJ", "LGJ", "LPJ", "MAMy", "MRL", "NOD", "NZO", "PJ", "PLJ", "SEA", "SMJ", "ST", "SWR");
  ### strains included in the VCF file in the exact order
 
-my @strains = ("129P2", "129S1", "129S5", "AKR", "A_J", "B10", "BPL", "BPN", "BTBR", "BUB", "B_C", "C3H", "C57BL10J", "C57BL6NJ", "C57BRcd", "C57LJ", "C58", "CBA", "CEJ", "DBA", "DBA1J", "FVB", "ILNJ", "KK", "LGJ", "LPJ", "MAMy", "NOD", "NON", "NOR", "NUJ", "NZB", "NZO", "NZW", "PJ", "PLJ", "RFJ", "RHJ", "RIIIS",  "SEA", "SJL", "SMJ", "ST", "SWR", "TALLYHO", "RBF");
+# my @strains = ("129P2", "129S1", "129S5", "AKR", "A_J", "B10", "BPL", "BPN", "BTBR", "BUB", "B_C", "C3H", "C57BL10J", "C57BL6NJ", "C57BRcd", "C57LJ", "C58", "CBA", "CEJ", "DBA", "DBA1J", "FVB", "ILNJ", "KK", "LGJ", "LPJ", "MAMy", "NOD", "NON", "NOR", "NUJ", "NZB", "NZO", "NZW", "PJ", "PLJ", "RFJ", "RHJ", "RIIIS",  "SEA", "SJL", "SMJ", "ST", "SWR", "TALLYHO", "RBF");
 
 my $inputChr = "ALL";
 my @chr = ($inputChr);
 # my $inputFile = "/home/mzheng/NGS/combined_results/20180101/samtools1/var.chr".$inputChr.".raw.vcf";
-my $inputFile = "/u07/NGS_Chr/var.chr".$inputChr.".raw.vcf";
 # #my $outputFolder = "/home/mzheng/NGS/combined_results/20180101/";
-my $outputFolder = "/u07/combined_results/20190301/";
 
 if($inputChr eq "ALL")
 {
