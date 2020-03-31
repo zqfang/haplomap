@@ -17,6 +17,7 @@ def strain2trait(trait, strain, ids, outdir):
     
     # save files
     traits = traits[traits.measnumSex.isin(IDS)]
+    traits = traits[traits.strain_abbr.isin(strains['Abbr'])]
     trait_ids = traits.measnumSex.unique()
     if len(trait_ids) != len(np.unique(IDS)):
         sys.exit(f"Error! Some IDs Not Matched! Check file: {ids}")

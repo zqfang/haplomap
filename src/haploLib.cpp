@@ -110,8 +110,8 @@ void readStrains(char *fname)
     }
 
     // FIXME: some unnecessary string copies
-    string name = rdr.getToken(0);
-    string abbrev = rdr.getToken(1);
+    string name = rdr.getToken(1);
+    string abbrev = rdr.getToken(0);
 
     relevantStrains.addElementIfNew(name);
     strainAbbrevs.addElementIfNew(abbrev);

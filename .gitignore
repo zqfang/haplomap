@@ -6,3 +6,4 @@ bin
 src/*.o
 .vscode
 .snakemake
+workflow/.snakemake

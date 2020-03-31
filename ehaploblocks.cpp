@@ -458,7 +458,7 @@ void readPerlegenAlleleInfo(char *fname)
 
     SNPInfo *pSNPInfo = fit->second;
 
-    int strIdx = relevantStrains.hasIndex(strain);
+    int strIdx = strainAbbrevs.hasIndex(strain);
 
     // skip irrelevant strains.
     if (strIdx < 0)
@@ -489,10 +489,10 @@ void writeAlleleInfoCompact(char *fname)
     exit(1);
   }
 
-  // write first line: relevantStrains (all strains, this time).
+  // write first line: strainAbbrevs (all strains, this time).
   for (int i = 0; i < numStrains; i++)
   {
-    cs << relevantStrains.eltOf(i);
+    cs << strainAbbrevs.eltOf(i);
     if (i + 1 < numStrains)
     {
       cs << "\t";
@@ -596,7 +596,8 @@ void readAlleleInfoCompact(char *fname)
       // build up the allele string
       for (int strIdx = 0; strIdx < numStrains; strIdx++)
       {
-        string strain = relevantStrains.eltOf(strIdx);
+        //string strain = relevantStrains.eltOf(strIdx);
+        string strain = strainAbbrevs.eltOf(strIdx);
         // will report error if relevant strain was not in data.
         int aStrIdx = allStrains.indexOf(strain);
         char alleleChr = alleleStr[aStrIdx];
@@ -768,7 +769,7 @@ void readAlleleInfo(char *fname)
 
     string strain = rdr.getToken(2);
 
-    int strIdx = relevantStrains.hasIndex(strain);
+    int strIdx = strainAbbrevs.hasIndex(strain);
 
     // skip irrelevant strains.
     if (strIdx < 0)
@@ -2599,7 +2600,7 @@ int writeChrBlockSummary(ofstream &os, size_t blkIdx, int minBlockSNPs)
 
 int acquireLock()
 {
-  int result;
+  // int result;
   //*** Disable locking
   return 0;
   // while (result = open("output.lck", O_WRONLY | O_CREAT | O_EXCL, S_IRUSR|S_IWUSR) < 0 && errno==EEXIST) {
@@ -2900,7 +2901,7 @@ int main(int argc, char **argv)
   beginPhase("reading strains");
   readStrains(opts->strainsFileName);
   endPhase();
-  numStrains = relevantStrains.size();
+  numStrains = strainAbbrevs.size(); 
   // Can't do this earlier because numStrains is used in constructor.
   snpVec.reserve(approxNumSNPs);
 
@@ -2975,7 +2976,7 @@ int main3(int argc, char **argv)
   readStrains((char *)"all_strains.txt");
   endPhase();
 
-  numStrains = relevantStrains.size();
+  numStrains = strainAbbrevs.size();
 
   // perlegen_b36_snp_vs_mmgene_091208.unl
   beginPhase("reading perlegen_b36_snp_vs_mmgene_091208.unl");
@@ -3015,7 +3016,7 @@ int main4(int argc, char **argv)
   readStrains((char *)"roche_all_strains.txt");
   endPhase();
 
-  numStrains = relevantStrains.size();
+  numStrains = strainAbbrevs.size();
   minDefined = (numStrains + 1) / 2; // half of strains must be defined (rounded up).
 
   beginPhase("reading chr_info_perl.txt");
