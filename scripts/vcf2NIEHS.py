@@ -67,22 +67,21 @@ def vcf2niehs(invcf, outdir, sstrain, chromosome, qual_samtools=50, heterzygote_
 
         ###find the entries for GT & PL
         # GATK
-        if newline[8] == 'GT:AD:DP:GQ:PL':
-            GTind, PLind = 0, 4
-        elif newline[8] == 'GT:AD:DP:GQ:PGT:PID:PL':
-            GTind, PLind = 0, 6
-        # samtools
-        elif newline[8] == "GT:PL:DP:DV:SP:DP4:DPR:GP:GQ":
-            GTind, PLind = 0, 1
-        else:
-            IDS = newline[8].split(":") 
-            GTind, PLind = -1, -1
-            for i in IDS:
-                if i == 'GT': GTind = i
-                if i == "PL": PLind = i
-
-            if (GTind == -1) | (PLind == -1):
-                sys.exit("Error! NOT PL or GT!") 
+        # if newline[8] == 'GT:AD:DP:GQ:PL':
+        #     GTind, PLind = 0, 4
+        # elif newline[8] == 'GT:AD:DP:GQ:PGT:PID:PL':
+        #     GTind, PLind = 0, 6
+        # # samtools
+        # elif newline[8] == "GT:PL:DP:DV:SP:DP4:DPR:GP:GQ":
+        #     GTind, PLind = 0, 1
+        # else:
+        IDS = newline[8].split(":") 
+        GTind, PLind = -1, -1
+        try:
+            GTind = IDS.index('GT')
+            PLind = IDS.index('PL')
+        except ValueError:
+            sys.exit("Error! PL or GT NOT Found!") 
         
         chrom = newline[0]
         pos = newline[1]  
