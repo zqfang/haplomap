@@ -21,16 +21,15 @@ rule bcftoolsCalling:
     input:
         genome = GENOME,
         bam = expand("BAM/{sample}.marked.fixed.BQSR.bam", sample=STRAINS),
-        chroms_region="region.{region}", # chrom region file
+        chroms_region="region.{region}", # chrom region <- "Y:1-91744698"
     output: "VCFs/combined.{region}.raw.vcf"
     params:
         chrom = lambda wildcards, output: output[0].split(":")[0] # <- "Y"
-        region="{region}", # <- "Y:1-91744698"
         bam = " ".join(expand("BAM/{sample}.marked.fixed.BQSR.bam", sample=STRAINS))
     threads: 8
     shell:
         "bcftools mpileup -t DP,AD,ADF,ADR,SP,INFO/AD --threads {threads} " 
-        "-E -Q 0 -p -m3 -F0.25 -d500 -r {params.region} "
+        "-E -Q 0 -p -m3 -F0.25 -d500 -r {wildcards.region} "
         "-Ou -f {input.genome} {params.bam} | "
         "bcftools call --threads {threads} -mv -f GQ,GP -Ov  > {output}"
 

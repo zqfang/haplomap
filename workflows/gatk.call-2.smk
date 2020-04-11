@@ -1,7 +1,7 @@
 import os
 from snakemake.shell import shell
 ############### Globals ########################
-WORKSPACE = "/home/fangzq/20200410"
+WORKSPACE = "/data/bases/fangzq"
 workdir: WORKSPACE
 
 GENOME="/home/fangzq/genome/mouse/GRCm38_68.fa"
@@ -21,21 +21,47 @@ STRAINS = ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10',
         'BPL', 'BPN', 'BTBR', 'BUB', 'B_C', 'C3H', 'C57BL10J',
         'C57BL6NJ', 'C57BRcd', 'C57LJ', 'C58', 'CBA', 'CEJ', 
         'DBA', 'DBA1J', 'FVB', 'ILNJ', 'KK', 'LGJ', 'LPJ', 
-        'MAMy', 'MRL','NOD', 'NON', 'NOR', 'NUJ', 'NZB', 'NZO', 'NZW', 
-        'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF'] + \
-         ['CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB']  # <- wild derived except MRL
+        'MAMy', 'MRL', 'NOD', 'NON', 'NOR', 'NUJ', 'NZB', 'NZO', 'NZW', 
+        'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF'] #+ \
+         #['CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB']  # <- wild derived except MRL
 # OUTPUT
 VCF_VQSR = expand("VCFs/combined.chr{i}.VQSR.vcf.gz", i=CHROMSOME)
 VCF_HFILTER = expand("VCFs/combined.chr{i}.hardfilter.vcf.gz", i=CHROMSOME)
 VCF_HFILTER_PASS = expand("VCFs/combined.chr{i}.hardfilter.pass.vcf.gz", i=CHROMSOME)
 VCF_RAW = expand("VCFs/combined.chr{i}.raw.vcf", i=CHROMSOME)
 GVCF = expand("GVCF/{sample}.raw.g.vcf", sample=STRAINS)
+# SNPs = expand("SNPs/combined.chr{i}.txt", i=CHROMSOME)
+
 
 ############## Rules ##########################
 rule all:
     input: VCF_HFILTER_PASS, #VCF_VQSR
 
 # include: "rules/gatk.getbam.smk"
+
+rule sampleCalling:
+    input:
+        dbSNP = dbSNP,
+        genome = GENOME,
+        genomedict = GENOME.replace(".fa", ".dict"),
+        #bam = "BAM/{sample}.marked.fixed.BQSR.bam",
+        bam = os.path.join(BAM_DIR, "{sample}/output.GATKrealigned.Recal.bam")
+    output: 
+        # save for future use when more strains are added
+        gvcf= protected("GVCF/{sample}.raw.g.vcf"), 
+        gvcfi= protected("GVCF/{sample}.raw.g.vcf.idx") 
+    threads: 8
+    log: "logs/{sample}.haplotypecaller.log"
+    params:
+        java_ops="-Xmx32G -Djava.io.tmpdir=%s"%TMPDIR
+    shell:
+        "gatk --java-options '{params.java_ops}' HaplotypeCaller "
+        "-ERC GVCF "
+        "--native-pair-hmm-threads {threads} "
+        "--dbsnp {input.dbSNP} "
+        "-R {input.genome} "
+        "-I {input.bam} "
+        "-O {output.gvcf} 2> {log} "
 
 ## temp output for combineGVCFs.
 rule chroms: 
@@ -44,64 +70,25 @@ rule chroms:
         for out in output:
             shell("touch %s"%out)
 
-# split into chromosomes to speedup
-rule singleCalling:
-    input:
-        chrom="GVCF/chr{i}.combine.tmp",
-        dbSNP = dbSNP,
-        genome = GENOME,
-        genomedict = GENOME.replace(".fa", ".dict"),
-        #bam = "BAM/{sample}.marked.fixed.BQSR.bam",
-        bam = os.path.join(BAM_DIR, "{sample}/output.GATKrealigned.Recal.bam")
-    output: 
-        # save for future use when more strains are added
-        gvcf= protected("GVCF/{sample}.chr{i}.raw.g.vcf"), 
-        gvcfi= protected("GVCF/{sample}.chr{i}.raw.g.vcf.idx") 
-    #threads: 6
-    log: "logs/{sample}.chr{i}.haplotypecaller.log"
-    params:
-        java_ops="-Xmx32G -Djava.io.tmpdir=%s"%TMPDIR,
-        extra="--native-pair-hmm-threads 6 "
-    shell:
-        "gatk --java-options '{params.java_ops}' HaplotypeCaller "
-        "-ERC GVCF "
-        "--dbsnp {input.dbSNP} "
-        "-L {wildcards.i} "
-        "-R {input.genome} "
-        "-I {input.bam} "
-        "-O {output.gvcf} 2> {log} "
-
-# rule gatherVCFs:
-#     input:
-#         gvcf=expand("GVCF/{sample}.chr{i}.raw.g.vcf", i=CHROMSOME),
-#         gvcfi=expand("GVCF/{sample}.chr{i}.raw.g.vcf", i=CHROMSOME)
-#     output:
-#         gvcf="GVCF/{sample}.raw.g.vcf",
-#         gvcfi="GVCF/{sample}.raw.g.vcf.idx"
-#     log: "logs/{sample}.gatherVCFs.log"
-#     run:
-#        g = " -I ".join(input.gvcf)
-#        shell("gatk GatherVcfs -I {gvcf} -O {output.gvcf}".format(gvcf=g))
-
 # CombinedGVCFs, has to be an interval 
-## parallel computing for joint_calling       
-rule concatGVCFs:
+## parallel computing for joint_calling
+# WARNING: This step used a lot of memory when combineGVCFs.        
+rule combineGVCFs:
     input:
         genome=GENOME,
         chrom="GVCF/chr{i}.combine.tmp",
-        gvcf=["GVCF/%s.chr{i}.raw.g.vcf"%s for s in STRAINS],
-        gvcfi=["GVCF/%s.chr{i}.raw.g.vcf.idx"%s for s in STRAINS]
+        gvcf=expand("GVCF/{sample}.raw.g.vcf", sample=STRAINS),
+        gvcfi=expand("GVCF/{sample}.raw.g.vcf.idx", sample=STRAINS)
     output:
         gvcf=temp("GVCF/combined.chr{i}.g.vcf"),
         gvcfi=temp("GVCF/combined.chr{i}.g.vcf.idx")
     params:
         chrom=CHROMSOME,
-        gvcf=" --variant ".join(["GVCF/%s.chr{i}.raw.g.vcf"%s for s in STRAINS]),
+        gvcf=" --variant ".join(expand("GVCF/{sample}.raw.g.vcf", sample=STRAINS)),
         java_ops="-Xmx32G -Djava.io.tmpdir=%s"%TMPDIR
     log: "logs/chr{i}.combineGVCFs.log"
     shell:
-        "gatk --java-options '{params.java_ops}' "
-        "CombineGVCFs -L {wildcards.i} -R {input.genome} "
+        "gatk --java-options '{params.java_ops}' CombineGVCFs -L {wildcards.i} -R {input.genome} "
         "--variant {params.gvcf} -O {output.gvcf} 2> {log}"
 
 # NOTE：GATK 相比于samtools 更容易找到杂合突变
@@ -111,8 +98,8 @@ rule jointCalling:
         gvcfi="GVCF/combined.chr{i}.g.vcf.idx",
         genome=GENOME
     output: 
-        vcf=protected("VCFs/combined.chr{i}.raw.vcf"),
-        vcfi=protected("VCFs/combined.chr{i}.raw.vcf.idx"),
+        vcf="VCFs/combined.chr{i}.raw.vcf",
+        vcfi="VCFs/combined.chr{i}.raw.vcf.idx",
     params:
         tmpdir=TMPDIR,
         java_ops= "-Xmx32G -Djava.io.tmpdir=%s"%TMPDIR
@@ -228,7 +215,6 @@ rule compressVQSRVCFs:
            tabix -p vcf {output}
         """
 
-
 ################# Hard filering ######################
 rule selectSNPs:
     input: 
@@ -269,7 +255,7 @@ rule selectINDELs:
         vcfi=temp("VCFs/combined.{chrom}.indel.vcf.idx"),
     shell:
         "gatk SelectVariants -select-type INDEL " 
-        "-V {input.vcf} -O {output.vcf} 2>/dev/null "   
+        "-V {input.vcf} -O {output.vcf} 2>/dev/null"   
 
 rule hardFilterINDELs:
     input: 
@@ -298,7 +284,7 @@ rule mergeHardVCFs:
         vcfi=protected("VCFs/combined.{chrom}.hardfilter.vcf.idx")
     shell:
         "gatk MergeVcfs -I {input.snp} -I {input.indel} "
-        "-O {output.vcf} 2>/dev/null "
+        "-O {output.vcf} 2>/dev/null"
 
 rule compressHardVCF:
     input: "VCFs/combined.{chrom}.hardfilter.vcf"
