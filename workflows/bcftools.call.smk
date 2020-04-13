@@ -11,10 +11,16 @@ rule getChromSize:
     input: rule.faidx.output
     output: temp(expand("chr{i}.txt",i=CHROMOSOME))
     params:
-        #strng='{print "chr"$1":1-"$2}'
-        strng='{print $1":1-"$2}'
+        cmd='{print $1":1-"$2}'
     shell:
-        "awk -F'\t' '{params.string}' {input} | while read line;"
+        # snakemake use bash -c mode 
+        # Escape certain characters, such as \t by \\t, $ by \$, and { by {{.
+        # Use triple quotation marks to surround the command line call.
+        # """awk -F"\\t" '{{print $1":1-"$2}}' {input} | while read line;
+        #    do echo -e $line > region.$line done
+        # """
+        # this works too
+        "awk -F'\\t' '{params.cmd}' {input} | while read line; "
         "do echo -e $line > region.$line done"
 
 rule bcftoolsCalling:
@@ -59,4 +65,4 @@ rule bcfcall_filtering:
         vcfi="VCFs/combined.{region}.raw.vcf.tbi"
     output: "VCFs/combined.{region}.filter.vcf.gz"
     shell: 
-        "bcftools filter -Oz -o {ouput} -s LOWQUAL -i'%QUAL>10' {input}"
+        "bcftools filter -Oz -o {ouput} -s LOWQUAL -i'%QUAL>20' {input}"
