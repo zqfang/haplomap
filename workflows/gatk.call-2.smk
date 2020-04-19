@@ -22,8 +22,8 @@ STRAINS = ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10',
         'C57BL6NJ', 'C57BRcd', 'C57LJ', 'C58', 'CBA', 'CEJ', 
         'DBA', 'DBA1J', 'FVB', 'ILNJ', 'KK', 'LGJ', 'LPJ', 
         'MAMy', 'MRL', 'NOD', 'NON', 'NOR', 'NUJ', 'NZB', 'NZO', 'NZW', 
-        'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF'] #+ \
-         #['CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB']  # <- wild derived except MRL
+        'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF'] + \
+        ['CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB']  # <- wild derived except MRL
 # OUTPUT
 VCF_VQSR = expand("VCFs/combined.chr{i}.VQSR.vcf.gz", i=CHROMSOME)
 VCF_HFILTER = expand("VCFs/combined.chr{i}.hardfilter.vcf.gz", i=CHROMSOME)
@@ -35,7 +35,7 @@ GVCF = expand("GVCF/{sample}.raw.g.vcf", sample=STRAINS)
 
 ############## Rules ##########################
 rule all:
-    input: VCF_HFILTER_PASS, #VCF_VQSR
+    input: GVCF,#VCF_HFILTER_PASS, #VCF_VQSR
 
 # include: "rules/gatk.getbam.smk"
 
@@ -50,7 +50,7 @@ rule sampleCalling:
         # save for future use when more strains are added
         gvcf= protected("GVCF/{sample}.raw.g.vcf"), 
         gvcfi= protected("GVCF/{sample}.raw.g.vcf.idx") 
-    threads: 8
+    threads: 4
     log: "logs/{sample}.haplotypecaller.log"
     params:
         java_ops="-Xmx32G -Djava.io.tmpdir=%s"%TMPDIR

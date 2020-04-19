@@ -48,8 +48,10 @@ rule tabix:
 rule bcftools_stats:
     input: 
         genome=GENOME,
-        vcf="VCFs/combined.{region}.raw.vcf"
-    output: "VCFs/combined.{region}.raw.vcf.stats"
+        vcf="VCFs/combined.{region}.raw.vcf",
+        vcfi="VCFs/combined.{region}.raw.vcf.tbi"
+    output: 
+        "VCFs/combined.{region}.raw.vcf.stats"
     shell:
         "bcftools stats -F {input.genome} -s - {input.vcf} > {output}"
 
@@ -63,6 +65,7 @@ rule bcfcall_filtering:
     input: 
         vcf="VCFs/combined.{region}.raw.vcf",
         vcfi="VCFs/combined.{region}.raw.vcf.tbi"
-    output: "VCFs/combined.{region}.filter.vcf.gz"
+    output: 
+        "VCFs/combined.{region}.filter.vcf.gz"
     shell: 
         "bcftools filter -Oz -o {ouput} -s LOWQUAL -i'%QUAL>20' {input}"
