@@ -2,18 +2,19 @@ import os
 from snakemake.shell import shell
 ############################# Required ###################################
 # set output directory 
-WORKSPACE = "/data/bases/shared/haplomap/results_mpd20200324"
+WORKSPACE = "/data/bases/shared/haplomap/results_mpd20200422"
 workdir: WORKSPACE
 
 # MPD trait ids 
-TRAIT_IDS = os.path.join(WORKSPACE, "test_ids.txt")
+#TRAIT_IDS = os.path.join(WORKSPACE, "test_ids.txt")
+TRAIT_IDS = "/data/bases/shared/haplomap/new_test_ids.txt"
 # ghmap input
-TRAIT_DATA =  "/data/bases/shared/haplomap/strainmeans_byGender.csv"
+TRAIT_DATA =  "/data/bases/shared/haplomap/strainmeans_old_byGender.csv"
 
 # eblock input
-STRAIN_ANNO = "/data/bases/shared/haplomap/PELTZ_20190301/Strains_20190301.csv"
-SNPS_DIR = "/data/bases/shared/haplomap/PELTZ_20190301/SNPS"
-GENE_ANNO = "/data/bases/shared/haplomap/PELTZ_20190301/gene_coding.txt"
+STRAIN_ANNO = "/data/bases/shared/haplomap/PELTZ_20180101/Strains_20180101.csv"
+SNPS_DIR = "/data/bases/shared/haplomap/PELTZ_20180101/SNPS"
+GENE_ANNO = "/data/bases/shared/haplomap/PELTZ_20180101/gene_coding.txt"
 
 # VCF input pattern (from samtools or GATK)
 VCFs = "/data/bases/fangzq/VCFs/combined.chr{i}.snp.filter.vcf"
@@ -99,7 +100,7 @@ rule eblocks:
         smkdir = SNAKEMAKE_DIR
     log: "logs/MPD_{ids}.chr{i}.eblocks.log"
     shell:
-        "{params.smkdir}/build/bin/eblocks -a {input.snps} -g {input.gene_anno} "
+        "{params.smkdir}/haplomap/build/bin/eblocks -a {input.snps} -g {input.gene_anno} "
         "-s {input.strains} -p {output.snphb} -o {output.hb} "
         "-v > {log}"
 
@@ -111,10 +112,11 @@ rule ghmap:
     output: "MPD_{ids}/chr{i}.results.txt"
     params:
         smkdir = SNAKEMAKE_DIR,
-        cat = "MPD_{ids}/strain.{ids}.categorical"
+        cat = "MPD_{ids}/trait.{ids}.categorical"
     log: "logs/MPD_{ids}.chr{i}.ghmap.log"
     run:
         categorical = "-c" if os.path.exists(params.cat) else ''
-        cmd = "{params.smkdir}/build/bin/ghmap %s "%categorical +\
-              "-p {input.trait} -b {input.hb} -o {output} -v > {log}"
+        cmd = "{params.smkdir}/haplomap/build/bin/ghmap %s "%categorical +\
+              "-p {input.trait} -b {input.hb} -o {output} " +\
+              "-n MPD_{wildcards.ids} -v > {log}"
         shell(cmd)

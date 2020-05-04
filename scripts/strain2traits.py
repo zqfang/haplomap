@@ -32,11 +32,11 @@ def strain2trait(trait, strain, ids, outdir):
         temp.loc[:,['strain_abbr','strain']].to_csv(os.path.join(outdir,f"MPD_{tid}/strain.{tid}.txt"),
                                                     index=False, header=None, sep="\t")
         # FIXME: if categorical
-        if temp['mean'].unique().shape[0] < temp['strain_abbr'].unique().shape[0]:
+        if len(temp['mean'].unique()) < len(temp['strain_abbr'].unique()) and temp['sd'].isna().sum() == temp.shape[0]:
             print("Cateogorical measure found!")
-            catout = os.path.join(outdir,f"MPD_{tid}/strain.{tid}.categorical")
+            catout = os.path.join(outdir,f"MPD_{tid}/trait.{tid}.categorical")
             os.system(f"touch {catout}")
-            temp['mean'] = temp['mean'].astype(int)
+            temp['mean'] = temp['mean'].astype('category')
             temp.loc[:,['strain_abbr','mean']].to_csv(os.path.join(outdir,f"MPD_{tid}/trait.{tid}.txt"),
                                                       index=False, header=None, sep="\t")
         else:

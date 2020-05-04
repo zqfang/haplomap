@@ -1,9 +1,7 @@
-build
-gsl
-bin
+*build
+*gsl
+*bin
 *.o
 *.ipynb
-src/*.o
-.vscode
-.snakemake
-workflow/.snakemake
+*.vscode
+*.snakemake

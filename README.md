@@ -95,7 +95,7 @@ snakemake -s haplomap.smk -p -j 24
 |0 |GeneName   | Associated Gene     |
 |1 |CodonFlag  | condonChange ? 1:0  |
 |2 |Pattern    | Haplotype pattern   |
-|3 |Score      | isCatergircal ? Fstat : Pvalue |
+|3 |Score      | isCategorical ? Fstat : Pvalue |
 |4 |Effect     | Genetic Effect (Effect Size)   |
 |5 |Chrom      | Chromosome idx      |
 |6 |ChrBeg     | HaploBlock begin idx|

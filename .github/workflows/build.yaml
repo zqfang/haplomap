@@ -32,7 +32,7 @@ jobs:
     - name: Install GSL
       # run: sudo apt-get install libgsl-dev
       run: |
-        cd ${GITHUB_WORKSPACE}
+        cd ${GITHUB_WORKSPACE}/haplomap
         wget http://ftp.wayne.edu/gnu/gsl/gsl-2.6.tar.gz
         tar -xvzf gsl-2.6.tar.gz 
         cd gsl-2.6
@@ -43,7 +43,7 @@ jobs:
 
     - name: CMake build 
       run: |
-        cd ${GITHUB_WORKSPACE}     
+        cd ${GITHUB_WORKSPACE}/haplomap     
         mkdir -p build && cd build
         cmake ..
         make 

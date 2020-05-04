@@ -35,7 +35,7 @@ GVCF = expand("GVCF/{sample}.raw.g.vcf", sample=STRAINS)
 
 ############## Rules ##########################
 rule all:
-    input: GVCF,#VCF_HFILTER_PASS, #VCF_VQSR
+    input: VCF_HFILTER_PASS, #VCF_VQSR
 
 # include: "rules/gatk.getbam.smk"
 
