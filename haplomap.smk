@@ -16,9 +16,6 @@ STRAIN_ANNO = "/data/bases/shared/haplomap/PELTZ_20180101/Strains_20180101.csv"
 SNPS_DIR = "/data/bases/shared/haplomap/PELTZ_20180101/SNPS"
 GENE_ANNO = "/data/bases/shared/haplomap/PELTZ_20180101/gene_coding.txt"
 
-# VCF input pattern (from samtools or GATK)
-VCFs = "/data/bases/fangzq/VCFs/combined.chr{i}.snp.filter.vcf"
-
 ############################################################################
 # snakefile dir
 SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
@@ -34,33 +31,8 @@ HBCGM =  expand("MPD_{ids}/chr{i}.results.txt", ids=IDS, i=CHROMOSOMES)
 HBLOCKS = expand("MPD_{ids}/chr{i}.hblocks.txt", ids=IDS, i=CHROMOSOMES)
 
 rule target:
-    input: HBCGM,#SNPDB
+    input: HBCGM
 
-# rule vcf2strains:
-#     input:  
-#         # vcf = "VCFs/combined.{chrom}.raw.vcf", 
-#         vcf = VCFs
-#     output: 
-#         temp("SNPs/chr{i}.strains.temp")
-#     shell:
-#         # NOTE: '\t' is default delim for cut
-#         "head -n 1000 {input.vcf} | grep '^#CHROM' | "
-#         "cut -f10-  > {output}"  
-    
-# rule vcf2niehs:
-#     input:  
-#         # vcf = "VCFs/combined.chr{i}.raw.vcf", 
-#         vcf = VCFs,
-#         strains = "SNPs/chr{i}.strains.temp"
-#     output: 
-#         protected("SNPs/chr{i}.txt")
-#     params:
-#         outdir= "SNPs",
-#         chrom="{i}",
-#         qual_samtools=50, 
-#         heterzygote_cutoff = 20
-#     script:
-#         "scripts/vcf2NIEHS.py"
 
 # rule pheno:
 #     input: TRAIT_DATA

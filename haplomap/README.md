@@ -1,14 +1,32 @@
 
-# HBCGM
+# haplomap
 Haplotype-based computational genetic mapping  
 
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 
-
 ## Installation
 
-See detail in ``haplomap`` subfolder: [Install](haplomap/README.md)
+1. Install GSL and export the lib path  
+e.g.
+```bash
+./configure --prefix=${HOME}/program/gsl
+make && make install
+```
 
+2. edit `CMakeLists.txt`, set GSL header and lib path, 
+
+```cmake
+set(GSL_INCLUDE /path/to/gsl/include)
+set(GSL_LIBS /path/to/gsl/lib)
+```
+
+
+3. build
+```bash
+mkdir build && cd build
+cmake ..
+make
+```
 
 ## Dependency 
 
@@ -16,41 +34,20 @@ Ubuntu 18.04.2 LTS
 * GSL 2.6
 * GCC 7.4.0
 
+## Usage
+e.g.
+```bash
+# find haplotypes
+eblocks -a ${HOME}/data/SNPS/chr18.txt \
+        -g ${HOME}/data/gene_coding.txt \
+        -s ${HOME}/TMPDATA/test_strains.txt \
+        -p ${HOME}/TMPDATA/test.haploblocks.txt \
+        -o ${HOME}/TMPDATA/test.SNPs.hb.txt
 
-### Usage  
-#### 1. Prepare MPD trait id file. Each id per row. e.g.
-```
-1501-f
-26720-m
-26720-f
-...
-```
-
-#### 2. Edit the required file path in `haplomap.smk`, including
-
-```python
-# working directory
-WORKSPACE = "/data/bases/fangzq/20200429"
-
-# MPD trait id file
-TRAIT_IDS = "/data/bases/shared/haplomap/new_test_ids.txt"
-
-# MPD trait database 
-TRAIT_DATA =  "/data/bases/shared/haplomap/strainmeans_old_byGender.csv"
-
-# strain metadata for SNP database
-STRAIN_ANNO = "/data/bases/shared/haplomap/PELTZ_20180101/Strains_20180101.csv"
-
-# SNP database
-SNPS_DIR = "/data/bases/shared/haplomap/PELTZ_20180101/SNPS"
-# genen annotation input 
-GENE_ANNO = "/data/bases/shared/haplomap/PELTZ_20180101/gene_coding.txt"
-```
-
-#### 3. run
-```shell
-# modify the file path in haplomap and run with 24 cores
-snakemake -s haplomap.smk -k -p -j 24   
+# statistical testing with trait data
+ghmap -p ${HOME}/data/test_traits.txt \
+      -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
+      -o ${HOME}/TMPDATA/test.final.output.txt
 ```
 
 

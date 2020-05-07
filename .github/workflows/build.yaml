@@ -32,14 +32,14 @@ jobs:
     - name: Install GSL
       # run: sudo apt-get install libgsl-dev
       run: |
-        cd ${GITHUB_WORKSPACE}/haplomap
+        cd ${GITHUB_WORKSPACE}
         wget http://ftp.wayne.edu/gnu/gsl/gsl-2.6.tar.gz
         tar -xvzf gsl-2.6.tar.gz 
         cd gsl-2.6
-        sudo ./configure --prefix=${GITHUB_WORKSPACE}/gsl
+        sudo ./configure --prefix=${GITHUB_WORKSPACE}/haplomap/gsl
         sudo make
         sudo make install
-        export LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/gsl/lib:$LD_LIBRARY_PATH 
+        export LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/haplomap/gsl/lib:$LD_LIBRARY_PATH 
 
     - name: CMake build 
       run: |
@@ -48,7 +48,3 @@ jobs:
         cmake ..
         make 
         
-    # - name: Testing
-    #   run: |
-    #     ${GITHUB_WORKSPACE}/build/bin/eblocks --version
-    #     ${GITHUB_WORKSPACE}/build/bin/ghmap --version

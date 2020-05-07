@@ -31,9 +31,13 @@ VCF_HFILTER_PASS = expand("VCFs/combined.chr{i}.hardfilter.pass.vcf.gz", i=CHROM
 VCF_RAW = expand("VCFs/combined.chr{i}.raw.vcf", i=CHROMSOME)
 GVCF = expand("GVCF/{sample}.raw.g.vcf", sample=STRAINS)
 
+
+# output files
+SNPDB = expand("SNPs/chr{i}.txt", i=CHROMSOME)
+
 ############## Rules ##########################
 rule all:
-    input: VCF_HFILTER_PASS, #VCF_VQSR
+    input: VCF_HFILTER_PASS, SNPDB#VCF_VQSR
 
 # include: "rules/gatk.getbam.smk"
 
@@ -316,3 +320,30 @@ rule extractPASS:
     shell:
         "gatk SelectVariants -R {input.genome} -V {input.vcf} -O {output} "
         " -select 'vc.isNotFiltered()' 2>/dev/null"
+
+
+
+rule vcf2strains:
+    input:  
+        "VCFs/combined.{chrom}.snp.filter.vcf"
+    output: 
+        temp("SNPs/{chrom}.strains.temp")
+    shell:
+        # NOTE: '\t' is default delim for cut
+        "head -n 1000 {input} | grep '^#CHROM' | "
+        "cut -f10-  > {output}"  
+    
+rule vcf2niehs:
+    input:  
+        # vcf = "VCFs/combined.chr{i}.raw.vcf", 
+        vcf = "VCFs/combined.chr{i}.snp.filter.vcf",
+        strains = "SNPs/chr{i}.strains.temp"
+    output: 
+        protected("SNPs/chr{i}.txt")
+    params:
+        outdir= "SNPs",
+        chrom="{i}",
+        qual_samtools=50, 
+        heterzygote_cutoff = 20
+    script:
+        "../scripts/vcf2NIEHS.py"

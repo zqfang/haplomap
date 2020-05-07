@@ -33,9 +33,12 @@ VCF_RAW = expand("VCFs/combined.chr{i}.raw.vcf", i=CHROMSOME)
 VCF_STATS = expand("VCFs/combined.chr{i}.raw.vcf.stats", i=CHROMSOME)
 GVCF = expand("GVCF/{sample}.raw.g.vcf", sample=STRAINS)
 
+# output files
+SNPDB = expand("SNPs/chr{i}.txt", i=CHROMSOME)
+
 ###########################################################################################
 rule target:
-    input: VCF_STATS, VCF_HFILTER_PASS
+    input: VCF_STATS, SNPDB
 
 # samtools-bcftools-calling
 rule faidx: 
@@ -77,13 +80,13 @@ rule bcftoolsCalling:
     params:
         #bam = " ".join(expand("BAM/{sample}.marked.fixed.BQSR.bam", sample=STRAINS))
         bam=" ".join(expand(os.path.join(BAM_DIR, "{sample}/output.GATKrealigned.Recal.bam"), sample=STRAINS))
-    threads: 8
+    threads: 4
     run:
         with open(input.chroms_region) as reg:
             region = reg.read().strip()
-        cmd = "bcftools mpileup -t DP,AD,ADF,ADR,SP,INFO/AD --threads {threads} "+\ 
-              "-E -Q 0 -p -m3 -F0.25 -d500 -r %s "%region +\
-              "-Ou -f {input.genome} {params.bam} | " +\
+        cmd = "bcftools mpileup --threads {threads} "+\ 
+              "-E -F0.25 -Q0 -p -m3 -d500 -r %s "%region +\
+              "-Ou -f {input.genome} {params.bam} | " +\  
               "bcftools call --threads {threads} -mv -f GQ,GP -Ov  > {output}"
         shell(cmd)
 
@@ -114,6 +117,31 @@ rule bcfcall_filtering:
         vcf="VCFs/combined.{chr}.raw.vcf",
         vcfi="VCFs/combined.{chr}.raw.vcf.tbi"
     output: 
-        "VCFs/combined.chr{i}.hardfilter.pass.vcf.gz"
+        "VCFs/combined.{chr}.hardfilter.pass.vcf"
     shell: 
-        "bcftools filter -Oz -o {ouput} -s LOWQUAL -i'%QUAL>20' {input}"
+        "bcftools filter -Oz -o {output} -s LOWQUAL -i'%QUAL>20' {input}"
+
+rule vcf2strains:
+    input:  
+        "VCFs/combined.{chr}.hardfilter.pass.vcf"
+    output: 
+        temp("SNPs/{chr}.strains.temp")
+    shell:
+        # NOTE: '\t' is default delim for cut
+        "head -n 1000 {input} | grep '^#CHROM' | "
+        "cut -f10-  > {output}"  
+    
+rule vcf2niehs:
+    input:  
+        # vcf = "VCFs/combined.chr{i}.raw.vcf", 
+        vcf = "VCFs/combined.chr{i}.hardfilter.pass.vcf",
+        strains = "SNPs/chr{i}.strains.temp"
+    output: 
+        protected("SNPs/chr{i}.txt")
+    params:
+        outdir= "SNPs",
+        chrom="{i}",
+        qual_samtools=50, 
+        heterzygote_cutoff = 20
+    script:
+        "../scripts/vcf2NIEHS.py"
