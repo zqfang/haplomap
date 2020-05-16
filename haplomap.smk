@@ -1,5 +1,4 @@
-import os
-from snakemake.shell import shell
+import os, glob
 ############################# Required ###################################
 # set output directory 
 WORKSPACE = "/data/bases/shared/haplomap/results_mpd20200422"
@@ -16,6 +15,9 @@ STRAIN_ANNO = "/data/bases/shared/haplomap/PELTZ_20180101/Strains_20180101.csv"
 SNPS_DIR = "/data/bases/shared/haplomap/PELTZ_20180101/SNPS"
 GENE_ANNO = "/data/bases/shared/haplomap/PELTZ_20180101/gene_coding.txt"
 
+# open chromatin regions input
+ATAC_PEAKS = glob.glob("/data/bases/fangzq/MouseEpigenomeAtlas/beds/*.blacklist_removed.broadPeak")
+
 ############################################################################
 # snakefile dir
 SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
@@ -29,9 +31,9 @@ CHROMOSOMES = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
 SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOMES)
 HBCGM =  expand("MPD_{ids}/chr{i}.results.txt", ids=IDS, i=CHROMOSOMES)
 HBLOCKS = expand("MPD_{ids}/chr{i}.hblocks.txt", ids=IDS, i=CHROMOSOMES)
-
+HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.regulatory_region.results.txt", ids=IDS, i=CHROMOSOMES)
 rule target:
-    input: HBCGM
+    input: HBCGM, HBCGM_NONCODING
 
 
 # rule pheno:
@@ -92,3 +94,24 @@ rule ghmap:
               "-p {input.trait} -b {input.hb} -o {output} " +\
               "-n MPD_{wildcards.ids} -v > {log}"
         shell(cmd)
+
+rule open_chrom:
+    input: 
+        ghmap="MPD_{ids}/chr{i}.results.txt",
+        peaks=ATAC_PEAKS,
+    output:
+        "MPD_{ids}/chr{i}.regulatory_region.results.txt",
+    params:
+        peaks=" ".join(ATAC_PEAKS)
+    shell:
+        "sed '1,3d' {input.ghmap} | cut -f6-8 | "
+        "sed -e 's/^/chr/' | sort -k1,1 -k2,2n | "
+        "bedtools intersect -sorted -a stdin -b {params.peaks} -wa -wb > {output}"
+
+# about sort -k field1[,field2]
+# To sort on the first field and then on the second: sort -k1,1 -k2,2
+# The arguments field1 and field2 have the form m.n (m,n > 0) 
+# and can be followed by one or more of the modifiers b, d, f, i, n, g, M and r,
+# which correspond to the sort options. -n: numberic sort
+
+

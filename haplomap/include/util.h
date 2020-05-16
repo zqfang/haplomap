@@ -4,13 +4,11 @@
 
 #ifndef UTIL_H
 #define UTIL_H
-
-using namespace std;
-
-// Random functions that should exist.
 #include <string>
 #include <iostream>
+// Random functions that should exist.
 
+using namespace std;
 inline const int toInt(const std::string& s)
 {
   return std::atoi(s.c_str());
@@ -40,5 +38,3 @@ ostream& operator<<(ostream& os, const vector<T>& v) {
 }
 
 #endif
-
-

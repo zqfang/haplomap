@@ -70,7 +70,7 @@ rule getChromSize:
                 cmd = f"echo -e '{c1[0]}:1-{c1[1]}' > chr{c1[0]}.tmp"
                 shell(cmd)
             
-rule bcftoolsCalling:
+rule bcftools_call:
     input:
         genome = GENOME,
         bam = expand(os.path.join(BAM_DIR, "{sample}/output.GATKrealigned.Recal.bam"), sample=STRAINS),
