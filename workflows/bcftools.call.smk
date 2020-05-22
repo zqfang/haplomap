@@ -10,11 +10,10 @@ dbSNP="/home/fangzq/genome/mouse/mgp.v5.merged.snps_all.dbSNP142.sorted.vcf"
 dbINDEL="/home/fangzq/genome/mouse/mgp.v5.merged.indels.dbSNP142.normed.vcf"
 STRAINS_FILE = "/data/bases/fangzq/strain"
 BAM_DIR = "/data/bases/fangzq/strains"
-TMPDIR = "/home/fangzq/TMPDATA"
 
 #CHROMSOME = [ str(c) for c in range(1,20)] + ["X", "Y", "MT"]
-CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["MT", "X", "Y"]
-
+#CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["X", "Y"]
+CHROMSOME = ['4','Y']
 # with open(STRAINS_FILE, 'r') as s:
 #     STRAINS = s.read().strip().split()
  
@@ -30,15 +29,13 @@ STRAINS = ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10',
 VCF_HFILTER = expand("VCFs/combined.chr{i}.hardfilter.vcf.gz", i=CHROMSOME)
 VCF_HFILTER_PASS = expand("VCFs/combined.chr{i}.hardfilter.pass.vcf.gz", i=CHROMSOME)
 VCF_RAW = expand("VCFs/combined.chr{i}.raw.vcf", i=CHROMSOME)
-VCF_STATS = expand("VCFs/combined.chr{i}.raw.vcf.stats", i=CHROMSOME)
-GVCF = expand("GVCF/{sample}.raw.g.vcf", sample=STRAINS)
+VCF_STATS = expand("VCFs/combined.chr{i}.raw.vcf.gz.stats", i=CHROMSOME)
 
-# output files
 SNPDB = expand("SNPs/chr{i}.txt", i=CHROMSOME)
 
 ###########################################################################################
 rule target:
-    input: VCF_STATS, SNPDB
+    input: VCF_STATS, VCF_HFILTER_PASS,SNPDB
 
 # samtools-bcftools-calling
 rule faidx: 
@@ -80,46 +77,56 @@ rule bcftools_call:
     params:
         #bam = " ".join(expand("BAM/{sample}.marked.fixed.BQSR.bam", sample=STRAINS))
         bam=" ".join(expand(os.path.join(BAM_DIR, "{sample}/output.GATKrealigned.Recal.bam"), sample=STRAINS))
-    threads: 4
     run:
         with open(input.chroms_region) as reg:
             region = reg.read().strip()
-        cmd = "bcftools mpileup --threads {threads} "+\ 
+        cmd = "bcftools mpileup "+\
+              "-a DP,AD,ADF,ADR,SP,INFO/AD "+\ 
               "-E -F0.25 -Q0 -p -m3 -d500 -r %s "%region +\
               "-Ou -f {input.genome} {params.bam} | " +\  
-              "bcftools call --threads {threads} -mv -f GQ,GP -Ov  > {output}"
+              "bcftools call -mv -f GQ,GP -Ov  > {output}"
         shell(cmd)
 
 rule tabix:
     input: "VCFs/combined.{chr}.raw.vcf"
-    output: "VCFs/combined.{chr}.raw.vcf.tbi"
+    output: 
+        temp("VCFs/combined.{chr}.raw.vcf.gz"),
+        temp("VCFs/combined.{chr}.raw.vcf.gz.tbi")
     shell:
-        "tabix -p vcf {input}"
+        """bgzip -f {input} 
+           tabix -p vcf {output[0]}
+        """
 
 rule bcftools_stats:
     input: 
         genome=GENOME,
-        vcf="VCFs/combined.{chr}.raw.vcf",
-        vcfi="VCFs/combined.{chr}.raw.vcf.tbi"
+        vcf="VCFs/combined.{chr}.raw.vcf.gz",
+        vcfi="VCFs/combined.{chr}.raw.vcf.gz.tbi"
     output: 
-        "VCFs/combined.{chr}.raw.vcf.stats"
+        "VCFs/combined.{chr}.raw.vcf.gz.stats"
     shell:
         "bcftools stats -F {input.genome} -s - {input.vcf} > {output}"
 
 rule bcftools_plot:
-    input: "VCFs/combined.{chr}.raw.vcf.stats"
-    output: "VCFs/combined.{chr}.raw.vcf.stats.pdf"
+    input: "VCFs/combined.{chr}.raw.vcf.gz.stats"
+    output: "figures/combined.{chr}.raw.vcf.gz.stats.pdf"
     shell:
-        "plot-vcfstats -p plots {input}"
+        "plot-vcfstats -p figures -T {wildcards.chr} {input}"
 
 rule bcfcall_filtering:
     input: 
-        vcf="VCFs/combined.{chr}.raw.vcf",
-        vcfi="VCFs/combined.{chr}.raw.vcf.tbi"
+        vcf="VCFs/combined.{chr}.raw.vcf.gz",
+        vcfi="VCFs/combined.{chr}.raw.vcf.gz.tbi"
     output: 
-        "VCFs/combined.{chr}.hardfilter.pass.vcf"
+        "VCFs/combined.{chr}.hardfilter.pass.vcf.gz"
     shell: 
         "bcftools filter -Oz -o {output} -s LOWQUAL -i'%QUAL>20' {input}"
+
+rule unbigzip:
+    input: "VCFs/combined.{chr}.hardfilter.pass.vcf.gz"
+    output: temp("VCFs/combined.{chr}.hardfilter.pass.vcf")
+    shell:
+        "bgzip -d {input}"
 
 rule vcf2strains:
     input:  

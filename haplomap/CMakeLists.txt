@@ -19,9 +19,9 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ggdb -O2 -m64")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# add GSL
-set(GSL_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/gsl/include)
-set(GSL_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/gsl/lib)
+# # add GSL
+# set(GSL_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/gsl/include)
+# set(GSL_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/gsl/lib)
 
 # add srcs, headers 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)

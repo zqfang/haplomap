@@ -1,57 +1,28 @@
 
 # haplomap
-Haplotype-based computational genetic mapping  
+Core function for haplotype-based computational genetic mapping  
 
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 
-## Installation
-
-1. Install GSL and export the lib path  
-e.g.
-```bash
-./configure --prefix=${HOME}/program/gsl
-make && make install
-```
-
-2. edit `CMakeLists.txt`, set GSL header and lib path, 
-
-```cmake
-set(GSL_INCLUDE /path/to/gsl/include)
-set(GSL_LIBS /path/to/gsl/lib)
-```
-
-
-3. build
-```bash
-mkdir build && cd build
-cmake ..
-make
-```
-
-## Dependency 
-
-Ubuntu 18.04.2 LTS
-* GSL 2.6
-* GCC 7.4.0
 
 ## Usage
 e.g.
 ```bash
 # find haplotypes
-eblocks -a ${HOME}/data/SNPS/chr18.txt \
-        -g ${HOME}/data/gene_coding.txt \
-        -s ${HOME}/TMPDATA/test_strains.txt \
-        -p ${HOME}/TMPDATA/test.haploblocks.txt \
-        -o ${HOME}/TMPDATA/test.SNPs.hb.txt
+bin/eblocks -a ${HOME}/data/SNPS/chr18.txt \
+            -g ${HOME}/data/gene_coding.txt \
+            -s ${HOME}/TMPDATA/test_strains.txt \
+            -p ${HOME}/TMPDATA/test.haploblocks.txt \
+            -o ${HOME}/TMPDATA/test.SNPs.hb.txt
 
 # statistical testing with trait data
-ghmap -p ${HOME}/data/test_traits.txt \
-      -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
-      -o ${HOME}/TMPDATA/test.final.output.txt
+bin/ghmap -p ${HOME}/data/test_traits.txt \
+          -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
+          -o ${HOME}/TMPDATA/test.final.output.txt
 ```
 
 
-### Input
+## Input
 1. eblocks:
     - Strain file (-s): column1 -> abbrev, column2 -> fullname
     - Allele file (-a): NIEHS compact format
@@ -62,7 +33,7 @@ ghmap -p ${HOME}/data/test_traits.txt \
     - Trait file (-p):  column1 -> abbrev, column2 -> value
     - eblock output (-o): haplotype blocks
 
-### Output
+## Output
 
 1. ebloks:
 

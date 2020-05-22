@@ -74,7 +74,7 @@ rule eblocks:
         smkdir = SNAKEMAKE_DIR
     log: "logs/MPD_{ids}.chr{i}.eblocks.log"
     shell:
-        "{params.smkdir}/haplomap/build/bin/eblocks -a {input.snps} -g {input.gene_anno} "
+        "{params.smkdir}/build/bin/eblocks -a {input.snps} -g {input.gene_anno} "
         "-s {input.strains} -p {output.snphb} -o {output.hb} "
         "-v > {log}"
 
@@ -90,7 +90,7 @@ rule ghmap:
     log: "logs/MPD_{ids}.chr{i}.ghmap.log"
     run:
         categorical = "-c" if os.path.exists(params.cat) else ''
-        cmd = "{params.smkdir}/haplomap/build/bin/ghmap %s "%categorical +\
+        cmd = "{params.smkdir}/build/bin/ghmap %s "%categorical +\
               "-p {input.trait} -b {input.hb} -o {output} " +\
               "-n MPD_{wildcards.ids} -v > {log}"
         shell(cmd)

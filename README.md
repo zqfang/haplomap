@@ -5,20 +5,40 @@ Haplotype-based computational genetic mapping
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 
 
-## Installation
-
-See detail in ``haplomap`` subfolder: [Install](haplomap/README.md)
-
-
 ## Dependency 
 
 Ubuntu 18.04.2 LTS
-* GSL 2.6
-* GCC 7.4.0
+* GSL
+* GCC >= 4.8
+
+## Installation
+
+1. Install GSL and export the lib path  
+e.g.
+```bash
+./configure --prefix=${HOME}/program/gsl
+make && make install
+```
+
+2. edit `CMakeLists.txt`, set GSL header and lib path, 
+
+```cmake
+set(GSL_INCLUDE /path/to/gsl/include)
+set(GSL_LIBS /path/to/gsl/lib)
+```
+
+3. build
+```bash
+mkdir build && cd build
+cmake ..
+make
+```
 
 
-### Usage  
-#### 1. Prepare MPD trait id file. Each id per row. e.g.
+## Usage  
+See more detail in ``haplomap`` subfolder: [Install](haplomap/README.md)
+
+### 1. Prepare MPD trait id file. Each id per row. e.g.
 ```
 1501-f
 26720-m
@@ -26,7 +46,7 @@ Ubuntu 18.04.2 LTS
 ...
 ```
 
-#### 2. Edit the required file path in `haplomap.smk`, including
+### 2. Edit the required file path in `haplomap.smk`, including
 
 ```python
 # working directory
@@ -47,14 +67,14 @@ SNPS_DIR = "/data/bases/shared/haplomap/PELTZ_20180101/SNPS"
 GENE_ANNO = "/data/bases/shared/haplomap/PELTZ_20180101/gene_coding.txt"
 ```
 
-#### 3. run
+### 3. run
 ```shell
 # modify the file path in haplomap and run with 24 cores
 snakemake -s haplomap.smk -k -p -j 24   
 ```
 
 
-### Input
+## Input
 1. eblocks:
     - Strain file (-s): column1 -> abbrev, column2 -> fullname
     - Allele file (-a): NIEHS compact format
@@ -65,7 +85,16 @@ snakemake -s haplomap.smk -k -p -j 24
     - Trait file (-p):  column1 -> abbrev, column2 -> value
     - eblock output (-o): haplotype blocks
 
-### Output
+3. Get SNP database
+  - select snakemake pipelines in workflow folder.
+  - edit the input and output files, then run  
+    e.g.
+    ```shell
+    # modify the file path in haplomap and run with 24 cores
+    snakemake -s workflows/bcftools.call.smk -k -p -j 24   
+    ```
+
+## Output
 
 1. ebloks:
 

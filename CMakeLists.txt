@@ -26,9 +26,13 @@ if (CMAKE_VERSION VERSION_LESS 2.8.11)
             "${gmock_SOURCE_DIR}/include")
 endif()
 
+# add GSL
+set(GSL_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/gsl/include)
+set(GSL_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/gsl/lib)
+
+
 # Now simply link your own targets against gtest, gmock,
 # etc. as appropriate
-
 enable_testing()
 add_subdirectory(test)
 add_subdirectory(haplomap)
