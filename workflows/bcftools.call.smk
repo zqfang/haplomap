@@ -1,29 +1,29 @@
 
 import os
-from snakemake.shell import shell
 ############### Globals ########################
-WORKSPACE = "/data/bases/fangzq/20200429"
-workdir: WORKSPACE
+# configfile: "config.yaml"
+workdir: config['BCFTOOLS']['WORKSPACE']
 
-GENOME="/home/fangzq/genome/mouse/GRCm38_68.fa"
-dbSNP="/home/fangzq/genome/mouse/mgp.v5.merged.snps_all.dbSNP142.sorted.vcf"
-dbINDEL="/home/fangzq/genome/mouse/mgp.v5.merged.indels.dbSNP142.normed.vcf"
-STRAINS_FILE = "/data/bases/fangzq/strain"
-BAM_DIR = "/data/bases/fangzq/strains"
+GENOME = config['GENOME']
+dbSNP = config['dbSNP']
+dbINDEL = config['dbINDEL']
+BAM_DIR = config['BAM_DIR']
+TMPDIR = config['TMPDIR']
+STRAINS = config['STRAINS']
 
 #CHROMSOME = [ str(c) for c in range(1,20)] + ["X", "Y", "MT"]
-#CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["X", "Y"]
-CHROMSOME = ['4','Y']
+CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["X", "Y"]
+
 # with open(STRAINS_FILE, 'r') as s:
 #     STRAINS = s.read().strip().split()
  
-STRAINS = ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10', 
-        'BPL', 'BPN', 'BTBR', 'BUB', 'B_C', 'C3H', 'C57BL10J',
-        'C57BL6NJ', 'C57BRcd', 'C57LJ', 'C58', 'CBA', 'CEJ', 
-        'DBA', 'DBA1J', 'FVB', 'ILNJ', 'KK', 'LGJ', 'LPJ', 
-        'MAMy', 'MRL','NOD', 'NON', 'NOR', 'NUJ', 'NZB', 'NZO', 'NZW', 
-        'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF'] + \
-         ['CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB']  # <- wild derived except MRL
+# STRAINS = ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10', 
+#         'BPL', 'BPN', 'BTBR', 'BUB', 'B_C', 'C3H', 'C57BL10J',
+#         'C57BL6NJ', 'C57BRcd', 'C57LJ', 'C58', 'CBA', 'CEJ', 
+#         'DBA', 'DBA1J', 'FVB', 'ILNJ', 'KK', 'LGJ', 'LPJ', 
+#         'MAMy', 'MRL','NOD', 'NON', 'NOR', 'NUJ', 'NZB', 'NZO', 'NZW', 
+#         'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF'] + \
+#          ['CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB']  # <- wild derived except MRL
 # OUTPUT
 
 VCF_HFILTER = expand("VCFs/combined.chr{i}.hardfilter.vcf.gz", i=CHROMSOME)
@@ -73,7 +73,7 @@ rule bcftools_call:
         bam = expand(os.path.join(BAM_DIR, "{sample}/output.GATKrealigned.Recal.bam"), sample=STRAINS),
         #bam = expand("BAM/{sample}.marked.fixed.BQSR.bam", sample=STRAINS),
         chroms_region="chr{i}.tmp"
-    output: 'VCFs/combined.chr{i}.raw.vcf'
+    output: protected('VCFs/combined.chr{i}.raw.vcf')
     params:
         #bam = " ".join(expand("BAM/{sample}.marked.fixed.BQSR.bam", sample=STRAINS))
         bam=" ".join(expand(os.path.join(BAM_DIR, "{sample}/output.GATKrealigned.Recal.bam"), sample=STRAINS))
@@ -82,7 +82,7 @@ rule bcftools_call:
             region = reg.read().strip()
         cmd = "bcftools mpileup "+\
               "-a DP,AD,ADF,ADR,SP,INFO/AD "+\ 
-              "-E -F0.25 -Q0 -p -m3 -d500 -r %s "%region +\
+              "-E -F0.25 -Q0 -p -m3 -d5000 -r %s "%region +\
               "-Ou -f {input.genome} {params.bam} | " +\  
               "bcftools call -mv -f GQ,GP -Ov  > {output}"
         shell(cmd)
@@ -90,8 +90,8 @@ rule bcftools_call:
 rule tabix:
     input: "VCFs/combined.{chr}.raw.vcf"
     output: 
-        temp("VCFs/combined.{chr}.raw.vcf.gz"),
-        temp("VCFs/combined.{chr}.raw.vcf.gz.tbi")
+        "VCFs/combined.{chr}.raw.vcf.gz",
+        "VCFs/combined.{chr}.raw.vcf.gz.tbi"
     shell:
         """bgzip -f {input} 
            tabix -p vcf {output[0]}
@@ -118,7 +118,7 @@ rule bcfcall_filtering:
         vcf="VCFs/combined.{chr}.raw.vcf.gz",
         vcfi="VCFs/combined.{chr}.raw.vcf.gz.tbi"
     output: 
-        "VCFs/combined.{chr}.hardfilter.pass.vcf.gz"
+        protected("VCFs/combined.{chr}.hardfilter.pass.vcf.gz")
     shell: 
         "bcftools filter -Oz -o {output} -s LOWQUAL -i'%QUAL>20' {input}"
 
@@ -148,7 +148,7 @@ rule vcf2niehs:
     params:
         outdir= "SNPs",
         chrom="{i}",
-        qual_samtools=50, 
-        heterzygote_cutoff = 20
+        qual_samtools=config['BCFTOOLS']['qual'], 
+        heterzygote_cutoff = config['BCFTOOLS']['heterzygote_cutoff']
     script:
         "../scripts/vcf2NIEHS.py"

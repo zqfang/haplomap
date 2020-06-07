@@ -1,18 +1,50 @@
+
+import os,re
+############### Globals ########################
+configfile: "config.yaml"
+workdir: config['WORKSPACE']
+
+GENOME = config['GENOME']
+dbSNP = config['dbSNP']
+dbINDEL = config['dbINDEL']
+BAM_DIR = config['BAM_DIR']
+TMPDIR = config['TMPDIR']
+STRAINS = config['strains']
+
+#CHROMSOME = [ str(c) for c in range(1,20)] + ["X", "Y", "MT"]
+CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["MT", "X", "Y"]
+
+#outputs
+BAMS = expand("BAM/{sample}.marked.fixed.BQSR.bam", sample=STRAINS)
+
+### refined each time running !!!
+# automatic search sample names using regex
+pat = re.compile(r"([A-Z0-9-]+)-([A-Z0-9a-z]{2,4})_[0-9A-Z]{2}_(L[0-9]{3})_([RI][12])_[0-9]{3}.fastq.gz")
+# name, capture, lane, reads = pat.search(f).groups()
+files = glob.glob(os.path.join(config['FASTQS']['PATH'], "*fastq.gz"))
+files = [pat.search(f).groups() for f in files]
+# remove duplicate entries
+files = {s[0]: { x[1]: x[0] for x in files } for s in files}
+
+#################### rules #######################
+rule target:
+    input: BAMS
+
 rule bwa_index:
     input: GENOME,
-    output: ""
+    output: GENOME +".bwt"
     params: 
         prefix="GRCm38"
     log: "logs/bwa.index.log"
     shell:
         "bwa index -a bwtsw -p {params.prefix} {input} 2> {log}"
 
-rule bwa_mem:
+rule bwa_men:
     input:
         r1="fastq/{sample}_R1.fastq.gz",
         r2="fastq/{sample}_R2.fastq.gz",,
-        index="GRCm38"
-    ouput: temp(".sam")
+        index= GENOME + ".bwt"
+    ouput: temp("{sample}.sam")
     threads: 8
     log: "logs/bwa.mem.log"
     params:
@@ -69,6 +101,7 @@ rule genome_dict:
 rule baseRecalibrate:
     input: 
         genome=GENOME,
+        gdict = GENOME + ".dict",
         bam = "BAM/{sample}.marked.fixed.bam",
         bai = "BAM/{sample}.marked.fixed.bai",
     output: 
@@ -82,7 +115,8 @@ rule baseRecalibrate:
 
 rule applyBQSR:
     input: 
-        genome=GENOME
+        genome=GENOME,
+        gdict = GENOME + ".dict",
         bam = "BAM/{sample}.marked.fixed.bam",
         bai = "BAM/{sample}.marked.fixed.bai",
         table = "BAM/{sample}.marked.fixed.table",

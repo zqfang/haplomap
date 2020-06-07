@@ -1,15 +1,15 @@
 import os
 from snakemake.shell import shell
 ############### Globals ########################
-WORKSPACE = "/data/bases/fangzq"
-workdir: WORKSPACE
+#configfile: "config.yaml"
+workdir: config['GATK']['WORKSPACE']
 
-GENOME="/home/fangzq/genome/mouse/GRCm38_68.fa"
-dbSNP="/home/fangzq/genome/mouse/mgp.v5.merged.snps_all.dbSNP142.sorted.vcf"
-dbINDEL="/home/fangzq/genome/mouse/mgp.v5.merged.indels.dbSNP142.normed.vcf"
-STRAINS_FILE = "/data/bases/fangzq/strain"
-BAM_DIR = "/data/bases/fangzq/strains"
-TMPDIR = "/home/fangzq/TMPDATA"
+GENOME = config['GENOME']
+dbSNP = config['dbSNP']
+dbINDEL = config['dbINDEL']
+BAM_DIR = config['BAM_DIR']
+TMPDIR = config['TMPDIR']
+STRAINS = config['STRAINS']
 
 #CHROMSOME = [ str(c) for c in range(1,20)] + ["X", "Y", "MT"]
 CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["MT", "X", "Y"]
@@ -17,13 +17,13 @@ CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,
 # with open(STRAINS_FILE, 'r') as s:
 #     STRAINS = s.read().strip().split()
  
-STRAINS = ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10', 
-        'BPL', 'BPN', 'BTBR', 'BUB', 'B_C', 'C3H', 'C57BL10J',
-        'C57BL6NJ', 'C57BRcd', 'C57LJ', 'C58', 'CBA', 'CEJ', 
-        'DBA', 'DBA1J', 'FVB', 'ILNJ', 'KK', 'LGJ', 'LPJ', 
-        'MAMy', 'MRL', 'NOD', 'NON', 'NOR', 'NUJ', 'NZB', 'NZO', 'NZW', 
-        'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF'] + \
-        ['CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB']  # <- wild derived except MRL
+# STRAINS = ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10', 
+#         'BPL', 'BPN', 'BTBR', 'BUB', 'B_C', 'C3H', 'C57BL10J',
+#         'C57BL6NJ', 'C57BRcd', 'C57LJ', 'C58', 'CBA', 'CEJ', 
+#         'DBA', 'DBA1J', 'FVB', 'ILNJ', 'KK', 'LGJ', 'LPJ', 
+#         'MAMy', 'MRL', 'NOD', 'NON', 'NOR', 'NUJ', 'NZB', 'NZO', 'NZW', 
+#         'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF'] + \
+#         ['CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB']  # <- wild derived except MRL
 # OUTPUT
 VCF_VQSR = expand("VCFs/combined.chr{i}.VQSR.vcf.gz", i=CHROMSOME)
 VCF_HFILTER = expand("VCFs/combined.chr{i}.hardfilter.vcf.gz", i=CHROMSOME)
@@ -323,7 +323,7 @@ rule vcf2niehs:
     params:
         outdir= "SNPs",
         chrom="{i}",
-        qual_samtools=50, 
-        heterzygote_cutoff = 20
+        qual_samtools=config['GATK']['qual'], 
+        heterzygote_cutoff = config['GATK']['heterzygote_cutoff']
     script:
         "../scripts/vcf2NIEHS.py"

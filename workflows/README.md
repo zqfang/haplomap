@@ -1,21 +1,31 @@
 # Snakemake pipeline for SNV calling
 
+## Usage
+### Edit the `config.yaml` file for required files:
+Install `snakemake` first
 
-### Two pipeline developed:
+```shell
+# modify the file path in haplomap and run with 12 cores
+snakemake -s workflows/bcftools.call.smk \
+          --configfile config.yaml \
+          -k -p -j 12   
+```
+
+## Two pipeline developed:
 1. bcftools call 
   - prefer pipeline for inbred mouse and HBCGM input
   - more accuary for inbred mouse
 
 
-2. GATK best practise
+2. GATK best practice
   - designed for human genetics 
-  - have to play with ``VQSR`` or ``hardfilering`` parameters if use non-human data
+  - have to play with ``VQSR`` or ``hardfiltering`` parameters if use non-human data
 
 
 **Caution !**: Both pipeline takes a long time to run.
 
 
-### Why not GATK
+## Why not GATK
 
 One of my colleague who studies mouse genetics, said, 
 

@@ -1,37 +1,34 @@
 import os, glob
 ############################# Required ###################################
 # set output directory 
-WORKSPACE = "/data/bases/shared/haplomap/results_mpd20200422"
-workdir: WORKSPACE
-
+#configfile: "config.yaml"
+workdir: config['HBCGM']['WORKSPACE']
+HBCGM_BIN = config['HBCGM']['BIN']
 # MPD trait ids 
-#TRAIT_IDS = os.path.join(WORKSPACE, "test_ids.txt")
-TRAIT_IDS = "/data/bases/shared/haplomap/new_test_ids.txt"
+TRAIT_IDS = config['HBCGM']['TRAIT_IDS']
 # ghmap input
-TRAIT_DATA =  "/data/bases/shared/haplomap/strainmeans_old_byGender.csv"
-
+TRAIT_DATA =  config['HBCGM']['TRAIT_DATA']
 # eblock input
-STRAIN_ANNO = "/data/bases/shared/haplomap/PELTZ_20180101/Strains_20180101.csv"
-SNPS_DIR = "/data/bases/shared/haplomap/PELTZ_20180101/SNPS"
-GENE_ANNO = "/data/bases/shared/haplomap/PELTZ_20180101/gene_coding.txt"
-
+STRAIN_ANNO = config['HBCGM']['STRAIN_ANNO']
+SNPDB = config['HBCGM']['SNPS_DIR']
+GENE_ANNO = config['HBCGM']['GENE_ANNO']
+GENE_EXPRS = config['HBCGM']['GENE_EXPRS']
 # open chromatin regions input
-ATAC_PEAKS = glob.glob("/data/bases/fangzq/MouseEpigenomeAtlas/beds/*.blacklist_removed.broadPeak")
+ATAC_PEAKS = glob.glob(config['HBCGM']['ATAC_PEAKS'])
 
 ############################################################################
-# snakefile dir
-SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
 
 ## trait ids
 with open(TRAIT_IDS, 'r') as t:
     IDS = t.read().strip().split()
+    assert len(IDS) >= 1
 
 CHROMOSOMES = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
 # output files
-SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOMES)
+# SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOMES)
 HBCGM =  expand("MPD_{ids}/chr{i}.results.txt", ids=IDS, i=CHROMOSOMES)
 HBLOCKS = expand("MPD_{ids}/chr{i}.hblocks.txt", ids=IDS, i=CHROMOSOMES)
-HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.regulatory_region.results.txt", ids=IDS, i=CHROMOSOMES)
+HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.open_region.bed", ids=IDS, i=CHROMOSOMES)
 rule target:
     input: HBCGM, HBCGM_NONCODING
 
@@ -56,41 +53,43 @@ rule strain2trait:
         "MPD_{ids}/strain.{ids}.txt",
         "MPD_{ids}/trait.{ids}.txt",
     params:
-        outdir = WORKSPACE,
+        outdir = config['HBCGM']['WORKSPACE'],
         traitid = "{ids}"
     script:
-        "scripts/strain2traits.py"
+        "../scripts/strain2traits.py"
 
 # find haplotypes
 rule eblocks:
     input: 
-        snps = os.path.join(SNPS_DIR, "chr{i}.txt"),
+        snps = os.path.join(SNPDB, "chr{i}.txt"),
         gene_anno = GENE_ANNO,
         strains = "MPD_{ids}/strain.{ids}.txt",
     output: 
         hb = protected("MPD_{ids}/chr{i}.hblocks.txt"),
         snphb = temp("MPD_{ids}/chr{i}.snp.hblocks.txt")
     params:
-        smkdir = SNAKEMAKE_DIR
+        bin = HBCGM_BIN,
     log: "logs/MPD_{ids}.chr{i}.eblocks.log"
     shell:
-        "{params.smkdir}/build/bin/eblocks -a {input.snps} -g {input.gene_anno} "
-        "-s {input.strains} -p {output.snphb} -o {output.hb} "
-        "-v > {log}"
+        "{params.bin}/eblocks -a {input.snps} -g {input.gene_anno} "
+        "-s {input.strains} -p {output.snphb} "
+        "-o {output.hb} -v > {log}"
 
 # statistical testing with trait data       
 rule ghmap:
     input: 
         hb = "MPD_{ids}/chr{i}.hblocks.txt",
-        trait = "MPD_{ids}/trait.{ids}.txt"
+        trait = "MPD_{ids}/trait.{ids}.txt",
+        gene_exprs = GENE_EXPRS,
     output: "MPD_{ids}/chr{i}.results.txt"
     params:
-        smkdir = SNAKEMAKE_DIR,
+        bin = HBCGM_BIN,
         cat = "MPD_{ids}/trait.{ids}.categorical"
     log: "logs/MPD_{ids}.chr{i}.ghmap.log"
     run:
         categorical = "-c" if os.path.exists(params.cat) else ''
-        cmd = "{params.smkdir}/build/bin/ghmap %s "%categorical +\
+        cmd = "{params.bin}/ghmap %s "%categorical +\
+              "-e {input.gene_exprs} " +\
               "-p {input.trait} -b {input.hb} -o {output} " +\
               "-n MPD_{wildcards.ids} -v > {log}"
         shell(cmd)
@@ -100,12 +99,14 @@ rule open_chrom:
         ghmap="MPD_{ids}/chr{i}.results.txt",
         peaks=ATAC_PEAKS,
     output:
-        "MPD_{ids}/chr{i}.regulatory_region.results.txt",
+        "MPD_{ids}/chr{i}.open_region.bed",
     params:
         peaks=" ".join(ATAC_PEAKS)
     shell:
         "sed '1,3d' {input.ghmap} | cut -f6-8 | "
-        "sed -e 's/^/chr/' | sort -k1,1 -k2,2n | "
+        # add 'chr' and convert hblocks to 0-based coordinate #BEGIN {{FS = \"\\t\";OFS = \"\\t\" }};
+        "awk -F'\\t' -v OFS='\\t' -v s=1 '{{print \"chr\"$1, $2-s, $3}}' | "
+        "sort -k1,1 -k2,2n | "
         "bedtools intersect -sorted -a stdin -b {params.peaks} -wa -wb > {output}"
 
 # about sort -k field1[,field2]

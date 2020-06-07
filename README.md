@@ -10,6 +10,7 @@ Haplotype-based computational genetic mapping
 Ubuntu 18.04.2 LTS
 * GSL
 * GCC >= 4.8
+* GATK 4.x
 
 ## Installation
 
@@ -46,31 +47,42 @@ See more detail in ``haplomap`` subfolder: [Install](haplomap/README.md)
 ...
 ```
 
-### 2. Edit the required file path in `haplomap.smk`, including
+### 2. Edit the `config.yaml` file path in `workflows`:
 
+only edit `hbcgm` section.
 ```python
-# working directory
-WORKSPACE = "/data/bases/fangzq/20200429"
-
-# MPD trait id file
-TRAIT_IDS = "/data/bases/shared/haplomap/new_test_ids.txt"
-
-# MPD trait database 
-TRAIT_DATA =  "/data/bases/shared/haplomap/strainmeans_old_byGender.csv"
-
-# strain metadata for SNP database
-STRAIN_ANNO = "/data/bases/shared/haplomap/PELTZ_20180101/Strains_20180101.csv"
-
-# SNP database
-SNPS_DIR = "/data/bases/shared/haplomap/PELTZ_20180101/SNPS"
-# genen annotation input 
-GENE_ANNO = "/data/bases/shared/haplomap/PELTZ_20180101/gene_coding.txt"
+HBCGM:
+    # working directory
+    WORKSPACE: "/data/bases/shared/haplomap/test_exprs"
+    # path to eblocks, ghmap
+    HBCGM_BIN: "/home/fangzq/github/HBCGM/bin"
+    # MPD trait ids 
+    TRAIT_IDS: "/data/bases/shared/haplomap/test_ids.txt"
+    # ghmap input
+    TRAIT_DATA:  "/data/bases/shared/haplomap/strainmeans_old_byGender.csv"
+    # eblock input
+    STRAIN_ANNO: "/data/bases/shared/haplomap/PELTZ_20190301/Strains_20190301.csv"
+    SNPS_DIR: "/data/bases/shared/haplomap/PELTZ_20190301/SNPS"
+    GENE_ANNO: "/data/bases/shared/haplomap/PELTZ_20190301/gene_coding.txt"
+    GENE_EXPRS: "/data/bases/shared/haplomap/PELTZ_20190301/mus.compact.exprs.txt"
+    # open chromatin regions input
+    ATAC_PEAKS: "/data/bases/fangzq/MouseEpigenomeAtlas/beds/*.blacklist_removed.broadPeak"
 ```
 
-### 3. run
+### 3. run haplomap
+
+Install `snakemake` first. You need `Miniconda` if conda is not installed
 ```shell
+conda create -n hbcgm -f environment.yaml
+```
+
+run your pipline in a 
+```shell
+conda activate hbcgm
 # modify the file path in haplomap and run with 24 cores
-snakemake -s haplomap.smk -k -p -j 24   
+snakemake -s workflows/haplomap.smk \
+          --configfile workflows/config.yaml \
+          -k -p -j 24   
 ```
 
 
