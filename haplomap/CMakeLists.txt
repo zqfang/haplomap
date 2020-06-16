@@ -27,16 +27,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${GSL_INCLUDE})
 link_directories(${GSL_LIBS}) # so, libgsl.so libgslcblas.so is found in ${LIBS}
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src HALPOMAP_CXX) # so, all .cpp file could be found by targets
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src HALPOMAP_SRC) # so, all .cpp file could be found by targets
 
 ## targets
 # eblocks
-add_executable(eblocks ${HALPOMAP_CXX} ${CMAKE_CURRENT_SOURCE_DIR}/ehaploblocks.cpp)
+add_executable(eblocks ${HALPOMAP_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/ehaploblocks.cpp)
 target_include_directories(eblocks PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${GSL_INCLUDE})
 #target_link_libraries(eblocks )
 
 # ghmap
-add_executable(ghmap ${HALPOMAP_CXX} ${CMAKE_CURRENT_SOURCE_DIR}/quantTraitMap.cpp)
+add_executable(ghmap ${HALPOMAP_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/quantTraitMap.cpp)
 target_include_directories(ghmap PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${GSL_INCLUDE})
 target_link_libraries(ghmap PUBLIC gsl gslcblas ) # link libgsl.so libgslcblas.so 
 

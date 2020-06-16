@@ -82,7 +82,7 @@ rule bcftools_call:
             region = reg.read().strip()
         cmd = "bcftools mpileup "+\
               "-a DP,AD,ADF,ADR,SP,INFO/AD "+\ 
-              "-E -F0.25 -Q0 -p -m3 -d5000 -r %s "%region +\
+              "-E -F0.25 -Q0 -p -m3 -d500 -r %s "%region +\
               "-Ou -f {input.genome} {params.bam} | " +\  
               "bcftools call -mv -f GQ,GP -Ov  > {output}"
         shell(cmd)
@@ -90,7 +90,7 @@ rule bcftools_call:
 rule tabix:
     input: "VCFs/combined.{chr}.raw.vcf"
     output: 
-        "VCFs/combined.{chr}.raw.vcf.gz",
+        protected("VCFs/combined.{chr}.raw.vcf.gz"),
         "VCFs/combined.{chr}.raw.vcf.gz.tbi"
     shell:
         """bgzip -f {input} 
@@ -118,13 +118,13 @@ rule bcfcall_filtering:
         vcf="VCFs/combined.{chr}.raw.vcf.gz",
         vcfi="VCFs/combined.{chr}.raw.vcf.gz.tbi"
     output: 
-        protected("VCFs/combined.{chr}.hardfilter.pass.vcf.gz")
+        "VCFs/combined.{chr}.hardfilter.pass.vcf.gz"
     shell: 
         "bcftools filter -Oz -o {output} -s LOWQUAL -i'%QUAL>20' {input}"
 
 rule unbigzip:
     input: "VCFs/combined.{chr}.hardfilter.pass.vcf.gz"
-    output: temp("VCFs/combined.{chr}.hardfilter.pass.vcf")
+    output: "VCFs/combined.{chr}.hardfilter.pass.vcf"
     shell:
         "bgzip -d {input}"
 

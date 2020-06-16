@@ -203,9 +203,9 @@ vcf2niehs(snakemake.input['vcf'], snakemake.params['outdir'],
 #             'BPL', 'BPN', 'BTBR', 'BUB', 'B_C', 'C3H', 'C57BL10J',
 #             'C57BL6NJ', 'C57BRcd', 'C57LJ', 'C58', 'CBA', 'CEJ', 
 #             'DBA', 'DBA1J', 'FVB', 'ILNJ', 'KK', 'LGJ', 'LPJ', 
-#             'MAMy', 'NOD', 'NON', 'NOR', 'NUJ', 'NZB', 'NZO', 'NZW', 
+#             'MAMy', 'MRL', 'NOD', 'NON', 'NOR', 'NUJ', 'NZB', 'NZO', 'NZW', 
 #             'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF'] + \
-#             ['MRL', 'CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB'] 
+#             ['CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB'] 
 #     # inputs and outputs
 #     ## chromosome = ['1'] + list(range(10,20)) + list(range(2, 10)) + [ "X", "Y", "MT"]
 #     chromosome = "X"

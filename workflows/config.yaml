@@ -23,13 +23,15 @@ STRAINS: ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10',
 
 HBCGM:
     # working directory
-    WORKSPACE: "/data/bases/shared/haplomap/test_exprs"
+    WORKSPACE: "/data/bases/shared/haplomap/results_AHresponse"
     # path to eblocks, ghmap
     BIN: "/home/fangzq/github/HBCGM/build/bin"
     # MPD trait ids 
     TRAIT_IDS: "/data/bases/shared/haplomap/test_ids.txt"
+    # set to True to force all traits as non-categorical   
+    NUMERIC: False 
     # ghmap input
-    TRAIT_DATA:  "/data/bases/shared/haplomap/strainmeans_old_byGender.csv"
+    TRAIT_DATA:  "/data/bases/shared/haplomap/AHresponse_strainmeans2.txt"
     # eblock input
     STRAIN_ANNO: "/data/bases/shared/haplomap/PELTZ_20190301/Strains_20190301.csv"
     SNPS_DIR: "/data/bases/shared/haplomap/PELTZ_20190301/SNPS"

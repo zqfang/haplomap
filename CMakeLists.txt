@@ -26,6 +26,11 @@ if (CMAKE_VERSION VERSION_LESS 2.8.11)
             "${gmock_SOURCE_DIR}/include")
 endif()
 
+
+
+# define some globals
+SET(SOURCECODE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+# output dir
 # add GSL
 set(GSL_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/gsl/include)
 set(GSL_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/gsl/lib)

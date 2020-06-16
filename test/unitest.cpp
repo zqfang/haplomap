@@ -1,6 +1,11 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "haplomap/include/haploLib.h"
+#include "ColumnReader.h"
+#include <unistd.h>
+
+
+
+
 
 int add(int a, int b) {
     return a + b;
@@ -11,6 +16,7 @@ TEST(add_function, Two_Plus_Two_Equals_Four)
 {
     EXPECT_EQ(add(2, 2), 4);
 }
+
 
 
 // Real class we want to mock
@@ -43,4 +49,14 @@ TEST(MathMockTest, Multiply) {
     MockMathMock MathMock;
     EXPECT_CALL(MathMock, multiply(_, _)).WillOnce(Return(6));
     EXPECT_EQ(MathMock.getAnswer(), 6);
+}
+
+TEST(ColumnReader__Test, testanything) {
+    char buffer[1024];
+    char * path = getcwd(buffer, 0);
+    auto curpath = std::string(path) +  "/data/test.txt";
+    ColumnReader cr(curpath.c_str(), (char*)"\t");
+    int line = cr.getLine();
+    EXPECT_GT(line, -1);
+
 }

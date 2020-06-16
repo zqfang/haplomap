@@ -54,7 +54,8 @@ rule strain2trait:
         "MPD_{ids}/trait.{ids}.txt",
     params:
         outdir = config['HBCGM']['WORKSPACE'],
-        traitid = "{ids}"
+        traitid = "{ids}",
+        has_categorical = not config['HBCGM']['NUMERIC']
     script:
         "../scripts/strain2traits.py"
 
@@ -88,10 +89,11 @@ rule ghmap:
     log: "logs/MPD_{ids}.chr{i}.ghmap.log"
     run:
         categorical = "-c" if os.path.exists(params.cat) else ''
+        cats = "catogorical" if os.path.exists(params.cat) else ''
         cmd = "{params.bin}/ghmap %s "%categorical +\
               "-e {input.gene_exprs} " +\
               "-p {input.trait} -b {input.hb} -o {output} " +\
-              "-n MPD_{wildcards.ids} -v > {log}"
+              "-n MPD_{wildcards.ids}_%s -v > {log}"%cats
         shell(cmd)
 
 rule open_chrom:

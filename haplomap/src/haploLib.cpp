@@ -2,7 +2,7 @@
 
 // Various useful functions from nhaploblocks
 
-#include "../include/haploLib.h"
+#include "haploLib.h"
 #include <sys/types.h>
 #include <unistd.h>
 
