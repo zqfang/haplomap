@@ -12,7 +12,7 @@ TMPDIR = config['TMPDIR']
 STRAINS = config['STRAINS']
 
 #CHROMSOME = [ str(c) for c in range(1,20)] + ["X", "Y", "MT"]
-CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["MT", "X", "Y"]
+CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["X", "Y"]
 
 # with open(STRAINS_FILE, 'r') as s:
 #     STRAINS = s.read().strip().split()
