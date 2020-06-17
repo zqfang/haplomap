@@ -2,6 +2,14 @@
 #ifndef __HAPLOMAP_VER__
 #define __HAPLOMAP_VER__ 0.1
 #endif
+
+
+#ifdef __clang__
+#define __COMPILER__ __clang__
+#else
+#define __COMPILER__ "GCC"
+#endif
+
 // FIXME: Add tracing of block info.
 #include <getopt.h>
 #include <cstring>
@@ -719,7 +727,7 @@ Options *parseOptions(int argc, char **argv)
     {
       if (strcmp("version", long_options[option_index].name) == 0)
       {
-        std::cout << "GCC: "<< __VERSION__ << std::endl;
+        std::cout << __COMPILER__ <<" "<< __VERSION__ << std::endl;
         std::cout <<"ghmap version: "<<__HAPLOMAP_VER__<<std::endl;
       }
       exit(1);

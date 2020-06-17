@@ -18,7 +18,7 @@
 #include <unordered_map>
 
 using namespace std;
-using namespace __gnu_cxx;
+//using namespace __gnu_cxx;
 
 template <typename EltType>
 class Dynum
