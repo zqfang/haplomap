@@ -15,7 +15,8 @@
 #include <algorithm>
 #include <cmath>
 //#include <ext/hash_set>
-#include <ext/functional>
+//#include <ext/functional>
+#include <functional> 
 //#include <hash_map>
 
 #include <time.h>

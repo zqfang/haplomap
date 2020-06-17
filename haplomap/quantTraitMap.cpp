@@ -944,7 +944,9 @@ void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetN
   GenesComparator gcomp(isCategorical);
   vector<GeneSummary *> genes;
   genes.reserve(geneTable.size());
-  transform(geneTable.begin(), geneTable.end(), back_inserter(genes), select2nd<unordered_map<string, GeneSummary *>::value_type>());
+  transform(geneTable.begin(), geneTable.end(), back_inserter(genes), std::bind(&std::unordered_map<string, GeneSummary *>::value_type::second, std::placeholders::_1 ));
+            //select2nd<unordered_map<string, GeneSummary *>::value_type>());
+           
   sort(genes.begin(), genes.end(), gcomp);
   showGeneBlockSums(blockout, isCategorical, blocks, pvalueCutoff, strOrderVec, genes);
 }
@@ -1109,7 +1111,8 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
   vector<GeneSummary *> genes;
   genes.reserve(geneTable.size());
   transform(geneTable.begin(), geneTable.end(), back_inserter(genes),
-            select2nd<unordered_map<string, GeneSummary *>::value_type>());
+            std::bind(&std::unordered_map<string, GeneSummary *>::value_type::second, std::placeholders::_1 ));
+            //select2nd<unordered_map<string, GeneSummary *>::value_type>());
   sort(genes.begin(), genes.end(), gcomp);
 
   // write them out.
