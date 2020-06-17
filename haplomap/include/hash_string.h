@@ -10,7 +10,7 @@
 
 //#include <ext/hash_map>
 #include <string>
-namespace __gnu_cxx
+//namespace __gnu_cxx
 {
 template <>
 struct hash<std::string>

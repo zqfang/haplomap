@@ -28,8 +28,8 @@
 #include <unordered_set>
 #include <unordered_map>
 
-#ifndef __VERSION__
-#def __VERSION__ 0.1
+#ifndef __HAPLOMAP_VER__
+#define __HAPLOMAP_VER__ 0.1
 #endif
 
 using namespace std;
@@ -2844,7 +2844,8 @@ Options *parseOptions(int argc, char **argv)
     {
       if (strcmp("version", long_options[option_index].name) == 0)
       {
-        std::cout << "eblock version: " << __VERSION__ << std::endl;
+        std::cout << "GCC: "<< __VERSION__ << std::endl;
+        std::cout << "eblock version: " << __HAPLOMAP_VER__ << std::endl;     
       }
       exit(1);
     }

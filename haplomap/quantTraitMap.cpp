@@ -1,12 +1,12 @@
 // -*- C++ -*-
-#ifndef __VERSION__
-#def __VERSION__ 0.1
+#ifndef __HAPLOMAP_VER__
+#define __HAPLOMAP_VER__ 0.1
 #endif
 // FIXME: Add tracing of block info.
 #include <getopt.h>
 #include <cstring>
 #include <unordered_map>
-#include <gsl/gsl_cdf.h>
+#include "gsl/gsl_cdf.h"
 #include "haploLib.h"
 
 const char *HAPLOCOLORS[] = {"red", "blue", "green", "orange", "violet", "yellow"};
@@ -632,7 +632,7 @@ Options *parseOptions(int argc, char **argv)
               "    -m --output gene and haplotype block\n"
               "    -a --output gene and haplotype block sort by block\n"
               "    -p --phenotypes_file <file with phenotype data>\n"
-              "    -o --output_file <output file name>"
+              "    -o --output_file <output file name>\n"
               "    -c --categorical\n"
               "    -l --pvalue_cutoff\n"
               "    -b --blocks_file\n"
@@ -719,7 +719,8 @@ Options *parseOptions(int argc, char **argv)
     {
       if (strcmp("version", long_options[option_index].name) == 0)
       {
-        std::cout << "ghmap version: " << __VERSION__ << std::endl;
+        std::cout << "GCC: "<< __VERSION__ << std::endl;
+        std::cout <<"ghmap version: "<<__HAPLOMAP_VER__<<std::endl;
       }
       exit(1);
     }

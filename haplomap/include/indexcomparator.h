@@ -8,7 +8,7 @@
 #include <vector>
 
 using namespace std;
-using namespace __gnu_cxx;
+//using namespace __gnu_cxx;
 
 // Function object for sorting an array of indices based on another array of values.
 
