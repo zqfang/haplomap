@@ -6,10 +6,11 @@ Haplotype-based computational genetic mapping
 
 
 ## Dependency 
+Works both on `Linux`and `MacOS`
 
-Ubuntu 18.04.2 LTS
 * GSL
 * GCC >= 4.8
+* clang >= 11.0.3 (only tested with 11.x version)
 * GATK 4.x
 
 ## Installation
