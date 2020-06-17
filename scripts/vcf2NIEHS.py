@@ -46,12 +46,13 @@ def vcf2niehs(invcf, outdir, chromosome, qual_samtools=50, heterzygote_cutoff = 
         # write header 
         if line.startswith("#CHROM"): 
             strain_name = line.split("FORMAT")[-1]
+            # FIXME: if this line more than twice ?
             strains += strain_name.strip().split("\t")
             for chrom, output in outputdict.items():
                 output.write("LOCAL_IDENTIFIER\tSS_ID\tCHROMOSOME\tACCESSION_NUM\tPOSITION\tSTRAND\tALLELES\t")
-                output.write("\tC57BL/6J"+strain_name)
+                output.write("C57BL/6J"+strain_name)
             for chrom, output in output_compact.items():
-                output.write("\tC57BL/6J"+strain_name)
+                output.write("C57BL/6J"+strain_name)
             continue
 
         # parse data
