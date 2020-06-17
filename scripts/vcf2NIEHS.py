@@ -1,15 +1,15 @@
-import time, sys, os, glob
+import time, sys, os, glob, gzip
 from collections.abc import Iterable
 
-def vcf2niehs(invcf, outdir, strains, chromosome, qual_samtools=50, heterzygote_cutoff = 20):
+def vcf2niehs(invcf, outdir, chromosome, qual_samtools=50, heterzygote_cutoff = 20):
     
     ## strains
-    if isinstance(strains, str) or not isinstance(strains, Iterable):
-        with open(strains, 'r') as ss:
-            strains = ss.read().strip().split()
-    # rename B_C to BALB
-    if strains.index("B_C") != -1:
-        strains[strains.index("B_C")] = "BALB"
+    # if isinstance(strains, str) or not isinstance(strains, Iterable):
+    #     with open(strains, 'r') as ss:
+    #         strains = ss.read().strip().split()
+    # # rename B_C to BALB
+    # if strains.index("B_C") != -1:
+    #     strains[strains.index("B_C")] = "BALB"
     os.makedirs(outdir, exist_ok=True)
     ##### filtering parameters
     qualCutoffForSamtools = qual_samtools
@@ -25,18 +25,36 @@ def vcf2niehs(invcf, outdir, strains, chromosome, qual_samtools=50, heterzygote_
     outputdict = { str(k) : open(os.path.join(outdir, f"chr{k}.full.txt" ), 'w') for k in chromosome }
     output_compact = { str(k) : open(os.path.join(outdir, f"chr{k}.txt" ), 'w') for k in chromosome }
     # add header
-    for chrom, output in outputdict.items():
-        output.write("LOCAL_IDENTIFIER\tSS_ID\tCHROMOSOME\tACCESSION_NUM\tPOSITION\tSTRAND\tALLELES\t")
-        output.write("\t".join(strains)+ "\n")
-    for chrom, output in output_compact.items():
-        output.write("\t".join(["C57BL/6J"] + strains)+ "\n")
+    # for chrom, output in outputdict.items():
+    #     output.write("LOCAL_IDENTIFIER\tSS_ID\tCHROMOSOME\tACCESSION_NUM\tPOSITION\tSTRAND\tALLELES\t")
+    #     output.write("\t".join(strains)+ "\n")
+    # for chrom, output in output_compact.items():
+    #     output.write("\t".join(["C57BL/6J"] + strains)+ "\n")
     # parse VCF
     # CHROM	POS	ID	REF	ALT	QUAL FILTER	INFO FORMAT	SAMPLES1 ...
     lineCount = 0
     sname = os.path.basename(invcf)
-    for line in open(invcf, 'r'):
+    
+    if invcf.endswith("gz"):
+        vcf = gzip.open(invcf, 'rt') 
+    else:
+        vcf = open(invcf, 'r')
+    strains = []
+    for line in vcf:
         # skip description lines
-        if line.startswith("#"): continue
+        if line.startswith("##"): continue
+        # write header 
+        if line.startswith("#CHROM"): 
+            strain_name = line.split("FORMAT")[-1]
+            strains += strain_name.strip().split("\t")
+            for chrom, output in outputdict.items():
+                output.write("LOCAL_IDENTIFIER\tSS_ID\tCHROMOSOME\tACCESSION_NUM\tPOSITION\tSTRAND\tALLELES\t")
+                output.write("\tC57BL/6J"+strain_name)
+            for chrom, output in output_compact.items():
+                output.write("\tC57BL/6J"+strain_name)
+            continue
+
+        # parse data
         newline = line.strip().split("\t")
 
         lineCount +=1
@@ -49,8 +67,9 @@ def vcf2niehs(invcf, outdir, strains, chromosome, qual_samtools=50, heterzygote_
         totalInterested +=1
         
         # FIXME: gatk not pass strings: MQ40, SOR3 ... ?
-        # gatk -> [PASS, LowQual, '.' ], bcftools -> ['.']
-        # gatk -> not filtering has been done when it's '.'
+        # gatk -> [PASS, LowQual, '.' ], 
+        # bcftools -> [PASS, LowQual, '.' ],
+        # -> not filtering has been done when it's '.'
         # if newline[6] in ["PASS", ".", "INDEL"]:
         #     numNonPass +=1
         #     continue
@@ -184,31 +203,24 @@ def vcf2niehs(invcf, outdir, strains, chromosome, qual_samtools=50, heterzygote_
             print(f"Sample: {sname} - Finished line: {lineCount}", file=sys.stderr)        
 
     # close file
-    for chrom, ouput in outputdict.items(): output.close()
-    for chrom, ouput in output_compact.items(): output.close()
+    for chrom, output in outputdict.items(): output.close()
+    for chrom, output in output_compact.items(): output.close()
+    vcf.close()
 
     print(f"Sample: {sname} - total: {totalVariant}, interested: {totalInterested}, notPass: {numNonPass}, " +\
           f"indels: {numINDEL}, lowQual: {numLowQual}, multiAlt: {numMultiAlt}, good: {numGoodSNP}", file=sys.stderr)
 
 
 vcf2niehs(snakemake.input['vcf'], snakemake.params['outdir'], 
-          snakemake.input['strains'], snakemake.params['chrom'],
+          snakemake.params['chrom'],
           snakemake.params['qual_samtools'], 
           snakemake.params['heterzygote_cutoff'])
 
 
 # if __name__ == '__main__':
-#     ## strains included in the VCF file in the exact order
-#     strains = ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10', 
-#             'BPL', 'BPN', 'BTBR', 'BUB', 'B_C', 'C3H', 'C57BL10J',
-#             'C57BL6NJ', 'C57BRcd', 'C57LJ', 'C58', 'CBA', 'CEJ', 
-#             'DBA', 'DBA1J', 'FVB', 'ILNJ', 'KK', 'LGJ', 'LPJ', 
-#             'MAMy', 'MRL', 'NOD', 'NON', 'NOR', 'NUJ', 'NZB', 'NZO', 'NZW', 
-#             'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF'] + \
-#             ['CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB'] 
 #     # inputs and outputs
-#     ## chromosome = ['1'] + list(range(10,20)) + list(range(2, 10)) + [ "X", "Y", "MT"]
-#     chromosome = "X"
-#     invcf = "/data/bases/shared/haplomap/PELTZ_20190301/VCFs_2019/var.chrX.raw.vcf"
-#     outdir = "/home/fangzq/data/test_convert"
-#     vcf2niehs(invcf, outdir, strains, chromosome, 50,  20)
+#     chromosome = list(range(1, 20)) + [ "X", "Y"]
+#     for i in chromosome:
+#         invcf = f"VCFs/combined.chr{i}.raw.vcf.gz"
+#         outdir = f"SNPs"
+#         vcf2niehs(invcf, outdir, str(i), 50,  20)

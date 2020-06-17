@@ -26,7 +26,6 @@ CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,
 #          ['CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB']  # <- wild derived except MRL
 # OUTPUT
 
-VCF_HFILTER = expand("VCFs/combined.chr{i}.hardfilter.vcf.gz", i=CHROMSOME)
 VCF_HFILTER_PASS = expand("VCFs/combined.chr{i}.hardfilter.pass.vcf.gz", i=CHROMSOME)
 VCF_RAW = expand("VCFs/combined.chr{i}.raw.vcf", i=CHROMSOME)
 VCF_STATS = expand("VCFs/combined.chr{i}.raw.vcf.gz.stats", i=CHROMSOME)
@@ -35,7 +34,7 @@ SNPDB = expand("SNPs/chr{i}.txt", i=CHROMSOME)
 
 ###########################################################################################
 rule target:
-    input: VCF_STATS, VCF_HFILTER_PASS,SNPDB
+    input: VCF_RAW, VCF_STATS, SNPDB
 
 # samtools-bcftools-calling
 rule faidx: 
@@ -120,29 +119,14 @@ rule bcfcall_filtering:
     output: 
         "VCFs/combined.{chr}.hardfilter.pass.vcf.gz"
     shell: 
-        "bcftools filter -Oz -o {output} -s LOWQUAL -i'%QUAL>20' {input}"
-
-rule unbigzip:
-    input: "VCFs/combined.{chr}.hardfilter.pass.vcf.gz"
-    output: "VCFs/combined.{chr}.hardfilter.pass.vcf"
-    shell:
-        "bgzip -d {input}"
-
-rule vcf2strains:
-    input:  
-        "VCFs/combined.{chr}.hardfilter.pass.vcf"
-    output: 
-        temp("SNPs/{chr}.strains.temp")
-    shell:
-        # NOTE: '\t' is default delim for cut
-        "head -n 1000 {input} | grep '^#CHROM' | "
-        "cut -f10-  > {output}"  
+        # only selecet SNPs, that's what we want
+        "bcftools filter -Oz -o {output} -s LOWQUAL " 
+        "-i'TYPE=\"snp\" && %QUAL>20' {input.vcf}"
     
 rule vcf2niehs:
     input:  
         # vcf = "VCFs/combined.chr{i}.raw.vcf", 
-        vcf = "VCFs/combined.chr{i}.hardfilter.pass.vcf",
-        strains = "SNPs/chr{i}.strains.temp"
+        vcf = "VCFs/combined.chr{i}.hardfilter.pass.vcf.gz",
     output: 
         protected("SNPs/chr{i}.txt")
     params:
