@@ -46,6 +46,7 @@ def vcf2niehs(invcf, outdir, chromosome, qual_samtools=50, heterzygote_cutoff = 
         # write header 
         if line.startswith("#CHROM"): 
             strain_name = line.split("FORMAT")[-1]
+            strain_name = strain_name.replace("B_C", "BALB")
             # FIXME: if this line more than twice ?
             strains += strain_name.strip().split("\t")
             for chrom, output in outputdict.items():
