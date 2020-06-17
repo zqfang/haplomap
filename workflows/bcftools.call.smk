@@ -121,7 +121,7 @@ rule bcfcall_filtering:
     shell: 
         # only selecet SNPs, that's what we want
         "bcftools filter -Oz -o {output} -s LOWQUAL " 
-        "-i'TYPE=\"snp\" && %QUAL>20' {input.vcf}"
+        "-i 'TYPE=\"snp\" && %QUAL>20' {input.vcf}"
     
 rule vcf2niehs:
     input:  
