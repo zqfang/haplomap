@@ -34,6 +34,9 @@ SET(SOURCECODE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 # add GSL
 set(GSL_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/gsl/include)
 set(GSL_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/gsl/lib)
+include_directories(${GSL_INCLUDE})
+link_directories(${GSL_LIBS})  # so, libgsl.so libgslcblas.so is found in ${GSL_LIBS}
+set(GSL_LIBRARIES gsl gslcblas)
 
 # Now simply link your own targets against gtest, gmock,
 # etc. as appropriate

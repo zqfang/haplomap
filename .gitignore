@@ -5,3 +5,5 @@
 *.ipynb
 *.vscode
 *.snakemake
+data
+*.idea

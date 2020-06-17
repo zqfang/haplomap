@@ -24,7 +24,7 @@ template <typename EltType>
 class Dynum
 {
 
-  typedef unordered_map<EltType, int> _E2IMap;
+  typedef std::unordered_map<EltType, int> _E2IMap;
 
   _E2IMap _elt_to_idx;
   vector<EltType> _idx_to_elt;

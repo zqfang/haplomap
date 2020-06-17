@@ -1,18 +1,16 @@
-  
-include_directories("${PROJECT_SOURCE_DIR}")
-
-include_directories(${CMAKE_SOURCE_DIR}/haplomap/include)
-include_directories(${GSL_INCLUDE})
-link_directories(${GSL_LIBS}) # so, libgsl.so libgslcblas.so is found in ${LIBS}
-aux_source_directory(${CMAKE_SOURCE_DIR}/haplomap/src HAPLOMAP_SRC) # so, all .cpp file could be found by targets
+project(test)
 
 
+set(Pleiades_INC ${CMAKE_SOURCE_DIR}/haplomap/include)
 
-
-
-add_executable(main main.cpp)
-target_link_libraries(main gtest)
+## math files
+# file(GLOB Pleiades_SRC ${CMAKE_SOURCE_DIR}/haplomap/src/*.cpp)
+include_directories(${Pleiades_INC})
+# Find all source files in a directory
+aux_source_directory(${CMAKE_SOURCE_DIR}/haplomap/src SRC) # so, all .cpp file could be found by targets
+aux_source_directory(${PROJECT_SOURCE_DIR} TEST_SRC)
 # First Simple Google Test
-add_executable(simple unitest.cpp ${HAPLOMAP_SRC})
-target_link_libraries(simple gtest gmock_main)
-add_test(NAME simple_test COMMAND simple)
+add_executable(unitest unitest.cpp ${SRC} ghmap.test.cpp)# ${TEST_SRC})
+#target_include_directories(unitest ${Pleiades_INC})
+target_link_libraries(unitest gtest gmock_main ${GSL_LIBRARIES})
+add_test(NAME Pleiades_test COMMAND unitest)
