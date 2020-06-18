@@ -2,8 +2,8 @@
 // Created by Zhuoqing Fang on 6/15/20.
 //
 
-#ifndef PLEIADES_UTILS_H
-#define PLEIADES_UTILS_H
+#ifndef UTILS_H
+#define UTILS_H
 
 
 #include <stdio.h>  /* defines FILENAME_MAX */
@@ -55,4 +55,4 @@ inline int toFloat(const std::string &s) {
     return std::stof(s);
 }
 
-#endif //PLEIADES_UTILS_H
+#endif // UTILS_H

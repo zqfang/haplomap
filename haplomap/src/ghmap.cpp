@@ -1172,3 +1172,81 @@ void writeSortedPattern(ostream &os, char *pattern, vector<int> &strOrderVec)
     }
 }
 
+
+// Some vector arithmetic.
+// destroys first argument (like +=)
+void addVectors(vector<float> &v1, vector<float> &v2)
+{
+    if (v1.size() != v2.size())
+    {
+        cout << "addVectors:  Vector sizes differ: " << v1.size() << " vs. " << v2.size() << endl;
+        exit(1);
+    }
+    vector<float>::iterator vend = v1.end();
+    vector<float>::iterator vit2 = v2.begin();
+    for (vector<float>::iterator vit1 = v1.begin(); vit1 < vend; vit1++)
+    {
+        *vit1 += *vit2;
+        vit2++;
+    }
+}
+
+void subtractVectors(vector<float> &v1, vector<float> &v2)
+{
+    if (v1.size() != v2.size())
+    {
+        cout << "subtractVectors:  Vector sizes differ: " << v1.size() << " vs. " << v2.size() << endl;
+        exit(1);
+    }
+    vector<float>::iterator vend = v1.end();
+    vector<float>::iterator vit2 = v2.begin();
+    for (vector<float>::iterator vit1 = v1.begin(); vit1 < vend; vit1++)
+    {
+        *vit1 -= *vit2;
+        vit2++;
+    }
+}
+
+//
+float dotVectors(vector<float> &v1, vector<float> &v2)
+{
+    float result = 0.0;
+    if (v1.size() != v2.size())
+    {
+        cout << "dotVectors:  Vector sizes differ: " << v1.size() << " vs. " << v2.size() << endl;
+        exit(1);
+    }
+    vector<float>::iterator vend = v1.end();
+    vector<float>::iterator vit2 = v2.begin();
+    for (vector<float>::iterator vit1 = v1.begin(); vit1 < vend; vit1++)
+    {
+        result += (*vit1) * (*vit2);
+        vit2++;
+    }
+    return result;
+}
+
+// multiply by scalar.  Destroys first argument.
+void scaleVector(vector<float> &v1, float c)
+{
+    vector<float>::iterator vend = v1.end();
+    for (vector<float>::iterator vit = v1.begin(); vit < vend; vit++)
+    {
+        *vit *= c;
+    }
+}
+
+// convert digits 0-9 in string to \000..\011 (but leave '?' printable).
+void makeUnprintable(char *pattern)
+{
+    char *p = pattern;
+    while (*p != 0)
+    {
+        if (*p != '?')
+        {
+            *p -= '0';
+        }
+        p++;
+    }
+}
+

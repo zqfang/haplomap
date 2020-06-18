@@ -256,26 +256,11 @@ Options *parseOptions(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-    // defined constants
-//    const char *HAPLOCOLORS[] = {"red", "blue", "green", "orange", "violet", "yellow"};
-//    int numCategories = 1; // default for non-categorical data.
-//    vector<string> catNames; // maps strIdx -> category name.
-//    // Maps gene names to a string of A's, M's, and P's
-//    unordered_map<string, string> geneExprMap(40000);
-//    // Globals
-//    std::unordered_map<std::string, GeneSummary *> geneTable; // for gene-oriented interface
-//    std::vector<BlockSummary *> blocks; // global vector of all blocks.
-
   Options *opts = parseOptions(argc, argv);
 
   beginPhase("reading blocks summary file");
   readBlockSummary(opts->blocksFileName, opts->geneName, opts->goTermFile);
   endPhase();
-
-
-//BlockSummary *pBtest = blocks[1];
-//cout << "Block: " << pBtest->chrName << "\t" << pBtest->blockIdx << endl;
-
 
   vector<vector<float>> phenvec(numStrains);
 
