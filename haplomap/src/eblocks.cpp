@@ -415,7 +415,7 @@ void readChromosomeInfo(char *fname)
     string snpName = rdr.getToken(0);
     string chr = rdr.getToken(2);
     int chrIdx = chromosomes.indexOf(chr);
-    int pos = toInt(rdr.getToken(4));
+    int pos = std::stoi(rdr.getToken(4));
 
     // Insert a blank SNPEntry in the table with snpName
     SNPInfo *pSNPInfo = new SNPInfo(snpName, chrIdx, pos);

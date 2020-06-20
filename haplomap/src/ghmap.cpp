@@ -249,8 +249,8 @@ bool BlocksComparator::operator()(const BlockSummary *pb1, const BlockSummary *p
       }
 
       // otherwise, in numerical order
-      int numChr1 = toInt(chr1);
-      int numChr2 = toInt(chr2);
+      int numChr1 = std::stoi(chr1);
+      int numChr2 = std::stoi(chr2);
       if (numChr1 < numChr2)
       {
         return true;
@@ -290,11 +290,11 @@ void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
         {
 
             BlockSummary *pBlock = new BlockSummary(strdup(rdr.getToken(0).c_str()),
-                                                    toInt(rdr.getToken(1)),
-                                                    toInt(rdr.getToken(2)),
-                                                    toInt(rdr.getToken(3)),
-                                                    toInt(rdr.getToken(4)),
-                                                    toInt(rdr.getToken(5)),
+                                                    std::stoi(rdr.getToken(1)),
+                                                    std::stoi(rdr.getToken(2)),
+                                                    std::stoi(rdr.getToken(3)),
+                                                    std::stoi(rdr.getToken(4)),
+                                                    std::stoi(rdr.getToken(5)),
                                                     strdup(rdr.getToken(6).c_str()));
             // Add to blocks.
             blocks.push_back(pBlock);
@@ -1015,7 +1015,7 @@ void readQPhenotypes(char *fname, vector<vector<float>> &phenvec)
         // FIXME: some unnecessary string copies
         string strain_abbrev = rdr.getToken(0);
         vector<float> qphen;
-        qphen.push_back(toFloat(rdr.getToken(1)));
+        qphen.push_back(std::stof(rdr.getToken(1)));
         //    int strIdx = strainAbbrevs.hasIndex(strain_abbrev);
         int strIdx = strainAbbrevs.addElementIfNew(strain_abbrev);
         if (strIdx < 0)
