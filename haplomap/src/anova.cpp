@@ -13,12 +13,10 @@ std::vector<float> sumVector(std::vector<float> &vec) {
 }
 
 void subVector(std::vector<float> &vec, float value) {
-    //std::vector<float> res;
+
     for (float & v: vec ){
         v -= value;
-        //res.push_back(v);
     }
-    //return res;
 }
 
 void ANOVA(vector<vector<float>> &phenvec, char *pattern, float &FStat, float &pvalue, float &effect)
@@ -78,6 +76,13 @@ void ANOVA(vector<vector<float>> &phenvec, char *pattern, float &FStat, float &p
         cout << "]" << endl;
     }
 
+    vector<float> mean(1, 0.0F); // mean of all data
+    for (auto & s: sumStrains)
+        mean[0] += s.back();
+    // scaleVector(mean, 1.0 / numDefined);
+    scaleVector(mean, 1.0 / numDefinedDataPoints);
+
+    //float SST = 0.0F;
     float SSW = 0.0F;
     for (int str1 = 0; str1 < numStrains; str1++)
     {
@@ -86,28 +91,21 @@ void ANOVA(vector<vector<float>> &phenvec, char *pattern, float &FStat, float &p
         {
             vector<float> resid = phenvec[str1];
             subVector(resid, haploMean[hap].back());
-            //subtractVectors(resid, haploMean[hap]);
-            float tmpdot = dotVectors(resid, resid);
-            SSW += tmpdot;
+            SSW += dotVectors(resid, resid);
+            // vector<float> resid2 = phenvec[str1];
+            // subVector(resid2, mean.back());
+            // SST += dotVectors(resid2, resid2);
         }
     }
 
     // SSB -- between sum of squares (sum over haplotypes hapsize*(hapmean-mean)^2
     float SSB = 0.0;
-    vector<float> mean(1, 0.0F); // mean of all data
-    for (auto & s: sumStrains)
-        mean[0] += s.back();
-    // scaleVector(mean, 1.0 / numDefined);
-    scaleVector(mean, 1.0 / numDefinedDataPoints);
-
     for (int hap = 0; hap < numHaplo; hap++)
     {
         vector<float> diff = haploMean[hap]; // copy so we don't destroy haploMeans
         subtractVectors(diff, mean);         // (haplotype mean) - mean
-        // FIXME: this is a wrong formula? why haploNum[hap] here?
+        // FIXME: why haploNum[hap] here? SStotal = SSB + SSW
         float sq = haploNum[hap] * dotVectors(diff, diff);
-        // Should just sq = dotVectors(diff, diff);
-        //float sq = dotVectors(diff, diff);
         SSB += sq;
     }
     // FIXME:
@@ -151,7 +149,9 @@ void ANOVA(vector<vector<float>> &phenvec, char *pattern, float &FStat, float &p
 
     if (traceFStat)
     {
-        cout << "SSW = " << SSW
+        cout << "SST = " /*<< SST*/
+             << " SSW + SSB = " << SSW + SSB
+             << " SSW = " << SSW
              << ", SSB = " << SSB
              << ", MSW = " << MSW
              << ", MSB = " << MSB
