@@ -58,7 +58,7 @@ bin/ghmap -p ${HOME}/data/test_traits.txt \
 |1 |CodonFlag  | condonChange ? 1:0  |
 |2 |Pattern    | Haplotype pattern   |
 |3 |Score      | isCategorical ? Fstat : Pvalue |
-|4 |Effect     | Genetic Effect ( $Omega^2$ )   |
+|4 |Effect     | Genetic Effect ( Omega^2 )   |
 |5 |Chrom      | Chromosome idx      |
 |6 |ChrBeg     | HaploBlock begin idx|
 |7 |ChrEnd     | HaploBlock end idx  |
