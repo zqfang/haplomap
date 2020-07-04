@@ -47,12 +47,18 @@ public:
 //}
 
 
-inline int toInt(const std::string &s) {
-    return std::stoi(s);
-}
+// Get Logger
+class MyLogger
+{
+public:
+    static std::shared_ptr<MyLogger> getInstance();
+    //log4cplus::Logger m_rootLog;
+    ~MyLogger();
 
-inline int toFloat(const std::string &s) {
-    return std::stof(s);
-}
+private:
+    MyLogger();
+    static std::shared_ptr<MyLogger> m_logger;
+};
+
 
 #endif // UTILS_H

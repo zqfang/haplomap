@@ -37,8 +37,8 @@ bin/ghmap -p ${HOME}/data/test_traits.txt \
 
 1. ebloks:
 
-|NO|Field | Explaination |
-|--| ---- | ------------ |
+| NO | Field | Explaination |
+|--- | ---- | ------------ |
 |0 |chrom | chromosome idx      |
 |1 |Block | Block id            |
 |2 |Start | Block start idx     |
@@ -52,13 +52,13 @@ bin/ghmap -p ${HOME}/data/test_traits.txt \
 2. ghmap:
   * gene-oriented results file
 
-|NO|Field | Explaination |
-|--| ---- | ------------ |
+| NO | Field | Explaination |
+|--- | ---- | ------------ |
 |0 |GeneName   | Associated Gene     |
 |1 |CodonFlag  | condonChange ? 1:0  |
 |2 |Pattern    | Haplotype pattern   |
 |3 |Score      | isCategorical ? Fstat : Pvalue |
-|4 |Effect     | Genetic Effect (Effect Size)   |
+|4 |Effect     | Genetic Effect ( $Omega^2$ )   |
 |5 |Chrom      | Chromosome idx      |
 |6 |ChrBeg     | HaploBlock begin idx|
 |7 |ChrEnd     | HaploBlock end idx  |
@@ -67,3 +67,12 @@ bin/ghmap -p ${HOME}/data/test_traits.txt \
   * block-oriented result file
 
 BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | CondingMap ...
+
+
+## Changelog
+2020-06-30 HBCGM v0.1
+* support raw animaldata (individual data) input
+* refactor source code, MacOS support
+
+2020-03-01
+* upgrade to C++ 11

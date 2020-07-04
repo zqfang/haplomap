@@ -9,8 +9,10 @@
 #define __HAPLOMAP_VER__ "0.1.0"
 #endif
 
-#ifdef __clang__
+#if defined(__clang__)
 #define __COMPILER__ "clang++"
+#elif defined(WIN32)
+#define ___COMPILER__ "MSVC"
 #else
 #define __COMPILER__ "g++"
 #endif

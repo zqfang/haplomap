@@ -6,6 +6,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "utils.h"
+#include "glob.h"
 
 
 
@@ -22,13 +23,20 @@ TEST(SPLIT_TRIM, split_and_trim) {
     EXPECT_EQ(trim(alleles, " \n\r\t"), "split\ta\tb\tc");
 }
 
-
-TEST(GET_CWD, getcwd_function) {
+TEST(GET_CWD_GLOB, getcwd_glob_function) {
     std::string dir = GetCurrentWorkingDir();
     std::cout<<"MyFunction: __file__: "<< dir <<std::endl;
     //std::cout << "CPP17: Current path is " << std::__fs::filesystem::current_path() << '\n';
     //EXPECT_EQ(dir, std::__fs::filesystem::current_path());
+
+    glob::glob globs(dir);
+    while (globs) {
+        std::cout << globs.current_match() << std::endl;
+        globs.next();
+    }
+
 }
+
 
 
 

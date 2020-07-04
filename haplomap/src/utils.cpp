@@ -37,6 +37,8 @@ std::string trim(const std::string& str, const std::string delimiter = " \n\r\t"
     return str.substr(first, (last - first + 1));
 }
 
+/* NULL, because instance will be initialized on demand. */
+Singleton* Singleton::instance = 0;
 /* Static access method. */
 Singleton* Singleton::getInstance()
 {
@@ -46,5 +48,29 @@ Singleton* Singleton::getInstance()
 }
 
 
-/* NULL, because instance will be initialized on demand. */
-Singleton* Singleton::instance = 0;
+// define MyLogger
+std::shared_ptr<MyLogger> MyLogger::m_logger = nullptr;
+
+MyLogger::MyLogger() {}
+
+MyLogger::~MyLogger()
+{
+    std::cout << "delete MyLogger" << std::endl;
+}
+
+std::shared_ptr<MyLogger> MyLogger::getInstance()
+{
+//    if (m_logger == nullptr)
+//    {
+//        std::cout << "construct MyLogger" << std::endl;
+//        log4cplus::initialize();
+//
+//        log4cplus::PropertyConfigurator::doConfigure(LOG4CPLUS_TEXT(MY_LOG_FILE_PATH));
+//        m_logger.reset(new MyLogger);
+//
+//        m_logger->m_rootLog = log4cplus::Logger::getRoot();
+//    }
+
+    return m_logger;
+}
+

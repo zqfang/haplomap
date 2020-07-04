@@ -123,6 +123,8 @@ public:
 
 void filterGoTerms(char *fname, vector<string> terms);
 
+std::vector<float> sumVector(std::vector<float> &vec);
+void subVector(std::vector<float> &vec, float value);
 // Some vector arithmetic.
 // destroys first argument (like +=)
 void addVectors(vector<float> &v1, vector<float> &v2);

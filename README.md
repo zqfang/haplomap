@@ -111,8 +111,8 @@ snakemake -s workflows/haplomap.smk \
 
 1. ebloks:
 
-|NO|Field | Explaination |
-|--| ---- | ------------ |
+| NO |Field | Explaination |
+|--- | ---- | ------------ |
 |0 |chrom | chromosome idx      |
 |1 |Block | Block id            |
 |2 |Start | Block start idx     |
@@ -126,13 +126,13 @@ snakemake -s workflows/haplomap.smk \
 2. ghmap:
   * gene-oriented results file
 
-|NO|Field | Explaination |
-|--| ---- | ------------ |
+| NO |Field | Explaination |
+|---| ---- | ------------ |
 |0 |GeneName   | Associated Gene     |
 |1 |CodonFlag  | condonChange ? 1:0  |
 |2 |Pattern    | Haplotype pattern   |
 |3 |Score      | isCategorical ? Fstat : Pvalue |
-|4 |Effect     | Genetic Effect (Effect Size)   |
+|4 |Effect     | Genetic Effect ( $Omega^2$ )   |
 |5 |Chrom      | Chromosome idx      |
 |6 |ChrBeg     | HaploBlock begin idx|
 |7 |ChrEnd     | HaploBlock end idx  |
