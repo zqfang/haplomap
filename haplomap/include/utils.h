@@ -20,6 +20,7 @@
 #include <iostream>
 #include <sstream>
 
+
 std::string GetCurrentWorkingDir( void );
 std::vector<std::string> split(const std::string& s, char delimiter);
 std::string trim(const std::string& str, const std::string delimiter);

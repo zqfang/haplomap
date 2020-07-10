@@ -2,7 +2,7 @@
 
 // Various useful functions from nhaploblocks
 
-#include "haploLib.h"
+#include "haplolib.h"
 #include <unistd.h>
 
 static time_t start_time; // For time printing.  Should be in an object.
@@ -122,12 +122,6 @@ void readStrains(char *fname)
     relevantStrains.addElementIfNew(name);
     strainAbbrevs.addElementIfNew(abbrev);
   }
-}
-
-
-template <typename T>
-decltype(std::bind(&T::value_type::second, std::placeholders::_1)) select2nd() {
-    return std::bind(&T::value_type::second, std::placeholders::_1);
 }
 
 

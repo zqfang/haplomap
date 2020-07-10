@@ -4,6 +4,8 @@
 #include <cstring>
 #include <unordered_map>
 #include "ghmap.h"
+#include "manova.h"
+#include "fdr.h"
 
 #ifndef __HAPLOMAP_VER__
 #define __HAPLOMAP_VER__ "0.1.0"
@@ -18,10 +20,8 @@
 #endif
 
 
-class Options
+struct Options
 {
-
-public:
   bool isCategorical;
   bool filterCoding;
   bool haploBlocks;
@@ -37,11 +37,14 @@ public:
   char *equalFile;
   char *goTermFile;
   char *goFilter;
+  char *geneticRelationMatrix;
+  char *geneticRelationIDs;
   // constructor
-  Options() : isCategorical(false), filterCoding(false), haploBlocks(false), geneBlocks(false), pvalueCutoff(0.05),
-              datasetName((char *)"Unnamed_dataset"), phenotypeFileName(NULL),
-              blocksFileName(NULL), outputFileName(NULL), geneName(NULL),
-              equalFile(NULL), goTermFile(NULL), goFilter(NULL){};
+  Options() : isCategorical(false), filterCoding(false), haploBlocks(false),
+              geneBlocks(false), pvalueCutoff(0.05),datasetName((char *)"Unnamed_dataset"),
+              phenotypeFileName(NULL), blocksFileName(NULL), outputFileName(NULL), geneName(NULL),
+              equalFile(NULL), goTermFile(NULL), goFilter(NULL),
+              geneticRelationMatrix(NULL), geneticRelationIDs(NULL) {};
 };
 
 // Options parsing
@@ -70,6 +73,7 @@ Options *parseOptions(int argc, char **argv)
       {"equal_file", required_argument, 0, 'q'},
       {"goterms_file", required_argument, 0, 'q'},
       {"goterms_include_file", required_argument, 0, 'q'},
+      {"relation", required_argument, 0, 'r'},
       {"version", no_argument, 0, 0},
       {0, 0, 0, 0}};
 
@@ -77,7 +81,7 @@ Options *parseOptions(int argc, char **argv)
   {
 
     int option_index = 0;
-    c = getopt_long(argc, argv, "cfkmahvn:p:b:l:o:g:e:q:t:i:", long_options, &option_index);
+    c = getopt_long(argc, argv, "cfkmahvn:p:b:l:o:g:e:q:t:i:r:", long_options, &option_index);
 
     /* Detect the end of the options. */
     if (c == -1)
@@ -143,6 +147,7 @@ Options *parseOptions(int argc, char **argv)
               "    -q --equal_file <name of file>\n"
               "    -t --goterms_file <name of file>\n"
               "    -i --goterms_include_file output only genes with these terms <name of file>\n"
+              "    -r --relation <name of genetic relation file: NXN matrix>\n"
               "    --version\n"
            << endl;
       break;
@@ -212,6 +217,14 @@ Options *parseOptions(int argc, char **argv)
       opts->goFilter = optarg;
       break;
     }
+    case 'r':
+    {
+        opts->geneticRelationMatrix = optarg;
+        ///MARK: if set .id file here, cmdline could not parse relative path
+        //char* ids = strdup(optarg);
+        //opts->geneticRelationIDs = std::strcat(ids, ".id");
+        break;
+    }
     case '?':
     {
       /* getopt_long already printed an error message. */
@@ -240,6 +253,10 @@ Options *parseOptions(int argc, char **argv)
   {
     cout << "Required arg missing: phenotype file name (-p)" << endl;
     exit(1);
+  } else if (NULL == opts->geneticRelationMatrix)// || opts->geneticRelationIDs == NULL)
+  {
+      std::cout<<"Required arg missing: genetic relation files (.rel, .rel.id)" << std::endl;
+      exit(1);
   }
 
   // Print any remaining command line arguments (not options).
@@ -253,65 +270,77 @@ Options *parseOptions(int argc, char **argv)
     exit(1);
   }
 
+
   return opts;
 }
 
 int main(int argc, char **argv)
 {
-  Options *opts = parseOptions(argc, argv);
 
-  beginPhase("reading blocks summary file");
-  readBlockSummary(opts->blocksFileName, opts->geneName, opts->goTermFile);
-  endPhase();
+    Options *opts = parseOptions(argc, argv);
 
-  vector<vector<float>> phenvec(numStrains);
+    beginPhase("reading blocks summary file");
+    readBlockSummary(opts->blocksFileName, opts->geneName, opts->goTermFile);
+    endPhase();
 
-  beginPhase("reading phenotype file");
-  if (opts->isCategorical)
-  {
+    std::vector<std::vector<float>> phenvec(numStrains);
+    beginPhase("reading genetic relation matrix");
+    char* _relid = strdup(opts->geneticRelationMatrix);
+    opts->geneticRelationIDs = std::strcat(_relid, ".id");
+    //const_cast<char*>(mid.c_str()); // string to char*
+    //printf("rel: %s\n",opts->geneticRelationMatrix);
+    //printf("rel.id: %s\n",opts->geneticRelationIDs);
+
+    MANOVA aov(opts->geneticRelationMatrix, opts->geneticRelationIDs, 4);
+    aov.setEigen(); // calculate eigenvectors
+    endPhase();
+
+    beginPhase("reading phenotype file");
+    if (opts->isCategorical)
+    {
     readCPhenotypes(opts->phenotypeFileName, phenvec);
-  }
-  else
-  {
+    }
+    else
+    {
     readQPhenotypes(opts->phenotypeFileName, phenvec);
-  }
-  endPhase();
+    }
+    endPhase();
 
-  beginPhase("reading gene expressions file");
-  if (opts->expressionFile)
-  {
+    beginPhase("reading gene expressions file");
+    if (opts->expressionFile)
+    {
     readCompactGeneExpr(opts->expressionFile);
-  }
-  endPhase();
+    }
+    endPhase();
 
-  beginPhase("reading go term file");
-  if (opts->goTermFile)
-  {
+    beginPhase("reading go term file");
+    if (opts->goTermFile)
+    {
     vector<string> goTerms;
     readFileToVec(opts->goFilter, goTerms);
     filterGoTerms(opts->goTermFile, goTerms);
-  }
-  endPhase();
+    }
+    endPhase();
 
-  if (opts->filterCoding)
-  {
+    if (opts->filterCoding)
+    {
     beginPhase("filtering blocks by coding");
     filterCodingBlocks();
     endPhase();
-  }
+    }
 
-  if (opts->equalFile)
-  {
+    if (opts->equalFile)
+    {
     beginPhase("filtering by equality class");
     vector<int> equalClass;
     readEqualFile(opts->equalFile, equalClass);
     filterEqualBlocks(equalClass);
     endPhase();
-  }
+    }
 
-  beginPhase("computing ANOVA p-values");
-  for (unsigned blkIdx = 0; blkIdx < blocks.size(); blkIdx++)
-  {
+    beginPhase("computing ANOVA p-values");
+    for (unsigned blkIdx = 0; blkIdx < blocks.size(); blkIdx++)
+    {
     BlockSummary *pBlock = blocks[blkIdx];
     //cout << "Block: " << pBlock->chrName << "\t" << pBlock->blockIdx << endl;
     if (pBlock->isIgnored)
@@ -330,40 +359,46 @@ int main(int argc, char **argv)
         cout << endl;
       }
       ANOVA(phenvec, pBlock->pattern, pBlock->FStat, pBlock->pvalue, pBlock->effect);
+      bool ok = aov.setNonQMarkMat(pBlock->pattern, strainAbbrevs);
+      if (ok)
+          aov.pillaiTrace(pBlock->mFStat, pBlock->mPvalue);
+
       if (pBlock->FStat == INFINITY && pBlock->effect < 0.0)
       {
         cout << "Weird effect:" << endl;
         cout << "blockIdx = " << pBlock->blockIdx << ", FStat = " << pBlock->FStat << ", effect = " << pBlock->effect << endl;
       }
     }
-  }
-  endPhase();
-  setBlockStats();
-  beginPhase("setting block stats");
+    }
+    endPhase();
+    setBlockStats();
+    beginPhase("Benjamini Hochberg procedure for controlling the FDR");
+    bh_fdr(blocks, 0.05, 0);
+    if (!opts->isCategorical)
+        bh_fdr(blocks, 0.05,1);
+    endPhase();
 
-  endPhase();
+    beginPhase("sorting blocks");
+    BlocksComparator bcomp(opts->isCategorical);
+    sort(blocks.begin(), blocks.end(), bcomp);
+    endPhase();
 
-  beginPhase("sorting blocks");
-  BlocksComparator bcomp(opts->isCategorical);
-  sort(blocks.begin(), blocks.end(), bcomp);
-  endPhase();
-
-  beginPhase("sorting blocks in gene table");
-  // Pass to sort block vectors in the gene table.
-  for (std::unordered_map<string, GeneSummary *>::iterator git = geneTable.begin(); git != geneTable.end(); git++)
-  {
+    beginPhase("sorting blocks in gene table");
+    // Pass to sort block vectors in the gene table.
+    for (std::unordered_map<string, GeneSummary *>::iterator git = geneTable.begin(); git != geneTable.end(); git++)
+    {
     vector<BlockSummary *> &gBlocks = (*git).second->blocks;
     sort(gBlocks.begin(), gBlocks.end(), bcomp);
-  }
-  endPhase();
+    }
+    endPhase();
 
-  // If haploBlocks flag is set, generate a blocks-oriented results file instead a gene-oriented file.
-  // This is a bit of a hack.  If geneName is provided on command line, this generates a block-oriented
-  // results file, in the format of nhaplomap.pl, for display when someone clicks on a gene in the
-  // gene-oriented html (or if * was specified for gene name)
-  // Otherwise, it generates the gene-oriented html.
-  if (opts->geneName || opts->haploBlocks)
-  {
+    // If haploBlocks flag is set, generate a blocks-oriented results file instead a gene-oriented file.
+    // This is a bit of a hack.  If geneName is provided on command line, this generates a block-oriented
+    // results file, in the format of nhaplomap.pl, for display when someone clicks on a gene in the
+    // gene-oriented html (or if * was specified for gene name)
+    // Otherwise, it generates the gene-oriented html.
+    if (opts->geneName || opts->haploBlocks)
+    {
     beginPhase("writing block-oriented results file for gene.");
     if (opts->isCategorical)
     {
@@ -379,17 +414,17 @@ int main(int argc, char **argv)
     {
       writeBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
     }
-  }
-  else if (opts->geneBlocks)
-  {
+    }
+    else if (opts->geneBlocks)
+    {
     writeGeneBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
-  }
-  else if (opts->geneByBlocks)
-  {
+    }
+    else if (opts->geneByBlocks)
+    {
     writeGeneBlockByBlocks(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
-  }
-  else
-  {
+    }
+    else
+    {
     beginPhase("writing gene-oriented results file.");
     if (opts->isCategorical)
     {
@@ -403,9 +438,9 @@ int main(int argc, char **argv)
       writeGeneSums(opts->isCategorical, opts->outputFileName, opts->datasetName,
                     phenvec, blocks, opts->pvalueCutoff, opts->filterCoding);
     }
-  }
+    }
 
-  endPhase();
+    endPhase();
 
-  return 0;
+    return 0;
 }

@@ -33,6 +33,10 @@ extern bool verbose; // in haploLib
 extern Dynum<string> relevantStrains;
 extern Dynum<string> strainAbbrevs;
 
+inline bool file_exist(const char* name) {
+    ifstream f(name);
+    return f.good();
+}
 
 ostream &showPattern(const char *pattern);
 ostream &showPattern(const char *pattern, size_t len);
@@ -47,8 +51,9 @@ void endPhase();
 void endPhase(const char *msg, string chr);
 
 template <typename T>
-decltype(std::bind(&T::value_type::second, std::placeholders::_1)) select2nd();
-
+decltype(std::bind(&T::value_type::second, std::placeholders::_1)) select2nd() {
+    return std::bind(&T::value_type::second, std::placeholders::_1);
+}
 // with parameters
 //template <typename T>
 //decltype(std::bind(&T::value_type::second, std::placeholders::_1)) select2nd(T m) {

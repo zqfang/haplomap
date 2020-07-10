@@ -11,110 +11,102 @@
 // but maybe that would be confusing.
 
 #include <fstream>
-#include <ostream>
-
+#include <iostream>
 #include <vector>
-//#include <ext/hash_map>
 #include <unordered_map>
 
-using namespace std;
-//using namespace __gnu_cxx;
 
 template <typename EltType>
 class Dynum
 {
-
-  typedef std::unordered_map<EltType, int> _E2IMap;
-
-  _E2IMap _elt_to_idx;
-  vector<EltType> _idx_to_elt;
-  int _numIndices;
-  ; // Number of indices allocated.  Also, the next index value.
+    typedef std::unordered_map<EltType, int> _E2IMap;
+    _E2IMap _elt_to_idx;
+    std::vector<EltType> _idx_to_elt;
+    int _numIndices; // Number of indices allocated.  Also, the next index value.
 
 public:
-  Dynum() : _numIndices(0){}; // constructor
+    Dynum() : _numIndices(0){}; // constructor
+    ~Dynum(){}; // destructor
 
-  ~Dynum(){}; // destructor
-
-  // If elt is already in enum, return old idx.
-  // Else, allocate a new idx and return it.
-  int addElementIfNew(EltType elt)
-  {
-    typename _E2IMap::iterator it = _elt_to_idx.find(elt);
-    if (it != _elt_to_idx.end())
+    // If elt is already in enum, return old idx.
+    // Else, allocate a new idx and return it.
+    int addElementIfNew(EltType elt)
     {
-      // return *it.second;
-      return it->second;
+        typename _E2IMap::iterator it = _elt_to_idx.find(elt);
+        if (it != _elt_to_idx.end())
+        {
+            // return *it.second;
+            return it->second;
+        }
+        else
+        {
+            _idx_to_elt.push_back(elt);
+            _elt_to_idx[elt] = _numIndices++;
+            return _numIndices - 1;
+        }
     }
-    else
-    {
-      _idx_to_elt.push_back(elt);
-      _elt_to_idx[elt] = _numIndices++;
-      return _numIndices - 1;
-    }
-  }
 
-  // Constructor to build a dynum out of an ordered vector of elements.
-  // elements must be unique.
-  Dynum(vector<EltType> &eltvec)
-  {
-    _idx_to_elt = eltvec; // FIXME: get rid of this copy.
-    _numIndices = eltvec.size();
-    for (int i = 0; i < eltvec.size(); i++)
+    // Constructor to build a dynum out of an ordered vector of elements.
+    // elements must be unique.
+    Dynum(std::vector<EltType> &eltvec)
     {
-      // FIXME: check for already defined.
-      _elt_to_idx[eltvec[i]] = i;
+        _idx_to_elt = eltvec; // FIXME: get rid of this copy.
+        _numIndices = eltvec.size();
+        for (int i = 0; i < eltvec.size(); i++)
+        {
+            // FIXME: check for already defined.
+            _elt_to_idx[eltvec[i]] = i;
+        }
     }
-  }
 
-  // Map element -> index, but returns -1 if not indexed.
-  int hasIndex(EltType elt)
-  {
-    typename _E2IMap::iterator it = _elt_to_idx.find(elt);
-    if (it == _elt_to_idx.end())
+    // Map element -> index, but returns -1 if not indexed.
+    int hasIndex(EltType elt)
     {
-      return -1;
+        typename _E2IMap::iterator it = _elt_to_idx.find(elt);
+        if (it == _elt_to_idx.end())
+        {
+            return -1;
+        }
+        // return *it;
+        return (*it).second;
     }
-    // return *it;
-    return (*it).second;
-  }
 
-  // Map element -> index.  Fatal error if not there.
-  int indexOf(EltType elt)
-  {
-    int idx = hasIndex(elt);
-    if (idx >= 0)
+    // Map element -> index.  Fatal error if not there.
+    // return -1 if not there
+    int indexOf(EltType elt)
     {
-      return idx;
+        int idx = hasIndex(elt);
+        if (idx >= 0)
+        {
+            return idx;
+        }
+        else
+        {
+            std::cerr << "Index of " << elt << " not found." << std::endl;
+            return -1;
+        }
     }
-    else
+
+    // Map index -> element
+    EltType eltOf(int idx)
     {
-      cerr << "Index of " << elt << " not found." << endl;
-      exit(1);
+        return _idx_to_elt[idx];
     }
-  }
 
-  // Map index -> element
-  EltType eltOf(int idx)
-  {
-    return _idx_to_elt[idx];
-  }
-
-  // size
-  int size()
-  {
-    return _numIndices;
-  }
-
-  // List mapping
-  void dump()
-  {
-    for (int i = 0; i < size(); i++)
+    // size
+    int size()
     {
-      cout << i << "\t" << eltOf(i) << endl;
+        return _numIndices;
     }
-  }
+
+    // List mapping
+    void dump()
+    {
+        for (int i = 0; i < size(); i++)
+        {
+            std::cout << i << "\t" << eltOf(i) << std::endl;
+        }
+    }
 };
 
-#else
 #endif

@@ -7,7 +7,7 @@
 #include <string>
 #include <unordered_map>
 #include <functional>
-#include "haploLib.h"
+#include "haplolib.h"
 
 using namespace std;
 
@@ -42,7 +42,11 @@ public:
   bool isIgnored; // for blocks that have been filtered out.
   float FStat;
   float pvalue;
+  float FDR;
   float effect;
+  float mFStat;
+  float mPvalue;
+  float mFDR;
   int numHaplo;
   int numInteresting;
   map<string, string> geneIsInteresting; // gene name -> codon change, by gene BY
@@ -50,6 +54,7 @@ public:
   // constructor
   BlockSummary(char *chrnm, int num, int start, int size,
                int chrbeg, int chrend, char *pat);
+  BlockSummary();
   ~BlockSummary();
 
   string updateCodonScore(string str);
@@ -212,9 +217,9 @@ void ANOVA(vector<vector<float>> &phenvec, char *pattern, float &FStat, float &p
  */
 extern int numCategories; // default for non-categorical data.
 extern const int AACLASSES[];
-extern std::vector<string> catNames; // maps strIdx -> category name.
+extern std::vector<std::string> catNames; // maps strIdx -> category name.
 // Maps gene names to a string of A's, M's, and P's
-extern std::unordered_map<string, string> geneExprMap;
+extern std::unordered_map<std::string, std::string> geneExprMap;
 // Globals
 extern std::unordered_map<std::string, GeneSummary *> geneTable; // for gene-oriented interface
 extern std::vector<BlockSummary *> blocks; // global vector of all blocks.

@@ -52,13 +52,16 @@ bin/ghmap -p ${HOME}/data/test_traits.txt \
 2. ghmap:
   * gene-oriented results file
 
-| NO | Field | Explaination |
-|--- | ---- | ------------ |
+| NO |Field | Explaination |
+|---| ---- | ------------ |
 |0 |GeneName   | Associated Gene     |
 |1 |CodonFlag  | condonChange ? 1:0  |
 |2 |Pattern    | Haplotype pattern   |
-|3 |Score      | isCategorical ? Fstat : Pvalue |
-|4 |Effect     | Genetic Effect ( Omega^2 )   |
+|3 |FStat/Pvalue | isCategorical ? Fstat : Pvalue |
+|4 |FDR        | Benjamini Hochberg. If categorical, skip |
+|5 |Effect     | Genetic Effect ( Omega^2 )   |
+|6 |GeneticPvalue | Pillai’s Trace Pvalue |
+|7 |GeneticFDR |   Pillai’s Trace FDR |
 |5 |Chrom      | Chromosome idx      |
 |6 |ChrBeg     | HaploBlock begin idx|
 |7 |ChrEnd     | HaploBlock end idx  |
@@ -68,11 +71,17 @@ bin/ghmap -p ${HOME}/data/test_traits.txt \
 
 BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | CondingMap ...
 
+## TODO
+[X] MPD trait data curation  
+[-] Unified commandline interface 
 
 ## Changelog
-2020-06-30 HBCGM v0.1
-* support raw animaldata (individual data) input
-* refactor source code, MacOS support
+v0.1
+* ghmap: population structure testing (Pillai’s Trace)
+* ghmap: multiple hypothesis testing correction. Benjamini Hochberg procedure
+* ghmap: support raw animaldata (individual data) input, which will give more statistical power..
+* Refactor source code, Cross-platform support (Linux, MacOS)
+* Refactor to modern C++11
 
-2020-03-01
-* upgrade to C++ 11
+v0.0
+* the first version of haplomap

@@ -12,7 +12,7 @@ ColumnReader::ColumnReader(const char *fname, char *delimiters)
   _delimiters = delimiters;
   if (!_in.is_open())
   {
-    cerr << "Open of file \"" << fname << "\" failed: ";
+    std::cerr << "Open of file \"" << fname << "\" failed: ";
     perror("");
     exit(1);
   }
@@ -27,7 +27,7 @@ ColumnReader::~ColumnReader()
 // General function -- perhaps it should go in another class.
 // Similar to perl split
 // int ColumnReader::split(string& s, char *delimiters, vector<string>& token_vector)
-int ColumnReader::split(string s, char *delimiters, vector<string> &token_vector)
+int ColumnReader::split(std::string s, char *delimiters, std::vector<std::string> &token_vector)
 {
   token_vector.clear();
 
@@ -50,7 +50,7 @@ int ColumnReader::split(string s, char *delimiters, vector<string> &token_vector
     {
       dpos = sz;
     }
-    string tok = s.substr(tokstart, dpos - tokstart);
+    std::string tok = s.substr(tokstart, dpos - tokstart);
     token_vector.push_back(tok);
     tokstart = dpos + 1; // don't care if it overflows
   }
@@ -69,4 +69,16 @@ int ColumnReader::getLine()
 
   // tokenize it
   return split(_line, _delimiters, _line_vector);
+}
+
+
+std::string ColumnReader::getToken(size_t i) {
+if (i < _line_vector.size())
+{
+return _line_vector[i];
+}
+else
+{
+return std::string("");
+}
 }

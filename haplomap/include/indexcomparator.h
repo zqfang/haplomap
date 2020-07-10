@@ -6,20 +6,20 @@
 #include <fstream>
 #include <ostream>
 #include <vector>
+#include <functional>
 
-using namespace std;
-//using namespace __gnu_cxx;
+//using namespace std;
 
 // Function object for sorting an array of indices based on another array of values.
 
 // *** Need to make this into a template
 
 template <typename sortType, typename lss>
-struct IndexComparator : public binary_function<sortType, sortType, bool>
+struct IndexComparator : public std::binary_function<sortType, sortType, bool>
 {
-  vector<sortType> *_pCmpVec;
+  std::vector<sortType> *_pCmpVec;
 
-  IndexComparator(vector<sortType> *pcmpVec) : _pCmpVec(pcmpVec){};
+  IndexComparator(std::vector<sortType> *pcmpVec) : _pCmpVec(pcmpVec){};
 
   bool operator()(const int &a, const int &b)
   {
