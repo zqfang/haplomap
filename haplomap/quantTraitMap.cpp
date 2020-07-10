@@ -361,7 +361,7 @@ int main(int argc, char **argv)
       ANOVA(phenvec, pBlock->pattern, pBlock->FStat, pBlock->pvalue, pBlock->effect);
       bool ok = aov.setNonQMarkMat(pBlock->pattern, strainAbbrevs);
       if (ok)
-          aov.pillaiTrace(pBlock->mFStat, pBlock->mPvalue);
+          aov.pillaiTrace(pBlock->relFStat, pBlock->relPvalue);
 
       if (pBlock->FStat == INFINITY && pBlock->effect < 0.0)
       {

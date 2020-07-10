@@ -55,10 +55,10 @@ std::vector<bool> bh_fdr(std::vector<_NumericType>& pval, std::vector<_NumericTy
 
 
 /// flag: 1 sort pvalue, 0 sort mpvalue
-std::vector<bool> bh_fdr(std::vector<BlockSummary *> & pval,
+void bh_fdr(std::vector<BlockSummary *> & pval,
                          float alpha=0.05, bool flag = 1)
 {
-    std::vector<bool> reject(pval.size(), false);
+    //std::vector<bool> reject(pval.size(), false);
     float m = pval.size();
     uint32_t k = pval.size(); // This is the rank, doesn't need to be double.
     float factor;
@@ -73,9 +73,9 @@ std::vector<bool> bh_fdr(std::vector<BlockSummary *> & pval,
         for (int i = 0; i < pval.size(); ++i) {
             factor = k / m;
             p = pval[i]->pvalue;
-            if (p <= factor * alpha) {
-                reject[i] = true;
-            }
+            //if (p <= factor * alpha) {
+            //    pval[i]->relReject = true;
+            //}
             p /= factor;
             pval[i]->FDR = std::min(p, previous_fdr); // accumulate minimum
             previous_fdr = p;
@@ -86,16 +86,16 @@ std::vector<bool> bh_fdr(std::vector<BlockSummary *> & pval,
 //                        { return std::min(x->FDR, y->FDR); });
     } else {
         std::stable_sort(pval.begin(), pval.end(),
-                  [](BlockSummary* x, BlockSummary* y) {return x->mPvalue > y->mPvalue;});
+                  [](BlockSummary* x, BlockSummary* y) {return x->relPvalue > y->relPvalue;});
         previous_fdr = 1.0;
         for (int i = 0; i < pval.size(); ++i) {
             factor = k / m;
-            p = pval[i]->mPvalue;
+            p = pval[i]->relPvalue;
             if (p <= factor * alpha) {
-                reject[i] = true;
+                pval[i]->relReject = true;
             }
             p /= factor;
-            pval[i]->mFDR = std::min(p, previous_fdr);
+            pval[i]->relFDR = std::min(p, previous_fdr);
             previous_fdr = p;
             k--; //Decrease rank
         }
@@ -105,7 +105,6 @@ std::vector<bool> bh_fdr(std::vector<BlockSummary *> & pval,
 
     }
     //delete pBlock;
-    return reject;
 }
 
 

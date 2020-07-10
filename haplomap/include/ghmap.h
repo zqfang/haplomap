@@ -44,9 +44,10 @@ public:
   float pvalue;
   float FDR;
   float effect;
-  float mFStat;
-  float mPvalue;
-  float mFDR;
+  float relFStat;
+  float relPvalue;
+  float relFDR;
+  bool relReject;
   int numHaplo;
   int numInteresting;
   map<string, string> geneIsInteresting; // gene name -> codon change, by gene BY

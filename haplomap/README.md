@@ -58,8 +58,8 @@ bin/ghmap -p ${HOME}/data/test_traits.txt \
 |1 |CodonFlag  | condonChange ? 1:0  |
 |2 |Pattern    | Haplotype pattern   |
 |3 |FStat/Pvalue | isCategorical ? Fstat : Pvalue |
-|4 |FDR        | Benjamini Hochberg. If categorical, skip |
-|5 |Effect     | Genetic Effect ( Omega^2 )   |
+|4 |Effect     | Genetic Effect ( Omega^2 )   |
+|5 |FDR        | Benjamini Hochberg. If categorical, skip |
 |6 |GeneticPvalue | Pillai’s Trace Pvalue |
 |7 |GeneticFDR |   Pillai’s Trace FDR |
 |5 |Chrom      | Chromosome idx      |
