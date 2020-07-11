@@ -86,19 +86,21 @@ int MANOVA::numHaplotypes(char *pattern)
     return numHap + 1;
 }
 
-void MANOVA::removeQMark(char *pattern) {
-    //
-    char _pat[_numStrains+1];
-    std::memcpy(_pat, pattern, _numStrains+1);
-    // pattern is unprintable => strlen() = 0
+char* MANOVA::removeQMark(char *pattern)
+{
+    /// MARK:: now newpat could be returned
+    char * newpat = (char *)malloc(_numStrains);
+    std::memcpy(newpat, pattern, _numStrains);
+
+    /// MARK: pattern is unprintable => strlen() = 0
     _numDefined = _numStrains;
     // remove all '?'
     int i = 0;
     while (i < _numDefined) {
-        char hap = _pat[i];
+        char hap = newpat[i];
         if (hap != '?') {
             // move left 1 step
-            std::memmove(_pat+i, _pat+i+1, _numDefined - i);
+            std::memmove(newpat+i, newpat+i+1, _numDefined - i);
             _numDefined --;
         } else {
             i++;
@@ -106,9 +108,10 @@ void MANOVA::removeQMark(char *pattern) {
     }
     //// debug reduced pattern
 //    for (int i=0; i < _numDefined; ++i)
-//        std::cout << (char)(_pat[i]+'0'); // ASCII -> char
+//        std::cout << (char)(newpatt[i]+'0'); // ASCII -> char
 //    std::cout<<std::endl;
     //_pattern = _pat; // local memory
+    return newpat;
 }
 
 void MANOVA::setEigen()
@@ -146,13 +149,15 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<string>& haploStrainAbbr)
         _numDefined = 0;
     }
 
+    // define _numDefined, and get new pattern
     //this->removeQMark(pattern);
     for (int i = 0; i < _numStrains; i++)
     {
         if (pattern[i] != '?')
             _numDefined ++;
     }
-
+    
+    assert(_numDefined >= _numHaplo);
     // Stop run if
     if (_numDefined < _numStrains/2 || _numDefined < this->L)
     {
@@ -164,7 +169,8 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<string>& haploStrainAbbr)
     this->L = std::min(this->L, _numDefined - _numHaplo);
 
     gsl_matrix * pm;
-    if (_useEigen) {
+    if (_useEigen)
+    {
         assert(_CorMat->eigenvectors != nullptr);
         pm = _CorMat->eigenvectors;
     }

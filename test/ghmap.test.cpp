@@ -46,6 +46,31 @@ void print_gslmat(gsl_matrix* M){
 }
 
 
+char* removeQMark(char *pattern, size_t _numDefined, char c)
+{
+    /// MARK:: now newpat could be returned
+    char * newpat = (char *)malloc(_numDefined);
+    std::memcpy(newpat, pattern, _numDefined);
+
+    // remove all '?'
+    int i = 0;
+    while (i < _numDefined) {
+        char hap = newpat[i];
+        if (hap != c) {
+            // move left 1 step
+            std::memmove(newpat+i, newpat+i+1, _numDefined - i);
+            _numDefined --;
+        } else {
+            i++;
+        }
+    }
+    //// debug reduced pattern
+    for (int i=0; i < _numDefined; ++i)
+        std::cout << (char)(newpat[i]); // ASCII -> char
+    std::cout<<std::endl;
+    return newpat;
+}
+
 
 
 TEST(READ_PHENO, DISABLED_cat_and_quant_read) {
@@ -193,7 +218,7 @@ TEST(REMOVE_qmark, rmqmark_test) {
     int len2 = len;
     //std::memmove(&pattern[1], &pattern[1+1], (len -1));
     printf("pattern: %s \n",pattern);
-    makeUnprintable(pattern);
+    //makeUnprintable(pattern);
 
     int i = 0;
     while (i < len) {
@@ -207,33 +232,16 @@ TEST(REMOVE_qmark, rmqmark_test) {
     }
     printf("final pattern: %s\n",pattern);
 
+//    for (int i=0; i < len; ++i)
+//        std::cout << (char)(pattern[i]+'0'); // ASCII -> char
+//    std::cout<<std::endl;
+
+    char* newp = removeQMark(pattern, len2+1, '?');
+
+    printf("new pattern:\n");
     for (int i=0; i < len; ++i)
-        std::cout << (char)(pattern[i]+'0'); // ASCII -> char
+        std::cout << (char)(newp[i]+'0'); // ASCII -> char
     std::cout<<std::endl;
-
-
-    char pat2[len2+1];
-    memcpy(pat2, pattern, len2+1);
-    i = 0;
-    while (i < len) {
-        if (pattern[i] == '?'){
-            std::memmove(pat2+i, pat2+i+1, len2-i);
-            printf("pattern: %s \n",pattern);
-            len2 --;
-        } else {
-            i ++;
-        }
-    }
-    printf("final pattern: %s\n",pat2);
-
-    for (int i=0; i < len; ++i)
-        std::cout << (char)(pat2[i]+'0'); // ASCII -> char
-    std::cout<<std::endl;
-
-
-
-
-
 
 }
 

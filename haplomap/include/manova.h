@@ -57,6 +57,8 @@ public:
     void readMat(const char* filename, gsl_matrix * Mat);
     void writeMat(const char* filename, gsl_matrix * Mat);
 
+    /// return new pattern without '?'. order remained.
+    char* removeQMark(char *pattern);
     /// print haplotype pattern
     friend std::ostream& operator<<(std::ostream &os, const MANOVA& aov);
 
@@ -64,8 +66,7 @@ public:
 private:
     /// returns maximum eq. class + 1.
     int numHaplotypes(char *pattern);
-    /// strip all '?'
-    void removeQMark(char *pattern);
+
 
     /// init _Mat, return new pattern without '?'
     void extractNonQMarkMat(gsl_matrix* M, char*pattern);

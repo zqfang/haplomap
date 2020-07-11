@@ -154,18 +154,19 @@ snakemake -s workflows/haplomap.smk \
 
 | NO |Field | Explaination |
 |---| ---- | ------------ |
-|0 |GeneName   | Associated Gene     |
-|1 |CodonFlag  | condonChange ? 1:0  |
-|2 |Pattern    | Haplotype pattern   |
+|0 |GeneName     | Associated Gene     |
+|1 |CodonFlag    | condonChange ? 1:0  |
+|2 |Pattern      | Haplotype pattern   |
 |3 |FStat/Pvalue | isCategorical ? Fstat : Pvalue |
-|4 |FDR        | Benjamini Hochberg. If categorical, skip |
-|5 |Effect     | Genetic Effect ( Omega^2 )   |
-|6 |GeneticPvalue | Pillai’s Trace Pvalue |
-|7 |GeneticFDR |   Pillai’s Trace FDR |
-|5 |Chrom      | Chromosome idx      |
-|6 |ChrBeg     | HaploBlock begin idx|
-|7 |ChrEnd     | HaploBlock end idx  |
-|8 |GeneExprMap| Gene expression Map |
+|4 |Effect       | Genetic Effect ( Omega^2 )   |
+|5 |FDR          | Benjamini Hochberg. If categorical, skip |
+|6 |popPvalue    | Pillai’s Trace Pvalue |
+|7 |popFDR       |   Pillai’s Trace FDR |
+|8 |popYes       | Pillai’s Trace FDR Rejection | 
+|9 |Chrom        | Chromosome idx      |
+|10 |ChrBeg      | HaploBlock begin idx|
+|11 |ChrEnd      | HaploBlock end idx  |
+|12 |GeneExprMap | Gene expression Map |
 
   * block-oriented result file
 

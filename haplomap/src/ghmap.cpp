@@ -1122,6 +1122,7 @@ void scaleVector(vector<float> &v1, float c)
 }
 
 // convert digits 0-9 in string to \000..\011 (but leave '?' printable).
+/// Mark: make ascii starts from 0, not '0'.
 void makeUnprintable(char *pattern)
 {
     char *p = pattern;
