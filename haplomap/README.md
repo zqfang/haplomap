@@ -1,6 +1,6 @@
 
 # haplomap
-Core function for haplotype-based computational genetic mapping  
+Haplotype-based computational genetic mapping  
 
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 
@@ -9,16 +9,15 @@ Core function for haplotype-based computational genetic mapping
 e.g.
 ```bash
 # find haplotypes
-bin/eblocks -a ${HOME}/data/SNPS/chr18.txt \
-            -g ${HOME}/data/gene_coding.txt \
-            -s ${HOME}/TMPDATA/test_strains.txt \
-            -p ${HOME}/TMPDATA/test.haploblocks.txt \
-            -o ${HOME}/TMPDATA/test.SNPs.hb.txt
+bin/haplomap eblocks -a ${HOME}/data/SNPS/chr18.txt \
+                     -g ${HOME}/data/gene_coding.txt \
+                     -s ${HOME}/TMPDATA/test_strains.txt \
+                     -o ${HOME}/TMPDATA/test.SNPs.hb.txt
 
 # statistical testing with trait data
-bin/ghmap -p ${HOME}/data/test_traits.txt \
-          -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
-          -o ${HOME}/TMPDATA/test.final.output.txt
+bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
+                   -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
+                   -o ${HOME}/TMPDATA/test.final.output.txt
 ```
 
 

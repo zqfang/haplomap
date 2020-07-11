@@ -1,7 +1,7 @@
 // -*-c++-*-
 
 // Various useful functions from nhaploblocks
-
+#pragma once
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -32,11 +32,6 @@ extern bool verbose; // in haploLib
 
 extern Dynum<std::string> relevantStrains;
 extern Dynum<std::string> strainAbbrevs;
-
-inline bool file_exist(const char* name) {
-    std::ifstream f(name);
-    return f.good();
-}
 
 std::ostream &showPattern(const char *pattern);
 std::ostream &showPattern(const char *pattern, size_t len);

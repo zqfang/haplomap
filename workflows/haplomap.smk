@@ -75,7 +75,7 @@ rule eblocks:
         bin = HBCGM_BIN,
     log: "logs/MPD_{ids}.chr{i}.eblocks.log"
     shell:
-        "{params.bin}/eblocks -a {input.snps} -g {input.gene_anno} "
+        "{params.bin}/haplomap eblocks -a {input.snps} -g {input.gene_anno} "
         "-s {input.strains} -p {output.snphb} "
         "-o {output.hb} -v > {log}"
 
@@ -93,7 +93,7 @@ rule ghmap:
     run:
         categorical = "-c" if os.path.exists(params.cat) else ''
         cats = "catogorical" if os.path.exists(params.cat) else ''
-        cmd = "{params.bin}/ghmap %s "%categorical +\
+        cmd = "{params.bin}/haplomap ghmap %s "%categorical +\
               "-e {input.gene_exprs} " +\
               "-p {input.trait} -b {input.hb} -o {output} " +\
               "-n MPD_{wildcards.ids}_%s -v > {log}"%cats

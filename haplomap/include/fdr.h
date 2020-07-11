@@ -1,7 +1,7 @@
 //
 // Created by Zhuoqing Fang on 7/7/20.
 //
-
+#pragma once
 #ifndef HBCGM_FDR_H
 #define HBCGM_FDR_H
 
@@ -10,7 +10,7 @@
 #include <functional>
 #include <numeric>
 #include <assert.h>
-#include "ghmap.h"
+//#include "ghmap.h"
 
 /* Benjamini Hochberg procedure for controlling the FDR
  * sort pvalue in descending order, and return adjust pvalue in descending order.
@@ -52,66 +52,5 @@ std::vector<bool> bh_fdr(std::vector<_NumericType>& pval, std::vector<_NumericTy
     //std::for_each(padj.begin(),padj.end(),[](double &p){return p < 1 ? p: 1.0;});
     return reject;
 }
-
-
-/// flag: 1 sort pvalue, 0 sort mpvalue
-void bh_fdr(std::vector<BlockSummary *> & pval,
-                         float alpha=0.05, bool flag = 1)
-{
-    //std::vector<bool> reject(pval.size(), false);
-    float m = pval.size();
-    uint32_t k = pval.size(); // This is the rank, doesn't need to be double.
-    float factor;
-    float p;
-    float previous_fdr;
-    //BlockSummary* pBlock = new BlockSummary();
-    // stored padj
-    if (flag) {
-        std::stable_sort(pval.begin(), pval.end(),
-                  [](BlockSummary* x, BlockSummary* y) {return x->pvalue > y->pvalue;});
-        previous_fdr =1.0;
-        for (int i = 0; i < pval.size(); ++i) {
-            factor = k / m;
-            p = pval[i]->pvalue;
-            //if (p <= factor * alpha) {
-            //    pval[i]->relReject = true;
-            //}
-            p /= factor;
-            pval[i]->FDR = std::min(p, previous_fdr); // accumulate minimum
-            previous_fdr = p;
-            k--; //Decrease rank
-        }
-//        std::accumulate(pval.begin(), pval.end(), pBlock,
-//                        [](BlockSummary* x, BlockSummary* y)
-//                        { return std::min(x->FDR, y->FDR); });
-    } else {
-        std::stable_sort(pval.begin(), pval.end(),
-                  [](BlockSummary* x, BlockSummary* y) {return x->relPvalue > y->relPvalue;});
-        previous_fdr = 1.0;
-        for (int i = 0; i < pval.size(); ++i) {
-            factor = k / m;
-            p = pval[i]->relPvalue;
-            if (p <= factor * alpha) {
-                pval[i]->relReject = true;
-            }
-            p /= factor;
-            pval[i]->relFDR = std::min(p, previous_fdr);
-            previous_fdr = p;
-            k--; //Decrease rank
-        }
-//        std::accumulate(pval.begin(), pval.end(), pBlock->mFDR,
-//                        [](BlockSummary* x, BlockSummary* y)
-//                                   { return std::min(x->mFDR, y->mFDR) ; });
-
-    }
-    //delete pBlock;
-}
-
-
-
-
-
-
-
 
 #endif //HBCGM_FDR_H

@@ -24,7 +24,7 @@ STRAINS: ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10',
 HBCGM:
     # working directory
     WORKSPACE: "/data/bases/fangzq/MPD/results_drug_diet"
-    # path to eblocks, ghmap
+    # path to haplomap
     BIN: "/home/fangzq/github/HBCGM/build/bin"
     
     # ghmap input
