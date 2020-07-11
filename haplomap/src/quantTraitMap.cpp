@@ -75,6 +75,28 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
         {
             break;
         }
+       const char *usage = "usage: ghmap [options]\n"
+        "\nrequired arguments:\n"  
+        "    -p, --phenotypes_file  <phenotype file> strain order should match to (-b)\n"
+        "    -b, --blocks_file      <output file from eblocks>\n"
+        "    -r, --relation         <genetic relation file>  n x n matrix\n"
+        "    -o, --output_file      <output file name>\n"
+        "\noptional arguments:\n"     
+        "    -n, --name             <name of phenotype dataset>\n"  
+        "    -e, --expression_file  <name of file>\n" 
+        "    -q, --equal_file       <name of file>\n"
+        "    -t, --goterms_file     <name of file>\n"
+        "    -g, --gene             <name of file>  writing block-oriented results file for gene\n"
+        "    -i, --goterms_include_file <name of file>\n"   
+        "                           output only genes with these terms\n"
+        "    -c    phenotype (-p) is categorical\n"                        
+        "    -f    filter out non-coding blocks\n"
+        "    -k    haploblocks generate a blocks-oriented results\n"
+        "    -m    output gene and haplotype block\n"
+        "    -a    output gene and haplotype block sort by block\n"
+        "    -l, --pvalue_cutoff    only write results with pvalue < cutoff\n"
+        "    -v, --verbose\n" 
+        "    -h, --help\n";
 
         switch (c)
         {
@@ -117,29 +139,7 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
 
             case 'h':
             {
-                std::cout << "usage: ghmap [options]\n"
-                        "\nrequired arguments:\n"  
-                        "    -p, --phenotypes_file  <phenotype file> strain order should match to (-b)\n"
-                        "    -b, --blocks_file      <output file from eblocks>\n"
-                        "    -r, --relation         <genetic relation file>  n x n matrix\n"
-                        "    -o, --output_file      <output file name>\n"
-                        "\noptional arguments:\n"     
-                        "    -n, --name             <name of phenotype dataset>\n"  
-                        "    -e, --expression_file  <name of file>\n" 
-                        "    -q, --equal_file       <name of file>\n"
-                        "    -t, --goterms_file     <name of file>\n"
-                        "    -g, --gene             <name of file>  writing block-oriented results file for gene\n"
-                        "    -i, --goterms_include_file <name of file>\n"   
-                        "                           output only genes with these terms\n"
-                        "    -c    phenotype (-p) is categorical\n"                        
-                        "    -f    filter out non-coding blocks\n"
-                        "    -k    haploblocks generate a blocks-oriented results\n"
-                        "    -m    output gene and haplotype block\n"
-                        "    -a    output gene and haplotype block sort by block\n"
-                        "    -l, --pvalue_cutoff    only write results with pvalue < cutoff\n"
-                        "    -v, --verbose\n" 
-                        "    -h, --help\n"
-                     << std::endl;
+                cout << usage << endl;
                 break;
             }
 
@@ -220,15 +220,6 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
                 /* getopt_long already printed an error message. */
                 break;
             }
-//            case 0: /* long option without a short arg */
-//            {
-//                if (strcmp("version", long_options_ghmap[option_index].name) == 0)
-//                {
-//                    std::cout << __COMPILER__ <<" "<< __VERSION__ << std::endl;
-//                    std::cout << "ghmap version: " << __HAPLOMAP_VER__ << std::endl;
-//                }
-//                exit(1);
-//            }
             default:
                 abort();
         }
