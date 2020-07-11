@@ -1136,3 +1136,55 @@ void makeUnprintable(char *pattern)
     }
 }
 
+
+void bh_fdr(std::vector<BlockSummary *> & pval, float alpha, bool flag)
+{
+    //std::vector<bool> reject(pval.size(), false);
+    float m = pval.size();
+    uint32_t k = pval.size(); // This is the rank, doesn't need to be double.
+    float factor;
+    float p;
+    float previous_fdr;
+    //BlockSummary* pBlock = new BlockSummary();
+    // stored padj
+    if (flag) {
+        std::stable_sort(pval.begin(), pval.end(),
+                         [](BlockSummary* x, BlockSummary* y) {return x->pvalue > y->pvalue;});
+        previous_fdr =1.0;
+        for (int i = 0; i < pval.size(); ++i) {
+            factor = k / m;
+            p = pval[i]->pvalue;
+            //if (p <= factor * alpha) {
+            //    pval[i]->relReject = true;
+            //}
+            p /= factor;
+            pval[i]->FDR = std::min(p, previous_fdr); // accumulate minimum
+            previous_fdr = p;
+            k--; //Decrease rank
+        }
+//        std::accumulate(pval.begin(), pval.end(), pBlock,
+//                        [](BlockSummary* x, BlockSummary* y)
+//                        { return std::min(x->FDR, y->FDR); });
+    } else {
+        std::stable_sort(pval.begin(), pval.end(),
+                         [](BlockSummary* x, BlockSummary* y) {return x->relPvalue > y->relPvalue;});
+        previous_fdr = 1.0;
+        for (int i = 0; i < pval.size(); ++i) {
+            factor = k / m;
+            p = pval[i]->relPvalue;
+            if (p <= factor * alpha) {
+                pval[i]->relReject = true;
+            }
+            p /= factor;
+            pval[i]->relFDR = std::min(p, previous_fdr);
+            previous_fdr = p;
+            k--; //Decrease rank
+        }
+//        std::accumulate(pval.begin(), pval.end(), pBlock->mFDR,
+//                        [](BlockSummary* x, BlockSummary* y)
+//                                   { return std::min(x->mFDR, y->mFDR) ; });
+
+    }
+    //delete pBlock;
+}
+

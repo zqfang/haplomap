@@ -211,6 +211,8 @@ void readFileToVec(char *fname, vector<string> &vec);
 // This does not actually compute the p-value.  It stops with the F statistic.
 void ANOVA(vector<vector<float>> &phenvec, char *pattern, float &FStat, float &pvalue, float &effect);
 
+/// flag: 1 sort pvalue, 0 sort mpvalue
+void bh_fdr(std::vector<BlockSummary *> & pval, float alpha=0.05, bool flag = 1);
 
 // defined globals
 /* use `extern` to declare global variable, to use it
