@@ -31,7 +31,7 @@ target_link_libraries(ghmap PUBLIC ${GSL_LIBRARIES} ) # link libgsl.so libgslcbl
 
 
 ## eblocks
-list(REMOVE_ITEM HAPLOMAP_SRC "${CMAKE_CURRENT_SOURCE_DIR}/quantTraitMap.cpp" )
+list(REMOVE_ITEM HAPLOMAP_SRC "${CMAKE_CURRENT_SOURCE_DIR}/quantTraitMap.cpp")
 add_executable(eblocks ehaploblocks.cpp "${HAPLOMAP_SRC}")
 #target_include_directories(eblocks PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${GSL_INCLUDE})
 target_link_libraries(eblocks PUBLIC ${GSL_LIBRARIES})
