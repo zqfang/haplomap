@@ -22,6 +22,9 @@ ATAC_PEAKS = glob.glob(config['HBCGM']['ATAC_PEAKS'])
 with open(TRAIT_IDS, 'r') as t:
     IDS = t.read().strip().split()
     assert len(IDS) >= 1
+## skip run if already done
+pat = config['HBCGM']['WORKSPACE'] + "MPD_{ids}/chrX.results.txt"
+IDS =  [ mnum for mnum in IDS if not os.path.exists(pat.format(ids = mnum)) ]
 
 CHROMOSOMES = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
 # output files
@@ -30,7 +33,7 @@ HBCGM =  expand("MPD_{ids}/chr{i}.results.txt", ids=IDS, i=CHROMOSOMES)
 HBLOCKS = expand("MPD_{ids}/chr{i}.hblocks.txt", ids=IDS, i=CHROMOSOMES)
 HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.open_region.bed", ids=IDS, i=CHROMOSOMES)
 rule target:
-    input: HBCGM, HBCGM_NONCODING
+    input: HBCGM, #HBCGM_NONCODING
 
 
 # rule pheno:
@@ -46,16 +49,16 @@ rule traits:
 
 rule strain2trait:
     input: 
-        trait = TRAIT_DATA,
         strain = STRAIN_ANNO,
         ids = "MPD_{ids}/strain.{ids}.temp"
     output: 
         "MPD_{ids}/strain.{ids}.txt",
         "MPD_{ids}/trait.{ids}.txt",
     params:
+        trait = TRAIT_DATA,
         outdir = config['HBCGM']['WORKSPACE'],
         traitid = "{ids}",
-        has_categorical = not config['HBCGM']['NUMERIC']
+        rawdata = config['HBCGM']['USE_RAWDATA']
     script:
         "../scripts/strain2traits.py"
 

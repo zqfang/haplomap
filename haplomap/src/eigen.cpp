@@ -2,9 +2,12 @@
 // Created by Zhuoqing Fang on 7/8/20.
 //
 
+#include <assert.h>
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_linalg.h>
+#include "gsl/gsl_matrix.h"
+#include "gsl/gsl_statistics.h"
 #include "ColumnReader.h"
 #include "eigen.h"
 

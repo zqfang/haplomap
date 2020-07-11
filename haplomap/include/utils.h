@@ -7,7 +7,7 @@
 
 
 #include <stdio.h>  /* defines FILENAME_MAX */
-#ifdef WIN
+#ifdef WIN32
 #include <direct.h>
 #define GetCurrentDir _getcwd
 #else
@@ -15,6 +15,7 @@
 #define GetCurrentDir getcwd
 #endif
 
+#include <memory>
 #include <vector>
 #include <string>
 #include <iostream>

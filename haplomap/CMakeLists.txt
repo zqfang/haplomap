@@ -26,15 +26,15 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src HAPLOMAP_SRC)
 add_executable(ghmap quantTraitMap.cpp "${HAPLOMAP_SRC}")
 #target_include_directories(ghmap PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 #target_link_libraries(ghmap PUBLIC GSL::gsl GSL::gslcblas ) # link libgsl.so libgslcblas.so
-target_link_libraries(ghmap PUBLIC ${GSL_LIBRARIES}) # link libgsl.so libgslcblas.so
+target_link_libraries(ghmap PUBLIC ${GSL_LIBRARIES} ) # link libgsl.so libgslcblas.so
 #target_link_libraries(ghmap gtest gmock_main) # link to gtest
 
 
 ## eblocks
-list(REMOVE_ITEM HAPLOMAP_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/ghmap.cpp" )
+list(REMOVE_ITEM HAPLOMAP_SRC "${CMAKE_CURRENT_SOURCE_DIR}/quantTraitMap.cpp" )
 add_executable(eblocks ehaploblocks.cpp "${HAPLOMAP_SRC}")
 #target_include_directories(eblocks PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${GSL_INCLUDE})
-##target_link_libraries(eblocks)
+target_link_libraries(eblocks PUBLIC ${GSL_LIBRARIES})
 
 
 

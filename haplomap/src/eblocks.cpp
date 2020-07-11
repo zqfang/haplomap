@@ -1,5 +1,6 @@
 
 #include "eblocks.h"
+using namespace std;
 
 // For setting initial datastructure sizes
 const int approxNumSNPs = 8000000;

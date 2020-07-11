@@ -18,37 +18,37 @@
 #include <cmath>
 #include <time.h>
 #include <unordered_set>
-#include "utils.h"
+//#include "utils.h"
 #include "dynum.h"
 #include "indexcomparator.h"
 #include "ColumnReader.h"
 
-using namespace std;
+//using namespace std;
 
 // FIXME: tasteless global variables (maybe verbose is ok).
 
 extern int numStrains;
 extern bool verbose; // in haploLib
 
-extern Dynum<string> relevantStrains;
-extern Dynum<string> strainAbbrevs;
+extern Dynum<std::string> relevantStrains;
+extern Dynum<std::string> strainAbbrevs;
 
 inline bool file_exist(const char* name) {
-    ifstream f(name);
+    std::ifstream f(name);
     return f.good();
 }
 
-ostream &showPattern(const char *pattern);
-ostream &showPattern(const char *pattern, size_t len);
-ostream &showPattern(ostream &os, const char *pattern);
-ostream &showPattern(ostream &os, const char *pattern, size_t len);
+std::ostream &showPattern(const char *pattern);
+std::ostream &showPattern(const char *pattern, size_t len);
+std::ostream &showPattern(std::ostream &os, const char *pattern);
+std::ostream &showPattern(std::ostream &os, const char *pattern, size_t len);
 void readStrains(char *fname);
 
 // Progress messages.
 void beginPhase();
 void beginPhase(const char *msg);
 void endPhase();
-void endPhase(const char *msg, string chr);
+void endPhase(const char *msg, std::string chr);
 
 template <typename T>
 decltype(std::bind(&T::value_type::second, std::placeholders::_1)) select2nd() {
@@ -71,13 +71,13 @@ class SNPInfo
     char *initPattern();
 
 public:
-    friend ostream &operator<<(ostream &os, const SNPInfo &s);
+    friend std::ostream &operator<<(std::ostream &os, const SNPInfo &s);
 
     // default constructor
     SNPInfo();
     // constructor for stuff in chr_info_perl file.
     //  SNPInfo(string n, int ci, int pos) : name(n), chrIdx(ci), position(pos) { alleles = initAlleles(); };
-    SNPInfo(string n, int ci, int pos);
+    SNPInfo(std::string n, int ci, int pos);
 
     // copy constructor
     SNPInfo(SNPInfo const &snpInfo);
@@ -86,14 +86,14 @@ public:
     // Overload assignment to memcpy, so we don't have to worry about string copying.
     SNPInfo &operator=(const SNPInfo &si);
 
-    string name;
+    std::string name;
     int chrIdx;   // chromosome index
     int position; // location on chromosome
     // string of alleles "ACGTD?" "D" is deletion, "?" is unspecified.
     char *alleles;
     // string of haplotype numbers (not printable).
     char *pattern;
-    map<string, string> geneCodonMap; // Map gene names to codons
+    std::map<std::string, std::string> geneCodonMap; // Map gene names to codons
     bool frozen;                      // when true, pattern is uniquified and should not be changed.
     bool used;                        // Is this SNP in a chosen block?
     bool qMarks;                      //Are there any unkowns in this SNP?
@@ -131,7 +131,7 @@ public:
     // destructor
     ~HaploBlock();
 
-    friend ostream &operator<<(ostream &os, const HaploBlock &s);
+    friend std::ostream &operator<<(std::ostream &os, const HaploBlock &s);
 };
 
 
@@ -152,7 +152,7 @@ inline bool eqPatterns(const char *pat1, const char *pat2)
     //  showPattern(pat1);
     //  cout << " = ";
     //  showPattern(pat2);
-    bool result = memcmp(pat1, pat2, numStrains) == 0;
+    bool result = std::memcmp(pat1, pat2, numStrains) == 0;
     //  cout << " result = " << result << endl;
     return result;
 }
@@ -179,10 +179,10 @@ extern PatternSet patternUniqueTable;
 // for debugging
 inline void showBlock(const HaploBlock &hb)
 {
-    cout << hb << endl;
+    std::cout << hb << std::endl;
 }
 
-void showBlocks(vector<HaploBlock *> &hbv);
+void showBlocks(std::vector<HaploBlock *> &hbv);
 
 
 // Map chromosome names to numerical indices.

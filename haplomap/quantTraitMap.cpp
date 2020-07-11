@@ -19,6 +19,8 @@
 #define __COMPILER__ "g++"
 #endif
 
+using namespace std;
+
 
 struct Options
 {

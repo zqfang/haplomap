@@ -26,9 +26,7 @@
 #include <unordered_map>
 #include "haplolib.h"
 
-
-
-using namespace std;
+//using namespace std;
 
 // For setting initial datastructure sizes
 extern const int approxNumSNPs;
@@ -54,7 +52,7 @@ int allelesToPattern(char *astr, char *pattern);
 extern const int haploLimit;    // Maximum number of haplotypes to allow in a block.
 extern const int tooLong; // A block cannot span more than 1 million base pairs
 
-typedef std::vector<string> strvec; // vector of strings data type.
+typedef std::vector<std::string> strvec; // vector of strings data type.
 
 //// Map chromosome names to numerical indices.
 //Dynum<string> chromosomes;
@@ -77,7 +75,7 @@ extern std::vector<HaploBlock *> chosenHaploBlocks;
  *****************************************************************/
 
 // Read file of strains to use and index them.
-int readDynumList(char *fname, Dynum<string> &dn);
+int readDynumList(char *fname, Dynum<std::string> &dn);
 
 // read file perlegen_b36_snp_vs_mmgene_091208.unl
 // NEED THIS TO REGENERATE COMPACT FILE
@@ -233,10 +231,10 @@ void chooseBlocks();
 // print a block and the SNPs in it.
 void showBlockSNPs(HaploBlock &hb);
 
-void showBlocks(vector<HaploBlock> &hbv);
+void showBlocks(std::vector<HaploBlock> &hbv);
 
 // Show a vector of pointers to blocks, instead of blocks. (Badly named.)
-void showBlocksSNPs(vector<HaploBlock *> &hbs);
+void showBlocksSNPs(std::vector<HaploBlock *> &hbs);
 
 // strain display structure, used so we can put strains in a good
 // order for HTML.
@@ -258,7 +256,7 @@ struct StrainDisp
                  numSNPsDefined(0),
                  haplotype('?'){};
 
-  friend ostream &operator<<(ostream &os, const StrainDisp &sd);
+  friend std::ostream &operator<<(std::ostream &os, const StrainDisp &sd);
 };
 
 // comparison function to get in right order.
@@ -270,7 +268,7 @@ struct StrainDisp
 bool compareStrainDisps(StrainDisp sd1, StrainDisp sd2);
 
 // Write out html for one block.
-void writeBlock(ostream &hs, int blkIdx, int haploLimit);
+void writeBlock(std::ostream &hs, int blkIdx, int haploLimit);
 
 // Writes HTML pages for a chromosome.  Since SNPs for multiple
 // chromosomes may be in same vector and chosenBlocks may have the
@@ -285,10 +283,10 @@ int writeChromosome(const char *dirname, size_t blkIdx);
 void writeHTML(char *dirName);
 
 // write out list of gene names for a single block.
-void writeBlockGeneNames(ofstream &os, HaploBlock *pHB);
+void writeBlockGeneNames(std::ofstream &os, HaploBlock *pHB);
 
 // Write block summary for a single chromosome.
-int writeChrBlockSummary(ofstream &os, size_t blkIdx, int minBlockSNPs);
+int writeChrBlockSummary(std::ofstream &os, size_t blkIdx, int minBlockSNPs);
 
 
 void writeBlockSummary(char *fileName, int minBlockSNPs);
