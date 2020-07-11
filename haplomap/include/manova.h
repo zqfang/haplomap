@@ -64,9 +64,11 @@ public:
 private:
     /// returns maximum eq. class + 1.
     int numHaplotypes(char *pattern);
+    /// strip all '?'
+    void removeQMark(char *pattern);
 
-    /// init _Mat, drop '?' strains
-    char* extractNonQMarkMat(gsl_matrix* M);
+    /// init _Mat, return new pattern without '?'
+    void extractNonQMarkMat(gsl_matrix* M, char*pattern);
 
     /// drop Mat and pattern where strains marked with ?
     /// return new pattern without '?'

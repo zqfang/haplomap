@@ -85,6 +85,32 @@ int MANOVA::numHaplotypes(char *pattern)
     }
     return numHap + 1;
 }
+
+void MANOVA::removeQMark(char *pattern) {
+    //
+    char _pat[_numStrains+1];
+    std::memcpy(_pat, pattern, _numStrains+1);
+    // pattern is unprintable => strlen() = 0
+    _numDefined = _numStrains;
+    // remove all '?'
+    int i = 0;
+    while (i < _numDefined) {
+        char hap = _pat[i];
+        if (hap != '?') {
+            // move left 1 step
+            std::memmove(_pat+i, _pat+i+1, _numDefined - i);
+            _numDefined --;
+        } else {
+            i++;
+        }
+    }
+    //// debug reduced pattern
+//    for (int i=0; i < _numDefined; ++i)
+//        std::cout << (char)(_pat[i]+'0'); // ASCII -> char
+//    std::cout<<std::endl;
+    //_pattern = _pat; // local memory
+}
+
 void MANOVA::setEigen()
 {
     assert(_CorMat != nullptr);
@@ -108,7 +134,6 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<string>& haploStrainAbbr)
     _numStrains = haploStrainAbbr.size();
     _haploStrainsAbbrevs = std::make_shared<Dynum<std::string>>(haploStrainAbbr);
     // called strdup to make makeUnprintable work
-    //_pattern = strdup(pattern);
     _numHaplo = this->numHaplotypes(pattern);
     _pattern = pattern;
 
@@ -120,13 +145,14 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<string>& haploStrainAbbr)
         _Mat = nullptr;
         _numDefined = 0;
     }
-    //
-    for (int str1 = 0; str1 < _numStrains; str1++)
+
+    //this->removeQMark(pattern);
+    for (int i = 0; i < _numStrains; i++)
     {
-        //char hap = pattern[str1];
-        if ('?' != pattern[str1])
-            _numDefined++;
+        if (pattern[i] != '?')
+            _numDefined ++;
     }
+
     // Stop run if
     if (_numDefined < _numStrains/2 || _numDefined < this->L)
     {
@@ -145,16 +171,14 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<string>& haploStrainAbbr)
     else {
         pm = _CorMat->data;
     }
-    //char* _reduced_pattern = this->extractNonQMarkMat(pm);
-    this->extractNonQMarkMat(pm);
+    this->extractNonQMarkMat(pm, pattern);
+
     return true;
 }
-
-char* MANOVA::extractNonQMarkMat(gsl_matrix* M)
+void MANOVA::extractNonQMarkMat(gsl_matrix* M, char* pattern)
 {
     // get new _Mat without '?'
-    std::string pat;
-    //char pat[_numDefined];
+
     // re-assign
     //_Mat = gsl_matrix_alloc(_SubMat->size1, _SubMat->size2);
     _Mat = gsl_matrix_alloc(_numDefined, this->L);
@@ -163,14 +187,11 @@ char* MANOVA::extractNonQMarkMat(gsl_matrix* M)
     std::string strain_abbr;
     for (int str1 = 0; str1 < _numStrains; str1++)
     {
-        char hap = _pattern[str1]; // 0,1,2,3,4, ?
+        char hap = pattern[str1]; // 0,1,2,3,4, ?
         if ('?' != hap) {
             strain_abbr = _haploStrainsAbbrevs->eltOf(str1);
             //strains abbrevs exclude '?' ones
             _MatRowNames.push_back(strain_abbr);
-            pat += hap; // might be slow when string very large
-            // append ch to str
-            //strncat(pat, &hap, 1); // c-style concat char
             idx = _CorMat->rownames.indexOf(strain_abbr);
             for (int cindex=0; cindex < this->L; ++cindex)
             {
@@ -181,11 +202,7 @@ char* MANOVA::extractNonQMarkMat(gsl_matrix* M)
         }
     }
     assert(_numDefined == rindex);
-    //// debug reduced pattern
-    //for (int i=0; i < _numDefined; ++i)
-    //    std::cout << (char)(pat[i]+'0'); // ASCII -> char
-    //std::cout<<std::endl;
-    return (char*)pat.c_str();
+
 }
 
 void MANOVA::pillaiTrace(float & FStat, float &PValue )
@@ -256,13 +273,24 @@ void MANOVA::pillaiTrace(float & FStat, float &PValue )
     // FIXME: e > p+1?
     //assert(e >= p);
     if (e < p) {
+        FStat = INFINITY;
+        PValue = 1.0;
+
+        // debugging
         // could not process
         std::cerr<<"numHaplo: "<<_numHaplo
                  <<" numDefine: "<<_numDefined
                  <<" numStrains: "<<_numStrains
-                 <<std::endl;
-        FStat = INFINITY;
-        PValue = 1.0;
+                 <<" pattern: ";
+
+        for (int i=0; i < _numStrains; ++i) {
+            char hap = _pattern[i];
+            if (hap != '?')
+                std::cerr << (char) (hap + '0'); // ASCII -> char
+            else
+                std::cerr << hap;
+        }
+        std::cerr<<std::endl;
         return;
     }
     double n = (e - p - 1) /2.0;

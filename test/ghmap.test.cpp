@@ -73,7 +73,7 @@ TEST(READ_PHENO, DISABLED_cat_and_quant_read) {
 
 }
 
-TEST(READ_BLOCK, read_block_summary) {
+TEST(READ_BLOCK, DISABLED_read_block_summary) {
     char* path = (char *)"../../data/MPD_39504/chrX.hblocks.txt";
     std::vector<BlockSummary *> xblocks;
     readBlockSummary(path, NULL, false);
@@ -164,8 +164,8 @@ TEST(MANOVA_READ, DISABLED_manova_test) {
         }
     }
     //EXPECT_TRUE(aov);
-    double P = 0,F=0;
-    const char* pattern = "00000000000000000000000000101111";
+    float P = 0,F=0;
+    const char* pattern = "??000001000000000?1000000000000?";
     char* pat = strdup(pattern);
     int N = strlen(pattern);
     std::cout<<"pattern length: "<<N<<std::endl;
@@ -182,6 +182,58 @@ TEST(MANOVA_READ, DISABLED_manova_test) {
     std::cout<<aov<<std::endl;
     EXPECT_GT(F,0);
     EXPECT_GT(P, 0);
+
+}
+
+
+TEST(REMOVE_qmark, rmqmark_test) {
+    char* pat = (char*)"??2000010001000000?1?2000010000?";
+    char* pattern = strdup(pat);
+    int len = strlen(pattern);
+    int len2 = len;
+    //std::memmove(&pattern[1], &pattern[1+1], (len -1));
+    printf("pattern: %s \n",pattern);
+    makeUnprintable(pattern);
+
+    int i = 0;
+    while (i < len) {
+        if (pattern[i] == '?'){
+            std::memmove(&pattern[i], &pattern[i+1], len-i);
+            printf("pattern: %s \n",pattern);
+            len --;
+        } else {
+            i ++;
+        }
+    }
+    printf("final pattern: %s\n",pattern);
+
+    for (int i=0; i < len; ++i)
+        std::cout << (char)(pattern[i]+'0'); // ASCII -> char
+    std::cout<<std::endl;
+
+
+    char pat2[len2+1];
+    memcpy(pat2, pattern, len2+1);
+    i = 0;
+    while (i < len) {
+        if (pattern[i] == '?'){
+            std::memmove(pat2+i, pat2+i+1, len2-i);
+            printf("pattern: %s \n",pattern);
+            len2 --;
+        } else {
+            i ++;
+        }
+    }
+    printf("final pattern: %s\n",pat2);
+
+    for (int i=0; i < len; ++i)
+        std::cout << (char)(pat2[i]+'0'); // ASCII -> char
+    std::cout<<std::endl;
+
+
+
+
+
 
 }
 
