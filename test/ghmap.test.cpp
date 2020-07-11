@@ -9,6 +9,8 @@
 #include "manova.h"
 #include "fdr.h"
 #include "eigen.h"
+#include "gsl/gsl_matrix.h"
+#include "gsl/gsl_vector.h"
 
 using namespace std;
 

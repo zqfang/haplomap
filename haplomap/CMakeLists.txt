@@ -37,10 +37,9 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src HAPLOMAP_SRC)
 ###target_link_libraries(eblocks)
 
 add_executable(haplomap main.cpp "${HAPLOMAP_SRC}")
-#target_include_directories(ghmap PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-#target_link_libraries(ghmap PUBLIC GSL::gsl GSL::gslcblas ) # link libgsl.so libgslcblas.so
+#target_include_directories(haplomap PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(haplomap PUBLIC ${GSL_LIBRARIES}) # link libgsl.so libgslcblas.so
-#target_link_libraries(ghmap gtest gmock_main) # link to gtest
+
 
 
 

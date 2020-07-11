@@ -58,24 +58,18 @@ static void usage(){
         }
         i++;
     }
-    std::cout << "usage:\n haplomap [subcommand] [options]\n"
-                 "    -v --version\n"
-                 "    -n --name <name of dataset>\n"
-                 "    -f --filter out non-coding blocks\n"
-                 "    -k --haploblocks generate a blocks-oriented results\n"
-                 "    -m --output gene and haplotype block\n"
-                 "    -a --output gene and haplotype block sort by block\n"
-                 "    -p --phenotypes_file <file with phenotype data>\n"
-                 "    -o --output_file <output file name>\n"
-                 "    -c --categorical\n"
-                 "    -l --pvalue_cutoff\n"
-                 "    -b --blocks_file\n"
-                 "    -g --gene writing block-oriented results file for gene\n"
-                 "    -e --expression_file\n"
-                 "    -q --equal_file <name of file>\n"
-                 "    -t --goterms_file <name of file>\n"
-                 "    -i --goterms_include_file output only genes with these terms <name of file>\n"
-                 "    -r --relation <name of genetic relation file: NXN matrix>\n"
+    std::cout <<
+    "Program: haplomap (Haplotype-based genetic computational method)\n"
+    "Version: "<<__HAPLOMAP_VER__<<"\n"<<
+    "Compiled by "<<__COMPILER__<<" "<<__VERSION__<<std::endl;
+    std::cout <<"\n"<<
+    "Usage:    haplomap <subcommand> [options]\n\n"
+    "Subcommands:\n"
+    "    eblocks        find all maximal haploblocks\n"
+    "    ghmap          statistical testing for hapbloblock with trait\n"
+    "Optional arguments:\n"
+    "    -v, --version  show program's version number and exit\n"
+    "    -h --help      show help message and exit."
               << std::endl;
 }
 
@@ -85,13 +79,14 @@ int main(int argc, char **argv) {
 
     if (std::strcmp(argv[1], "version") == 0 || std::strcmp(argv[1], "--version") == 0 || std::strcmp(argv[1], "-v") == 0)
     {
-        std::cout<<__COMPILER__<<" "<< __VERSION__<<std::endl;
         std::cout<< "HAPLOMAP: "<<  __HAPLOMAP_VER__ << std::endl;
+        std::cout<<__COMPILER__<<" "<< __VERSION__<<std::endl;
+        return 0;
     }
     else if (std::strcmp(argv[1], "help") == 0 || std::strcmp(argv[1], "--help") == 0 || std::strcmp(argv[1], "-h") == 0)
     {
         if (argc == 2) { usage(); return 0; }
-        // Otherwise change "hbcgm help COMMAND [...]" to "hbcgm COMMAND";
+        // Otherwise change "haplomap help COMMAND [...]" to "haplomap COMMAND";
         // main_xyz() functions by convention display the subcommand's usage
         // when invoked without any arguments.
         argv++;

@@ -1,5 +1,6 @@
 
 #include "eblocks.h"
+using namespace std;
 
 // For setting initial datastructure sizes
 const int approxNumSNPs = 8000000;
@@ -827,7 +828,7 @@ int combinePatternNoQs(char *combined, int blockstart, int blocksize, int haploL
   vector<SNPInfo *>::iterator blockBeginIt = snpVec.begin() + blockstart;
   vector<SNPInfo *>::iterator blockEndIt = blockBeginIt + blocksize;
 
-  int firstInClassIndex = 0;
+  //int firstInClassIndex = 0;
   int firstInClass = -1;
   int numAssigned = 0;
   for (int curClass = 0; curClass < haploLimit; curClass++)
@@ -847,7 +848,7 @@ int combinePatternNoQs(char *combined, int blockstart, int blocksize, int haploL
       numAssigned++;
       for (vector<SNPInfo *>::iterator snpIt = blockBeginIt; snpIt != blockEndIt; snpIt++)
       {
-        int index = snpIt - blockBeginIt;
+        //int index = snpIt - blockBeginIt;
         char *pat = (*snpIt)->pattern;
         if (pat[i] != pat[firstInClass]) // each one compared to the first pattern in blocks
         {

@@ -7,9 +7,9 @@
 // defined globals
 int numCategories = 1; // default for non-categorical data.
 const int AACLASSES[] = {4, -1, 3, 1, 1, 4, 2, 0, 4, -1, 0, 4, 4, 2, -1, 4, 2, 0, 2, 2, -1, 4, 4, 5, 2, -1};
-std::vector<string> catNames; // maps strIdx -> category name.
+std::vector<std::string> catNames; // maps strIdx -> category name.
 // Maps gene names to a string of A's, M's, and P's
-std::unordered_map<string, string> geneExprMap(40000);
+std::unordered_map<std::string, std::string> geneExprMap(40000);
 // Globals
 std::unordered_map<std::string, GeneSummary *> geneTable; // for gene-oriented interface
 std::vector<BlockSummary *> blocks; // global vector of all blocks.
@@ -34,7 +34,7 @@ BlockSummary::BlockSummary():
 BlockSummary::~BlockSummary() {}
 
 // summary of a block, read for the file.
-std::string BlockSummary::updateCodonScore(string str)
+std::string BlockSummary::updateCodonScore(std::string str)
   {
     int count = 0;
     size_t pos = 0;
@@ -42,7 +42,7 @@ std::string BlockSummary::updateCodonScore(string str)
     while (true)
     {
       pos = str.find("<", pos + 1);
-      if (pos == string::npos)
+      if (pos == std::string::npos)
         break;
       endpos = str.find(">", pos + 1);
       int aa1 = str[pos - 1] - 'A';
@@ -57,7 +57,7 @@ std::string BlockSummary::updateCodonScore(string str)
         }
       }
     }
-    if (str.find("SPLICE_SITE") != string::npos)
+    if (str.find("SPLICE_SITE") != std::string::npos)
     {
       return "splicing";
     }
@@ -70,7 +70,7 @@ std::string BlockSummary::updateCodonScore(string str)
 
 void updateGeneIsInteresting(BlockSummary *pb)
   { // BY
-    for (map<string, string>::iterator giit = pb->geneIsCodingMap.begin(); giit != pb->geneIsCodingMap.end(); giit++)
+    for (std::map<std::string, std::string>::iterator giit = pb->geneIsCodingMap.begin(); giit != pb->geneIsCodingMap.end(); giit++)
     {
       if (giit->second == "0" || giit->second == "1")
       {
@@ -83,7 +83,7 @@ void updateGeneIsInteresting(BlockSummary *pb)
 
   // print a line of the blocks file.
   // blockIdx	blockStart	blockSize	chromosome	begin	end	pattern	pval	effect	genename genehascoding ...
-void showBlockSum(ostream &os, bool isCategorical, BlockSummary *pb, vector<int> &strOrderVec)
+void showBlockSum(std::ostream &os, bool isCategorical, BlockSummary *pb, std::vector<int> &strOrderVec)
   {
     os << pb->blockIdx;
     if (pb->isIgnored)
@@ -100,20 +100,20 @@ void showBlockSum(ostream &os, bool isCategorical, BlockSummary *pb, vector<int>
     updateGeneIsInteresting(pb);
 
     // gene names and coding bits
-    map<string, string> &geneIsCodingMap = pb->geneIsCodingMap;
-    for (map<string, string>::iterator giit = geneIsCodingMap.begin(); giit != geneIsCodingMap.end(); giit++)
+    std::map<std::string, std::string> &geneIsCodingMap = pb->geneIsCodingMap;
+    for (std::map<std::string, std::string>::iterator giit = geneIsCodingMap.begin(); giit != geneIsCodingMap.end(); giit++)
     { ///EDITED BY
       os << "\t" << (*giit).first << "\t" << (*giit).second << "\t" << pb->geneIsInteresting[(*giit).first];
     }
-    os << endl;
+    os << std::endl;
   }
   // BY addition, output as such:
   // gene	codon_flag	pattern	pval	effect	chromosome	begin	end	blockIdx	blockStart	blockSize	expression
-void showGeneBlockByBlock(ostream &os, bool isCategorical, BlockSummary *pb, vector<int> &strOrderVec)
+void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb, std::vector<int> &strOrderVec)
   {
     updateGeneIsInteresting(pb);
-    map<string, string> &geneIsCodingMap = pb->geneIsCodingMap;
-    map<string, string>::iterator giit = geneIsCodingMap.begin();
+    std::map<std::string, std::string> &geneIsCodingMap = pb->geneIsCodingMap;
+    std::map<std::string, std::string>::iterator giit = geneIsCodingMap.begin();
     if (giit == geneIsCodingMap.end())
     { // no genes in this block
       os << "None\tNone\t";
@@ -121,11 +121,11 @@ void showGeneBlockByBlock(ostream &os, bool isCategorical, BlockSummary *pb, vec
       os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) <<"\t"<< pb->effect
          << "\t" << pb->FDR << "\t" << pb->relPvalue<<"\t"<<pb->relFDR<<"\t"<<pb->relReject
          << "\t" << pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd << "\t"
-         << pb->blockIdx << pb->blockStart << "\t" << pb->blockSize << endl;
+         << pb->blockIdx << pb->blockStart << "\t" << pb->blockSize << std::endl;
     }
     else
     {
-      for (map<string, string>::iterator giit = geneIsCodingMap.begin(); giit != geneIsCodingMap.end(); giit++)
+      for (std::map<std::string, std::string>::iterator giit = geneIsCodingMap.begin(); giit != geneIsCodingMap.end(); giit++)
       {
         os << (*giit).first << "\t" << pb->geneIsInteresting[(*giit).first] << "\t";
         writeSortedPattern(os, pb->pattern, strOrderVec);
@@ -133,15 +133,15 @@ void showGeneBlockByBlock(ostream &os, bool isCategorical, BlockSummary *pb, vec
            << "\t" <<pb->FDR << "\t" << pb->relPvalue<<"\t"<<pb->relFDR<<"\t"<<pb->relReject
            << "\t" <<pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd
            << "\t" <<pb->blockIdx << pb->blockStart << "\t" << pb->blockSize;
-        string gname = (*giit).first;
+        std::string gname = (*giit).first;
         upcase(gname);
         if (geneExprMap.find(gname) == geneExprMap.end())
         {
-          os << "\t-------------" << endl;
+          os << "\t-------------" << std::endl;
         }
         else
         {
-          os << "\t" << geneExprMap[gname] << endl;
+          os << "\t" << geneExprMap[gname] << std::endl;
         }
       }
     }
@@ -149,8 +149,8 @@ void showGeneBlockByBlock(ostream &os, bool isCategorical, BlockSummary *pb, vec
 
 
 
-void showBlockSums(ostream &os, bool isCategorical,
-                            vector<BlockSummary *> &blocks, float cutoff, vector<int> &strOrderVec)
+void showBlockSums(std::ostream &os, bool isCategorical,
+                            std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec)
   {
     for (unsigned i = 0; i < blocks.size(); i++)
     {
@@ -161,7 +161,7 @@ void showBlockSums(ostream &os, bool isCategorical,
     }
   }
 
-void showGeneBlockByBlocks(ostream &os, bool isCategorical, vector<BlockSummary *> &blocks, float cutoff, vector<int> &strOrderVec)
+void showGeneBlockByBlocks(std::ostream &os, bool isCategorical, std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec)
   {
     for (unsigned i = 0; i < blocks.size(); i++)
     {
@@ -316,11 +316,11 @@ void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
             // For each gene, add gene summary to the gene table (if not there already),
             // and insert block in the block set.
             // This iterates over list of alternating gene name/codon tokens.
-            for (vector<string>::iterator git = rdr.begin() + 7; git != rdr.end(); git += 2)
+            for (std::vector<std::string>::iterator git = rdr.begin() + 7; git != rdr.end(); git += 2)
             {
                 // *(git+1) is codon for gene name (*git).  Convert from string to bool using cond expr.
                 pLastBlock->geneIsCodingMap[*git] = *(git + 1);
-                std::unordered_map<string, GeneSummary *>::iterator entIt = geneTable.find(*git);
+                std::unordered_map<std::string, GeneSummary *>::iterator entIt = geneTable.find(*git);
 
                 if (entIt == geneTable.end())
                 {
@@ -350,17 +350,17 @@ void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
     }
 }
 
-void showGeneBlockSums(ostream &os, bool isCategorical, vector<BlockSummary *> &blocks,
-                       float cutoff, vector<int> &strOrderVec, vector<GeneSummary *> genesList)
+void showGeneBlockSums(std::ostream &os, bool isCategorical, std::vector<BlockSummary *> &blocks,
+                       float cutoff, std::vector<int> &strOrderVec, std::vector<GeneSummary *> genesList)
 {
-    vector<string> genesOver; // all genes that have been already printed
+    std::vector<std::string> genesOver; // all genes that have been already printed
     for (unsigned i = 0; i < blocks.size(); i++)
     {
         if (!isCutoff(isCategorical, cutoff, blocks[i]))
         {
             BlockSummary *pb = blocks[i];
-            map<string, string> &geneIsCodingMap = pb->geneIsCodingMap;
-            map<string, string>::iterator giit = geneIsCodingMap.begin();
+            std::map<std::string, std::string> &geneIsCodingMap = pb->geneIsCodingMap;
+            std::map<std::string, std::string>::iterator giit = geneIsCodingMap.begin();
             if (geneIsCodingMap.size() == 0)
             { // no genes in this block
                 updateGeneIsInteresting(pb);
@@ -368,19 +368,19 @@ void showGeneBlockSums(ostream &os, bool isCategorical, vector<BlockSummary *> &
                 writeSortedPattern(os, pb->pattern, strOrderVec);
                 os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) << "\t" << pb->effect << "\t";
                 os << pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd << "\t";
-                os << pb->blockIdx << pb->blockStart << "\t" << pb->blockSize << endl;
+                os << pb->blockIdx << pb->blockStart << "\t" << pb->blockSize << std::endl;
             }
             else
             {
                 for (; giit != geneIsCodingMap.end(); giit++)
                 {
-                    string gname = giit->first;
+                    std::string gname = giit->first;
                     if (find(genesOver.begin(), genesOver.end(), gname) != genesOver.end())
                     {
                         continue;
                     }
                     genesOver.push_back(gname);
-                    for (vector<GeneSummary *>::iterator git = genesList.begin(); git != genesList.end(); git++)
+                    for (std::vector<GeneSummary *>::iterator git = genesList.begin(); git != genesList.end(); git++)
                     {
                         if ((*git)->name == gname)
                         {
@@ -395,15 +395,15 @@ void showGeneBlockSums(ostream &os, bool isCategorical, vector<BlockSummary *> &
                                 os << "\t" << pb_t->relPvalue<<"\t"<<pb_t->relFDR <<"\t"<<pb_t->relReject<<"\t";
                                 os << pb_t->chrName << "\t" << pb_t->chrBegin << "\t" << pb_t->chrEnd << "\t";
                                 os << pb_t->blockIdx << pb_t->blockStart << "\t" << pb_t->blockSize;
-                                string upname = gname;
+                                std::string upname = gname;
                                 upcase(upname);
                                 if (geneExprMap.find(upname) == geneExprMap.end())
                                 {
-                                    os << "\t-------------" << endl;
+                                    os << "\t-------------" << std::endl;
                                 }
                                 else
                                 {
-                                    os << "\t" << geneExprMap[upname] << endl;
+                                    os << "\t" << geneExprMap[upname] << std::endl;
                                 }
                             }
                             break;
@@ -416,24 +416,24 @@ void showGeneBlockSums(ostream &os, bool isCategorical, vector<BlockSummary *> &
 }
 
 void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetName,
-                        vector<vector<float>> &phenvec, vector<BlockSummary *> &blocks, float pvalueCutoff)
+                        std::vector<std::vector<float>> &phenvec, std::vector<BlockSummary *> &blocks, float pvalueCutoff)
 {
-    ofstream blockout(outputFileName);
+    std::ofstream blockout(outputFileName);
     if (!blockout.is_open())
     {
-        cout << "Open of file \"" << outputFileName << "\" failed: ";
+        std::cout << "Open of file \"" << outputFileName << "\" failed: ";
         perror("");
         exit(1);
     }
     // Datasetname
-    blockout << datasetName << endl;
+    blockout << datasetName << std::endl;
     // sort strains by phenvec value
-    vector<int> strOrderVec(numStrains); // will contain strain indices.
+    std::vector<int> strOrderVec(numStrains); // will contain strain indices.
     sortStrainsByPheno(phenvec, strOrderVec);
 
     // output strain names.
-    vector<int>::iterator stoEnd1 = strOrderVec.end();
-    for (vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
+    std::vector<int>::iterator stoEnd1 = strOrderVec.end();
+    for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
     {
         int str1 = *stoIt1;
         blockout << strainAbbrevs.eltOf(str1);
@@ -442,10 +442,10 @@ void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetN
             blockout << "\t";
         }
     }
-    blockout << endl;
+    blockout << std::endl;
 
     // output phenotype values.
-    for (vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
+    for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
     {
         int str1 = *stoIt1;
         if (phenvec[str1].size() > 1) {
@@ -459,14 +459,14 @@ void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetN
             blockout << "\t";
         }
     }
-    blockout << endl;
+    blockout << std::endl;
 
     GenesComparator gcomp(isCategorical);
-    vector<GeneSummary *> genes;
+    std::vector<GeneSummary *> genes;
     genes.reserve(geneTable.size());
     //transform(geneTable.begin(), geneTable.end(), back_inserter(genes), select2nd<std::unordered_map<string, GeneSummary *> >());
     transform(geneTable.begin(), geneTable.end(), back_inserter(genes),
-              std::bind(&std::unordered_map<string, GeneSummary *>::value_type::second, std::placeholders::_1 ));
+              std::bind(&std::unordered_map<std::string, GeneSummary *>::value_type::second, std::placeholders::_1 ));
 
     sort(genes.begin(), genes.end(), gcomp);
     showGeneBlockSums(blockout, isCategorical, blocks, pvalueCutoff, strOrderVec, genes);
@@ -474,24 +474,24 @@ void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetN
 
 
 void writeGeneBlockByBlocks(bool isCategorical, char *outputFileName, char *datasetName,
-                            vector<vector<float>> &phenvec, vector<BlockSummary *> &blocks, float pvalueCutoff)
+                            std::vector<std::vector<float>> &phenvec,std::vector<BlockSummary *> &blocks, float pvalueCutoff)
 {
-    ofstream blockout(outputFileName);
+    std::ofstream blockout(outputFileName);
     if (!blockout.is_open())
     {
-        cout << "Open of file \"" << outputFileName << "\" failed: ";
+        std::cout << "Open of file \"" << outputFileName << "\" failed: ";
         perror("");
         exit(1);
     }
     // Datasetname
-    blockout << datasetName << endl;
+    blockout << datasetName << std::endl;
     // sort strains by phenvec value
-    vector<int> strOrderVec(numStrains); // will contain strain indices.
+    std::vector<int> strOrderVec(numStrains); // will contain strain indices.
     sortStrainsByPheno(phenvec, strOrderVec);
 
     // output strain names.
-    vector<int>::iterator stoEnd1 = strOrderVec.end();
-    for (vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
+    std::vector<int>::iterator stoEnd1 = strOrderVec.end();
+    for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
     {
         int str1 = *stoIt1;
         blockout << strainAbbrevs.eltOf(str1);
@@ -500,10 +500,10 @@ void writeGeneBlockByBlocks(bool isCategorical, char *outputFileName, char *data
             blockout << "\t";
         }
     }
-    blockout << endl;
+    blockout << std::endl;
 
     // output phenotype values.
-    for (vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
+    for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
     {
         int str1 = *stoIt1;
         if (phenvec[str1].size() > 1) {
@@ -516,35 +516,35 @@ void writeGeneBlockByBlocks(bool isCategorical, char *outputFileName, char *data
             blockout << "\t";
         }
     }
-    blockout << endl;
+    blockout << std::endl;
 
     showGeneBlockByBlocks(blockout, isCategorical, blocks, pvalueCutoff, strOrderVec);
 }
 
 void writeBlockSums(bool isCategorical, char *outputFileName,
-                    char *datasetName, vector<vector<float> > &phenvec,
-                    vector<BlockSummary *> &blocks, float pvalueCutoff)
+                    char *datasetName, std::vector<std::vector<float> > &phenvec,
+                    std::vector<BlockSummary *> &blocks, float pvalueCutoff)
 {
-    ofstream blockout(outputFileName);
+    std::ofstream blockout(outputFileName);
     if (!blockout.is_open())
     {
-        cout << "Open of file \"" << outputFileName << "\" failed: ";
+        std::cout << "Open of file \"" << outputFileName << "\" failed: ";
         perror("");
         exit(1);
     }
 
     // Datasetname
-    blockout << datasetName << endl;
+    blockout << datasetName << std::endl;
 
     // sort strains by phenvec value
 
-    vector<int> strOrderVec(numStrains); // will contain strain indices.
+    std::vector<int> strOrderVec(numStrains); // will contain strain indices.
     sortStrainsByPheno(phenvec, strOrderVec);
 
     // output strain names.
     // FIXME:  Start using vecfuns written for Ravi microarray analysis
-    vector<int>::iterator stoEnd1 = strOrderVec.end();
-    for (vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
+    std::vector<int>::iterator stoEnd1 = strOrderVec.end();
+    for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
     {
         int str1 = *stoIt1;
         blockout << strainAbbrevs.eltOf(str1);
@@ -553,10 +553,10 @@ void writeBlockSums(bool isCategorical, char *outputFileName,
             blockout << "\t";
         }
     }
-    blockout << endl;
+    blockout << std::endl;
 
     // output phenotype values.
-    for (vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
+    for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
     {
         int str1 = *stoIt1;
         if (isCategorical)
@@ -576,37 +576,37 @@ void writeBlockSums(bool isCategorical, char *outputFileName,
             blockout << "\t";
         }
     }
-    blockout << endl;
+    blockout << std::endl;
 
     showBlockSums(blockout, isCategorical, blocks, pvalueCutoff, strOrderVec);
 }
 
 // Write gene-oriented summary.
 void writeGeneSums(bool isCategorical, char *outputFileName,
-                   char *datasetName, vector<vector<float> > &phenvec,
-                   vector<BlockSummary *> &blocks, float cutoff, bool filterCoding)
+                   char *datasetName, std::vector<std::vector<float> > &phenvec,
+                   std::vector<BlockSummary *> &blocks, float cutoff, bool filterCoding)
 {
-    ofstream genesout(outputFileName);
+    std::ofstream genesout(outputFileName);
     if (!genesout.is_open())
     {
-        cout << "Open of file \"" << outputFileName << "\" failed: ";
+        std::cout << "Open of file \"" << outputFileName << "\" failed: ";
         perror("");
         exit(1);
     }
 
     // Datasetname
-    genesout << datasetName << endl;
+    genesout << datasetName << std::endl;
 
     // sort strains by phenvec value
 
-    vector<int> strOrderVec(numStrains); // will contain strain indices.
+    std::vector<int> strOrderVec(numStrains); // will contain strain indices.
     sortStrainsByPheno(phenvec, strOrderVec);
 
     // output strain names.
     // FIXME:  Start using vecfuns written for Ravi microarray analysis
     //  ... or STL algorithms!
-    vector<int>::iterator stoEnd1 = strOrderVec.end();
-    for (vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
+    std::vector<int>::iterator stoEnd1 = strOrderVec.end();
+    for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
     {
         int str1 = *stoIt1;
         genesout << strainAbbrevs.eltOf(str1);
@@ -615,10 +615,10 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
             genesout << "\t";
         }
     }
-    genesout << endl;
+    genesout << std::endl;
 
     // output phenotype values.
-    for (vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
+    for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
     {
         int str1 = *stoIt1;
         if (isCategorical)
@@ -638,19 +638,19 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
             genesout << "\t";
         }
     }
-    genesout << endl;
+    genesout << std::endl;
 
     GenesComparator gcomp(isCategorical);
 
     // Copy genesTable values into a vector and sort using GenesComparator
-    vector<GeneSummary *> genes;
+    std::vector<GeneSummary *> genes;
     genes.reserve(geneTable.size());
     transform(geneTable.begin(), geneTable.end(), back_inserter(genes),
-              std::bind(&std::unordered_map<string, GeneSummary *>::value_type::second, std::placeholders::_1 ));
+              std::bind(&std::unordered_map<std::string, GeneSummary *>::value_type::second, std::placeholders::_1 ));
     sort(genes.begin(), genes.end(), gcomp);
 
     // write them out.
-    for (vector<GeneSummary *>::iterator git = genes.begin(); git != genes.end(); git++)
+    for (std::vector<GeneSummary *>::iterator git = genes.begin(); git != genes.end(); git++)
     {
 
         if ((*git)->isIgnored)
@@ -672,8 +672,8 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
         }
 
         // write gene name and its coding bit.
-        string &gname = (*git)->name;
-        string ugname = gname; // gene names in expression data are upper case.
+        std::string &gname = (*git)->name;
+        std::string ugname = gname; // gene names in expression data are upper case.
         upcase(ugname);
 
         // coding bit is subtle.  This iterates over all of the blocks that are < pvalue cutoff
@@ -686,7 +686,7 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
         bool hasSpliceChange = false;
         //ofstream debug_log;
         //debug_log.open("debug.log",ios::app);
-        for (vector<BlockSummary *>::iterator blit = (*git)->blocks.begin(); blit != (*git)->blocks.end(); blit++)
+        for (std::vector<BlockSummary *>::iterator blit = (*git)->blocks.begin(); blit != (*git)->blocks.end(); blit++)
         {
             if (isCutoff(isCategorical, cutoff, *blit))
             {
@@ -700,7 +700,7 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
                     isCoding = true;
                 }
                 hasInteresting |= ((*blit)->numInteresting > 0);                                            //has a major amino acid change
-                hasSpliceChange |= (((*blit)->geneIsCodingMap[gname]).find("SPLICE_SITE") != string::npos); //if "SPLICE_SITE" was in there that means that the gene had a splice change
+                hasSpliceChange |= (((*blit)->geneIsCodingMap[gname]).find("SPLICE_SITE") != std::string::npos); //if "SPLICE_SITE" was in there that means that the gene had a splice change
             }
         }
         //New thing: -1 means not coding, 0 means coding but not important
@@ -726,28 +726,28 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
             if (geneExprMap.find(ugname) == geneExprMap.end())
             {
                 // no data for that gene name
-                genesout << "\t-------------" << endl;
+                genesout << "\t-------------" << std::endl;
             }
             else
             {
-                genesout << "\t" << geneExprMap[ugname] << endl;
+                genesout << "\t" << geneExprMap[ugname] << std::endl;
             }
         }
     }
 }
 
 
-void sortStrainsByPheno(vector<vector<float>> &phenvec, vector<int> &strOrderVec)
+void sortStrainsByPheno(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec)
 {
-    vector<int>::iterator stoEnd = strOrderVec.end();
+    std::vector<int>::iterator stoEnd = strOrderVec.end();
     int i = 0;
-    for (vector<int>::iterator stoIt = strOrderVec.begin(); stoIt != stoEnd; stoIt++)
+    for (std::vector<int>::iterator stoIt = strOrderVec.begin(); stoIt != stoEnd; stoIt++)
     {
         *stoIt = i++;
     }
     // This will sort lexicographically, which is the right thing.
     // For categorical values, we just want equal values together.
-    IndexComparator<vector<float>, less<vector<float>>> idxCompare(&phenvec);
+    IndexComparator<std::vector<float>, std::less<std::vector<float>>> idxCompare(&phenvec);
     std::stable_sort(strOrderVec.begin(), strOrderVec.end(), idxCompare);
 }
 
@@ -781,7 +781,7 @@ int numHaplotypes(char *pattern)
 }
 
 /* Returns a score that represents the interestingness of codon changes*/
-int scoreChanges(string str)
+int scoreChanges(std::string str)
 {
     int count = 0;
     size_t pos = 0;
@@ -789,7 +789,7 @@ int scoreChanges(string str)
     while (true)
     {
         pos = str.find("<", pos + 1);
-        if (pos == string::npos)
+        if (pos == std::string::npos)
             break;
         endpos = str.find(">", pos + 1);
         int aa1 = str[pos - 1] - 'A';
@@ -805,10 +805,10 @@ int scoreChanges(string str)
     return count;
 }
 
-int interestingChanges(const map<string, string> &geneCodingMap)
+int interestingChanges(const std::map<std::string, std::string> &geneCodingMap)
 {
     int changeCount = 0;
-    for (map<string, string>::const_iterator git = geneCodingMap.begin();
+    for (std::map<std::string, std::string>::const_iterator git = geneCodingMap.begin();
          git != geneCodingMap.end(); git++)
     {
         if (git->second == "0" || git->second == "1")
@@ -826,9 +826,9 @@ void filterCodingBlocks()
         BlockSummary *pBlock = blocks[blkIdx];
         // look for a coding gene
         bool keep = false;
-        map<string, string> &gicMap = pBlock->geneIsCodingMap;
+        std::map<std::string, std::string> &gicMap = pBlock->geneIsCodingMap;
 
-        for (map<string, string>::iterator gicmit = gicMap.begin(); gicmit != gicMap.end(); gicmit++)
+        for (std::map<std::string, std::string>::iterator gicmit = gicMap.begin(); gicmit != gicMap.end(); gicmit++)
         {
             if ((*gicmit).second != "0")
             {
@@ -840,7 +840,7 @@ void filterCodingBlocks()
     }
 }
 
-void filterEqualBlocks(vector<int> equalRegions)
+void filterEqualBlocks(std::vector<int> equalRegions)
 {
     for (unsigned blkIdx = 0; blkIdx < blocks.size(); blkIdx++)
     {
@@ -869,8 +869,8 @@ void readCompactGeneExpr(char *fname)
     while ((numtoks = rdr.getLine()) >= 0)
     {
         // A typical line: "Myc	PAPAAAAAAAPAA"
-        string geneName = rdr.getToken(0);
-        string present = rdr.getToken(1);
+        std::string geneName = rdr.getToken(0);
+        std::string present = rdr.getToken(1);
 
         upcase(geneName);
 
@@ -882,7 +882,7 @@ void readCompactGeneExpr(char *fname)
 }
 
 // Read a file of quantitative phenotypes.
-void readQPhenotypes(char *fname, vector<vector<float>> &phenvec)
+void readQPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec)
 {
     ColumnReader rdr(fname, (char *)"\t");
 
@@ -893,7 +893,7 @@ void readQPhenotypes(char *fname, vector<vector<float>> &phenvec)
         // file has "Abbrev\tValue\n"
         if (numtoks != 2)
         {
-            cout << "Warning: numtoks = " << numtoks << endl;
+            std::cout << "Warning: numtoks = " << numtoks << std::endl;
         }
 
         // FIXME: some unnecessary string copies
@@ -904,7 +904,7 @@ void readQPhenotypes(char *fname, vector<vector<float>> &phenvec)
         int strIdx = strainAbbrevs.addElementIfNew(strain_abbrev);
         if (strIdx < 0)
         {
-            cout << "Undefined strain abbrev: " << strain_abbrev << endl;
+           std::cout << "Undefined strain abbrev: " << strain_abbrev << std::endl;
         }
         //phenvec[strIdx] = qphen;
         // MARK: handle same animal with multiple values
@@ -923,11 +923,11 @@ void setBlockStats()
     }
 }
 // Read a file of categorical phenotypes.
-void readCPhenotypes(char *fname, vector<vector<float>> &phenvec)
+void readCPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec)
 {
 
     ColumnReader rdr(fname, (char *)"\t");
-    Dynum<string> categories; // assigned the distinct categories consecutive indices, starting at 0.
+    Dynum<std::string> categories; // assigned the distinct categories consecutive indices, starting at 0.
 
     catNames.resize(numStrains);
 
@@ -938,12 +938,12 @@ void readCPhenotypes(char *fname, vector<vector<float>> &phenvec)
         // file has "Abbrev\t\Value"
         if (numtoks != 2)
         {
-            cout << "Warning: numtoks = " << numtoks << endl;
+            std::cout << "Warning: numtoks = " << numtoks << std::endl;
         }
 
         // FIXME: some unnecessary string copies
-        string strain_abbrev = rdr.getToken(0);
-        string catname = rdr.getToken(1);
+        std::string strain_abbrev = rdr.getToken(0);
+        std::string catname = rdr.getToken(1);
         int strIdx = strainAbbrevs.addElementIfNew(strain_abbrev);
         catNames[strIdx] = catname;
         categories.addElementIfNew(catname);
@@ -955,29 +955,29 @@ void readCPhenotypes(char *fname, vector<vector<float>> &phenvec)
     for (int strIdx = 0; strIdx < numStrains; strIdx++)
     {
         // build vector value for this category and store in phenvec.
-        vector<float> cphen(categories.size(), 0.0F); // initialize to 0.
+        std::vector<float> cphen(categories.size(), 0.0F); // initialize to 0.
         cphen[categories.indexOf(catNames[strIdx])] = 1.0F;
         phenvec[strIdx] = cphen;
     }
 
     if (traceFStat)
     {
-        cout << "Phenotype values" << endl;
+        std::cout << "Phenotype values" << std::endl;
         categories.dump();
 
-        cout << "Phenotype vectors for strains" << endl;
+        std::cout << "Phenotype vectors for strains" << std::endl;
         for (int str = 0; str < numStrains; str++)
         {
 
             for(auto &t: phenvec[str])
-                cout << t << " ";
+                std::cout << t << " ";
         }
-        cout << endl;
+        std::cout << std::endl;
     }
 }
 
 //read in equal class
-void readEqualFile(char *fname, vector<int> &equalStrains)
+void readEqualFile(char *fname, std::vector<int> &equalStrains)
 {
     ColumnReader rdr(fname, (char *)"\t");
     //numStrains
@@ -986,7 +986,7 @@ void readEqualFile(char *fname, vector<int> &equalStrains)
     int i = 0;
     while ((numtoks = rdr.getLine()) >= 0)
     {
-        string eqclass = rdr.getToken(1);
+        std::string eqclass = rdr.getToken(1);
         if (eqclass != "0")
             equalStrains.push_back(i);
         i++;
@@ -994,7 +994,7 @@ void readEqualFile(char *fname, vector<int> &equalStrains)
 }
 
 //reads first column of tsv fname into vector vec
-void readFileToVec(char *fname, vector<string> &vec)
+void readFileToVec(char *fname, std::vector<std::string> &vec)
 {
     ColumnReader rdr(fname, (char *)"\t");
     //numStrains
@@ -1006,16 +1006,16 @@ void readFileToVec(char *fname, vector<string> &vec)
     }
 }
 
-void filterGoTerms(char *fname, vector<string> terms)
+void filterGoTerms(char *fname, std::vector<std::string> terms)
 {
     ColumnReader rdr(fname, (char *)"\t");
     int numtoks;
-    vector<string>::iterator startT = terms.begin();
-    vector<string>::iterator endT = terms.end();
+    std::vector<std::string>::iterator startT = terms.begin();
+    std::vector<std::string>::iterator endT = terms.end();
     while ((numtoks = rdr.getLine()) >= 0)
     {
-        string geneName = rdr.getToken(0);
-        std::unordered_map<string, GeneSummary *>::iterator it = geneTable.find(geneName);
+        std::string geneName = rdr.getToken(0);
+        std::unordered_map<std::string, GeneSummary *>::iterator it = geneTable.find(geneName);
         if (it == geneTable.end())
         {
             continue;
@@ -1032,7 +1032,7 @@ void filterGoTerms(char *fname, vector<string> terms)
 }
 
 // renumber eqclasses in pattern so the increase from left to right
-void writeSortedPattern(ostream &os, char *pattern, vector<int> &strOrderVec)
+void writeSortedPattern(std::ostream &os, char *pattern, std::vector<int> &strOrderVec)
 {
     int numHaplo = numHaplotypes(pattern);
     char *sortedEqMap = (char *)malloc(numHaplo);
@@ -1060,32 +1060,32 @@ void writeSortedPattern(ostream &os, char *pattern, vector<int> &strOrderVec)
 
 // Some vector arithmetic.
 // destroys first argument (like +=)
-void addVectors(vector<float> &v1, vector<float> &v2)
+void addVectors(std::vector<float> &v1, std::vector<float> &v2)
 {
     if (v1.size() != v2.size())
     {
-        cout << "addVectors:  Vector sizes differ: " << v1.size() << " vs. " << v2.size() << endl;
+        std::cout << "addVectors:  Vector sizes differ: " << v1.size() << " vs. " << v2.size() << std::endl;
         exit(1);
     }
-    vector<float>::iterator vend = v1.end();
-    vector<float>::iterator vit2 = v2.begin();
-    for (vector<float>::iterator vit1 = v1.begin(); vit1 < vend; vit1++)
+    std::vector<float>::iterator vend = v1.end();
+    std::vector<float>::iterator vit2 = v2.begin();
+    for (std::vector<float>::iterator vit1 = v1.begin(); vit1 < vend; vit1++)
     {
         *vit1 += *vit2;
         vit2++;
     }
 }
 
-void subtractVectors(vector<float> &v1, vector<float> &v2)
+void subtractVectors(std::vector<float> &v1, std::vector<float> &v2)
 {
     if (v1.size() != v2.size())
     {
-        cout << "subtractVectors:  Vector sizes differ: " << v1.size() << " vs. " << v2.size() << endl;
+        std::cout << "subtractVectors:  Vector sizes differ: " << v1.size() << " vs. " << v2.size() <<std::endl;
         exit(1);
     }
-    vector<float>::iterator vend = v1.end();
-    vector<float>::iterator vit2 = v2.begin();
-    for (vector<float>::iterator vit1 = v1.begin(); vit1 < vend; vit1++)
+    std::vector<float>::iterator vend = v1.end();
+    std::vector<float>::iterator vit2 = v2.begin();
+    for (std::vector<float>::iterator vit1 = v1.begin(); vit1 < vend; vit1++)
     {
         *vit1 -= *vit2;
         vit2++;
@@ -1093,17 +1093,17 @@ void subtractVectors(vector<float> &v1, vector<float> &v2)
 }
 
 //
-float dotVectors(vector<float> &v1, vector<float> &v2)
+float dotVectors(std::vector<float> &v1, std::vector<float> &v2)
 {
     float result = 0.0;
     if (v1.size() != v2.size())
     {
-        cout << "dotVectors:  Vector sizes differ: " << v1.size() << " vs. " << v2.size() << endl;
+        std::cout << "dotVectors:  Vector sizes differ: " << v1.size() << " vs. " << v2.size() << std::endl;
         exit(1);
     }
-    vector<float>::iterator vend = v1.end();
-    vector<float>::iterator vit2 = v2.begin();
-    for (vector<float>::iterator vit1 = v1.begin(); vit1 < vend; vit1++)
+    std::vector<float>::iterator vend = v1.end();
+    std::vector<float>::iterator vit2 = v2.begin();
+    for (std::vector<float>::iterator vit1 = v1.begin(); vit1 < vend; vit1++)
     {
         result += (*vit1) * (*vit2);
         vit2++;
@@ -1112,10 +1112,10 @@ float dotVectors(vector<float> &v1, vector<float> &v2)
 }
 
 // multiply by scalar.  Destroys first argument.
-void scaleVector(vector<float> &v1, float c)
+void scaleVector(std::vector<float> &v1, float c)
 {
-    vector<float>::iterator vend = v1.end();
-    for (vector<float>::iterator vit = v1.begin(); vit < vend; vit++)
+    std::vector<float>::iterator vend = v1.end();
+    for (std::vector<float>::iterator vit = v1.begin(); vit < vend; vit++)
     {
         *vit *= c;
     }

@@ -5,6 +5,7 @@
 #ifndef HBCGM_ARGSORT_H
 #define HBCGM_ARGSORT_H
 #include <vector>
+#include <assert.h>
 
 
 /// argsort usage:

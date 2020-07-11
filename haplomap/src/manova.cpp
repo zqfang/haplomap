@@ -2,15 +2,15 @@
 // Created by Zhuoqing Fang on 7/6/20.
 //
 #include <stdio.h>
-#include "manova.h"
 #include <string>
 #include <cmath>
 #include "gsl/gsl_cdf.h"
 #include "gsl/gsl_matrix.h"
 #include "gsl/gsl_statistics.h"
 #include "gsl/gsl_linalg.h"
-#include "ghmap.h"
 #include "ColumnReader.h"
+#include "ghmap.h"
+#include "manova.h"
 
 
 MANOVA::MANOVA(const char* MatFile, const char* RowNameFile, unsigned int L):
@@ -131,7 +131,7 @@ void MANOVA::setEigen()
 
 }
 
-int MANOVA::setNonQMarkMat(char* pattern, Dynum<string>& haploStrainAbbr)
+int MANOVA::setNonQMarkMat(char* pattern, Dynum<std::string>& haploStrainAbbr)
 {
     //_numStrains = strlen(pattern);
     _numStrains = haploStrainAbbr.size();

@@ -3,9 +3,9 @@
 //
 
 #include <numeric>
-#include "ghmap.h"
 #include "gsl/gsl_cdf.h"
 #include "gsl/gsl_math.h"
+#include "ghmap.h"
 
 
 std::vector<float> sumVector(std::vector<float> &vec) {
@@ -22,7 +22,7 @@ void subVector(std::vector<float> &vec, float value) {
 }
 
 
-void ANOVA(vector<vector<float>> &phenvec, char *pattern, float &FStat, float &pvalue, float &effect)
+void ANOVA(std::vector<std::vector<float>> &phenvec, char *pattern, float &FStat, float &pvalue, float &effect)
 {
     int numHaplo = numHaplotypes(pattern);
     // array haplotype -> num strains in haplotype.
@@ -63,20 +63,20 @@ void ANOVA(vector<vector<float>> &phenvec, char *pattern, float &FStat, float &p
 
     if (traceFStat)
     {
-        cout << "numDefined = " << numDefined << ", sumDefined = " << sumDefined.back() << endl;
-        cout << "haploNum[] = [";
+        std::cout << "numDefined = " << numDefined << ", sumDefined = " << sumDefined.back() << std::endl;
+        std::cout << "haploNum[] = [";
         for (int hap = 0; hap < numHaplo; hap++)
         {
-            cout << haploNum[hap] << " ";
+            std::cout << haploNum[hap] << " ";
         }
-        cout << "]" << endl;
+        std::cout << "]" << std::endl;
 
-        cout << "haploMean[] = [";
+        std::cout << "haploMean[] = [";
         for (int hap = 0; hap < numHaplo; hap++)
         {
-            cout << haploMean[hap].back() << " ";
+            std::cout << haploMean[hap].back() << " ";
         }
-        cout << "]" << endl;
+        std::cout << "]" << std::endl;
     }
 
     std::vector<float> mean(1, 0.0F); // mean of all data

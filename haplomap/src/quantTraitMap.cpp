@@ -134,7 +134,7 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
                         "    -q --equal_file <name of file>\n"
                         "    -t --goterms_file <name of file>\n"
                         "    -i --goterms_include_file output only genes with these terms <name of file>\n"
-                        "    -r --relation <name of genetic relation file: NXN matrix>\n"
+                        "    -r --relation <name of genetic relation file: n x n matrix>\n"
                      << std::endl;
                 break;
             }
