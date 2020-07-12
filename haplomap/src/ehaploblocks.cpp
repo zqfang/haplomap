@@ -257,9 +257,13 @@ int main_eblocks(int argc, char **argv)
   beginPhase("writing block summary");
   writeBlockSummary(opts->blocksFileName, opts->minBlockSNPs);
   endPhase();
-  beginPhase("writing block SNPs");
-  writeBlockSNPs(opts->blockSNPsFileName, opts->minBlockSNPs);
-  endPhase();
+
+  if (opts->blockSNPsFileName != NULL)
+  {
+      beginPhase("writing block SNPs");
+      writeBlockSNPs(opts->blockSNPsFileName, opts->minBlockSNPs);
+      endPhase();
+  }
 
   if (verbose)
   {
