@@ -7,7 +7,6 @@ Install `snakemake` first
 ```shell
 # modify the file path in haplomap and run with 12 cores
 snakemake -s workflows/bcftools.call.smk \
-          --configfile config.yaml \
           -k -p -j 12   
 ```
 

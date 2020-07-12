@@ -29,14 +29,14 @@ typedef struct
 
 static cmd_t cmds [] = {
         {
-            .func = main_ghmap,
-            .alias = "ghmap",
-            .help = "run ghmap"
-        },
-        {
             .func = main_eblocks,
             .alias = "eblocks",
             .help = "find haploblocks"
+        },
+        {
+            .func = main_ghmap,
+            .alias = "ghmap",
+            .help = "run ghmap"
         },
         {
             .func=NULL,
@@ -59,7 +59,7 @@ static void usage(){
         i++;
     }
     std::cout <<
-    "Program: haplomap (Haplotype-based genetic computational method)\n"
+    "Program: haplomap (haplotype-based computational genetic mapping, a.k.a HBCGM)\n"
     "Version: "<<__HAPLOMAP_VER__<<"\n"<<
     "Compiled by "<<__COMPILER__<<" "<<__VERSION__<<std::endl;
     std::cout <<"\n"<<
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
         }
         i++;
     }
-    std::cerr<<"Error:: "<<__func__<<" unrecognized command "<<argv[1]<<std::endl;
+    std::cerr<<"Error:: "<<__func__<<" unrecognized command: "<<argv[1]<<std::endl;
     return 1;
 
 }

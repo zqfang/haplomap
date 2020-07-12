@@ -62,16 +62,19 @@ EblockOptions *parseEblockOptions(int argc, char **argv)
     // default values
     opts->minBlockSNPs = 4;
 
-    const char *usage = "usage:\n eblocks\n"
-                        "    -v --verbose\n"
-                        "    -n --non_overlapping\n"
-                        "    -s --strains_file <name of strains file>\n"
-                        "    -a --alleles_file <name of alleles file>\n"
-                        "    -g --genes_file <name of SNPs-to-genes file>\n"
-                        "    -o --blocks_file  <output file with haplotype blocks>\n"
-                        "    -p --blockSNPs_file  <output file with SNPs for blocks>\n"
-                        "    -m --min_block_SNPs\n"
-                        "    -h --help\n";
+    const char *usage = "usage:\n eblocks [options]\n"
+                        "\nrequired arguments:\n" 
+                        "    -s, --strains_file     <name of strains file>\n"
+                        "    -a, --alleles_file     <name of alleles file>\n"
+                        "    -g, --genes_file       <name of SNPs-to-genes file>\n"
+                        "    -o, --blocks_file      <output file with haplotype blocks>\n"
+
+                        "\noptional arguments:\n"                       
+                        "    -p, --blockSNPs_file   <output file with SNPs for blocks>\n"
+                        "    -m, --min_block_SNPs\n"
+                        "    -n, --non_overlapping\n" 
+                        "    -v, --verbose\n"
+                        "    -h, --help\n";
 
     while (1)
     {
@@ -147,15 +150,6 @@ EblockOptions *parseEblockOptions(int argc, char **argv)
                 /* getopt_long already printed an error message. */
                 break;
             }
-//            case 0: /* long option without a short arg */
-//            {
-//                if (strcmp("version", long_options_eblock[option_index].name) == 0)
-//                {
-//                    std::cout<<__COMPILER__<<" "<< __VERSION__<<std::endl;
-//                    std::cout << "eblock version: " <<  __HAPLOMAP_VER__ << std::endl;
-//                }
-//                exit(1);
-//            }
             default:
                 abort();
         }
@@ -180,12 +174,12 @@ EblockOptions *parseEblockOptions(int argc, char **argv)
         cerr << usage << endl;
         exit(1);
     }
-    else if (NULL == opts->blockSNPsFileName)
-    {
-        cerr << "Required arg missing: block SNPs file name (-p)" << endl;
-        cerr << usage << endl;
-        exit(1);
-    }
+    // else if (NULL == opts->blockSNPsFileName)
+    // {
+    //     cerr << "Required arg missing: block SNPs file name (-p)" << endl;
+    //     cerr << usage << endl;
+    //     exit(1);
+    // }
 
     // Print any remaining command line arguments (not options).
     if (optind < argc)

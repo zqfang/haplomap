@@ -100,7 +100,7 @@ void gsl_matrix_matmul(gsl_matrix *a,gsl_matrix *b,gsl_matrix *c)
 void gsl_matrix_inv(gsl_matrix *a)
 {
     size_t n=a->size1;
-    size_t m=a->size2;
+    //size_t m=a->size2;
 
     gsl_matrix *temp1=gsl_matrix_calloc(n,n);
     gsl_matrix_memcpy(temp1,a);

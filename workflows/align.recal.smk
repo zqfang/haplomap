@@ -1,7 +1,7 @@
 
 import os,re
 ############### Globals ########################
-configfile: "config.yaml"
+#configfile: "config.yaml"
 workdir: config['WORKSPACE']
 
 GENOME = config['GENOME']

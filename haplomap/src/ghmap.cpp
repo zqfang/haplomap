@@ -449,7 +449,7 @@ void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetN
     {
         int str1 = *stoIt1;
         if (phenvec[str1].size() > 1) {
-            for (int i = 0; i < phenvec[str1].size() - 1; i++)
+            for (unsigned i = 0; i < phenvec[str1].size() - 1; i++)
                 blockout << phenvec[str1][i] << ",";
         }
         blockout << phenvec[str1].back();
@@ -507,7 +507,7 @@ void writeGeneBlockByBlocks(bool isCategorical, char *outputFileName, char *data
     {
         int str1 = *stoIt1;
         if (phenvec[str1].size() > 1) {
-            for (int i = 0; i < phenvec[str1].size() - 1; i++)
+            for (unsigned i = 0; i < phenvec[str1].size() - 1; i++)
                 blockout << phenvec[str1][i] << ",";
         }
         blockout << phenvec[str1].back();
@@ -566,7 +566,7 @@ void writeBlockSums(bool isCategorical, char *outputFileName,
         else
         {
             if (phenvec[str1].size() > 1) {
-                for (int i = 0; i < phenvec[str1].size() - 1; i++)
+                for (unsigned i = 0; i < phenvec[str1].size() - 1; i++)
                     blockout << phenvec[str1][i] << ",";
             }
             blockout << phenvec[str1].back();
@@ -628,7 +628,7 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
         else
         {
             if (phenvec[str1].size() > 1) {
-                for (int i = 0; i < phenvec[str1].size() - 1; i++)
+                for (unsigned i = 0; i < phenvec[str1].size() - 1; i++)
                     genesout << phenvec[str1][i] << ",";
             }
             genesout << phenvec[str1].back();
@@ -1151,7 +1151,7 @@ void bh_fdr(std::vector<BlockSummary *> & pval, float alpha, bool flag)
         std::stable_sort(pval.begin(), pval.end(),
                          [](BlockSummary* x, BlockSummary* y) {return x->pvalue > y->pvalue;});
         previous_fdr =1.0;
-        for (int i = 0; i < pval.size(); ++i) {
+        for (unsigned i = 0; i < pval.size(); ++i) {
             factor = k / m;
             p = pval[i]->pvalue;
             //if (p <= factor * alpha) {
@@ -1169,7 +1169,7 @@ void bh_fdr(std::vector<BlockSummary *> & pval, float alpha, bool flag)
         std::stable_sort(pval.begin(), pval.end(),
                          [](BlockSummary* x, BlockSummary* y) {return x->relPvalue > y->relPvalue;});
         previous_fdr = 1.0;
-        for (int i = 0; i < pval.size(); ++i) {
+        for (unsigned i = 0; i < pval.size(); ++i) {
             factor = k / m;
             p = pval[i]->relPvalue;
             if (p <= factor * alpha) {
