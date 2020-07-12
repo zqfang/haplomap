@@ -47,8 +47,10 @@ HBCGM:
     STRAIN_ANNO: "/data/bases/shared/haplomap/PELTZ_20200429/strains.metadata.csv"
     # path to SNP database
     SNPS_DIR: "/data/bases/shared/haplomap/PELTZ_20200429/SNPs"
-    # Gene name file
-    GENE_ANNO: "/data/bases/shared/haplomap/PELTZ_20200429/gene_coding.txt"
+    # SNP annotations for all genes
+    ANNOVAR: "/data/bases/shared/haplomap/PELTZ_20200429/AA_by_strains.pkl" 
+    KNOWNGENE_META: "/data/bases/shared/haplomap/PELTZ_20200429/mm10_kgXref.txt" 
+    KNOWNGENE: "/data/bases/shared/haplomap/PELTZ_20200429/mm10_knownGene.txt" 
 
 
 GATK:

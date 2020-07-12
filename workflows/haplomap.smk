@@ -8,9 +8,14 @@ HBCGM_BIN = config['HBCGM']['BIN']
 TRAIT_IDS = config['HBCGM']['TRAIT_IDS']
 # ghmap input
 TRAIT_DATA =  config['HBCGM']['TRAIT_DATA']
+GENETIC_REL = config['HBCGM']['GENETIC_REL']
+
 # eblock input
 STRAIN_ANNO = config['HBCGM']['STRAIN_ANNO']
 SNPDB = config['HBCGM']['SNPS_DIR']
+ANNOVAR = config['HBCGM']['ANNOVAR'], 
+KNOWNGENE_META = config['HBCGM']['KNOWNGENE_REF'], 
+KNOWNGENE = config['HBCGM']['KNOWNGENE'],
 GENE_ANNO = config['HBCGM']['GENE_ANNO']
 GENE_EXPRS = config['HBCGM']['GENE_EXPRS']
 # open chromatin regions input
@@ -33,7 +38,7 @@ HBCGM =  expand("MPD_{ids}/chr{i}.results.txt", ids=IDS, i=CHROMOSOMES)
 HBLOCKS = expand("MPD_{ids}/chr{i}.hblocks.txt", ids=IDS, i=CHROMOSOMES)
 HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.open_region.bed", ids=IDS, i=CHROMOSOMES)
 rule target:
-    input: HBCGM, #HBCGM_NONCODING
+    input: HBCGM, HBCGM_NONCODING
 
 
 # rule pheno:
@@ -62,11 +67,24 @@ rule strain2trait:
     script:
         "../scripts/strain2traits.py"
 
+rule annotateSNPs:
+    input:
+        strains = "MPD_{ids}/strain.{ids}.txt"
+        snps = os.path.join(SNPDB, "chr{i}.txt"), 
+        annodb = ANNOVAR, 
+        kgxref = KNOWNGENE_META, 
+        knowngene= KNOWNGENE,
+    output:
+        hgnc = "MPD_{ids}/strain.{ids}.anno.genename.txt",
+        ensemble = "MPD_{ids}/strain.{ids}.anno.geneid.txt",
+    script:
+        "../scripts/annotatSNPs.py"
+
 # find haplotypes
 rule eblocks:
     input: 
         snps = os.path.join(SNPDB, "chr{i}.txt"),
-        gene_anno = GENE_ANNO,
+        gene_anno = "MPD_{ids}/strain.{ids}.anno.genename.txt",
         strains = "MPD_{ids}/strain.{ids}.txt",
     output: 
         hb = protected("MPD_{ids}/chr{i}.hblocks.txt"),
@@ -85,6 +103,8 @@ rule ghmap:
         hb = "MPD_{ids}/chr{i}.hblocks.txt",
         trait = "MPD_{ids}/trait.{ids}.txt",
         gene_exprs = GENE_EXPRS,
+        rel = GENETIC_REL,
+        relid = GENETIC_REL+".id"
     output: "MPD_{ids}/chr{i}.results.txt"
     params:
         bin = HBCGM_BIN,
@@ -94,7 +114,7 @@ rule ghmap:
         categorical = "-c" if os.path.exists(params.cat) else ''
         cats = "catogorical" if os.path.exists(params.cat) else ''
         cmd = "{params.bin}/haplomap ghmap %s "%categorical +\
-              "-e {input.gene_exprs} " +\
+              "-e {input.gene_exprs} -r {input.rel}" +\
               "-p {input.trait} -b {input.hb} -o {output} " +\
               "-n MPD_{wildcards.ids}_%s -v > {log}"%cats
         shell(cmd)
