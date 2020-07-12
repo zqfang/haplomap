@@ -3,6 +3,7 @@
 #include <getopt.h>
 #include <cstring>
 #include <unordered_map>
+#include <memory>
 #include "ghmap.h"
 #include "manova.h"
 #include "fdr.h"
@@ -64,39 +65,40 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
             /*{"version", no_argument, 0, 0},*/
             {0, 0, 0, 0}};
 
+    const char *usage = "usage: ghmap [options]\n"
+                        "\nrequired arguments:\n"
+                        "    -p, --phenotypes_file  <phenotype file> strain order should match to (-b)\n"
+                        "    -b, --blocks_file      <output file from eblocks>\n"
+                        "    -o, --output_file      <output file name>\n"
+                        "\noptional arguments:\n"
+                        "    -r, --relation         <genetic relation file .rel>  n x n matrix\n"
+                        "    -n, --name             <name of phenotype dataset>\n"
+                        "    -e, --expression_file  <name of file>\n"
+                        "    -q, --equal_file       <name of file>\n"
+                        "    -t, --goterms_file     <name of file>\n"
+                        "    -g, --gene             <name of file>  writing block-oriented results file for gene\n"
+                        "    -i, --goterms_include_file <name of file>\n"
+                        "                           output only genes with these terms\n"
+                        "    -c    phenotype (-p) is categorical\n"
+                        "    -f    filter out non-coding blocks\n"
+                        "    -k    haploblocks generate a blocks-oriented results\n"
+                        "    -m    output gene and haplotype block\n"
+                        "    -a    output gene and haplotype block sort by block\n"
+                        "    -l, --pvalue_cutoff    only write results with pvalue < cutoff\n"
+                        "    -v, --verbose\n"
+                        "    -h, --help\n";
+
     while (1)
     {
 
         int option_index = 0;
-        c = getopt_long(argc, argv, "cfkmahvn:p:b:l:o:g:e:q:t:i:r:", long_options_ghmap, &option_index);
+        c = getopt_long(argc, argv, "hvcfkman:p:b:l:o:g:e:q:t:i:r:", long_options_ghmap, &option_index);
 
         /* Detect the end of the options. */
         if (c == -1)
         {
             break;
         }
-       const char *usage = "usage: ghmap [options]\n"
-        "\nrequired arguments:\n"  
-        "    -p, --phenotypes_file  <phenotype file> strain order should match to (-b)\n"
-        "    -b, --blocks_file      <output file from eblocks>\n"
-        "    -r, --relation         <genetic relation file>  n x n matrix\n"
-        "    -o, --output_file      <output file name>\n"
-        "\noptional arguments:\n"     
-        "    -n, --name             <name of phenotype dataset>\n"  
-        "    -e, --expression_file  <name of file>\n" 
-        "    -q, --equal_file       <name of file>\n"
-        "    -t, --goterms_file     <name of file>\n"
-        "    -g, --gene             <name of file>  writing block-oriented results file for gene\n"
-        "    -i, --goterms_include_file <name of file>\n"   
-        "                           output only genes with these terms\n"
-        "    -c    phenotype (-p) is categorical\n"                        
-        "    -f    filter out non-coding blocks\n"
-        "    -k    haploblocks generate a blocks-oriented results\n"
-        "    -m    output gene and haplotype block\n"
-        "    -a    output gene and haplotype block sort by block\n"
-        "    -l, --pvalue_cutoff    only write results with pvalue < cutoff\n"
-        "    -v, --verbose\n" 
-        "    -h, --help\n";
 
         switch (c)
         {
@@ -140,6 +142,7 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
             case 'h':
             {
                 cout << usage << endl;
+                exit(0);
                 break;
             }
 
@@ -224,21 +227,30 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
                 abort();
         }
     }
+    if (argc == 1)
+    {
+        std::cout<<usage<<std::endl;
+        exit(1);
+    }
 
     if (NULL == opts->blocksFileName)
     {
+        std::cout<<usage<<std::endl;
         cout << "Required arg missing: blocks file name (-b)" << endl;
         exit(1);
     }
     else if (NULL == opts->phenotypeFileName)
     {
+        std::cout<<usage<<std::endl;
         cout << "Required arg missing: phenotype file name (-p)" << endl;
         exit(1);
-    } else if (NULL == opts->geneticRelationMatrix)// || opts->geneticRelationIDs == NULL)
-    {
-        std::cout<<"Required arg missing: genetic relation files (.rel, .rel.id)" << std::endl;
-        exit(1);
     }
+//    else if (NULL == opts->geneticRelationMatrix)
+//    {
+//        std::cout<<usage<<std::endl;
+//        std::cout<<"Required arg missing: genetic relation files (.rel, .rel.id) -r "<< std::endl;
+//        exit(1);
+//    }
 
     // Print any remaining command line arguments (not options).
     if (optind < argc)
@@ -263,18 +275,17 @@ int main_ghmap(int argc, char **argv)
     beginPhase("reading blocks summary file");
     readBlockSummary(opts->blocksFileName, opts->geneName, opts->goTermFile);
     endPhase();
-
     std::vector<std::vector<float>> phenvec(numStrains);
-    beginPhase("reading genetic relation matrix");
-    char* _relid = strdup(opts->geneticRelationMatrix);
-    opts->geneticRelationIDs = std::strcat(_relid, ".id");
-    //const_cast<char*>(mid.c_str()); // string to char*
-    //printf("rel: %s\n",opts->geneticRelationMatrix);
-    //printf("rel.id: %s\n",opts->geneticRelationIDs);
 
-    MANOVA aov(opts->geneticRelationMatrix, opts->geneticRelationIDs, 4);
-    aov.setEigen(); // calculate eigenvectors
-    endPhase();
+    std::shared_ptr<MANOVA> aov;
+    if (opts->geneticRelationMatrix != NULL) {
+        beginPhase("reading genetic relation matrix");
+        char *_relid = strdup(opts->geneticRelationMatrix);
+        opts->geneticRelationIDs = std::strcat(_relid, ".id");
+        aov = std::make_shared<MANOVA>(opts->geneticRelationMatrix, opts->geneticRelationIDs, 4);
+        aov->setEigen(); // calculate eigenvectors
+        endPhase();
+    }
 
     beginPhase("reading phenotype file");
     if (opts->isCategorical)
@@ -339,11 +350,14 @@ int main_ghmap(int argc, char **argv)
         showPattern(pBlock->pattern);
         cout << endl;
       }
+      // ANOVA analysis
       ANOVA(phenvec, pBlock->pattern, pBlock->FStat, pBlock->pvalue, pBlock->effect);
-      bool ok = aov.setNonQMarkMat(pBlock->pattern, strainAbbrevs);
-      if (ok)
-          aov.pillaiTrace(pBlock->relFStat, pBlock->relPvalue);
-
+      // population structure
+      if (opts->geneticRelationMatrix != NULL) {
+          bool ok = aov->setNonQMarkMat(pBlock->pattern, strainAbbrevs);
+          if (ok)
+              aov->pillaiTrace(pBlock->relFStat, pBlock->relPvalue);
+      }
       if (pBlock->FStat == INFINITY && pBlock->effect < 0.0)
       {
         cout << "Weird effect:" << endl;
@@ -354,9 +368,10 @@ int main_ghmap(int argc, char **argv)
     endPhase();
     setBlockStats();
     beginPhase("Benjamini Hochberg procedure for controlling the FDR");
-    bh_fdr(blocks, 0.05, 0);
+    if (opts->geneticRelationMatrix != NULL)
+        bh_fdr(blocks, 0.05, 0); // pop structure pval correction
     if (!opts->isCategorical)
-        bh_fdr(blocks, 0.05,1);
+        bh_fdr(blocks, 0.05,1); // annova pval correction
     endPhase();
 
     beginPhase("sorting blocks");

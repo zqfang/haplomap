@@ -150,7 +150,7 @@ void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb
 
 
 void showBlockSums(std::ostream &os, bool isCategorical,
-                            std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec)
+        std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec)
   {
     for (unsigned i = 0; i < blocks.size(); i++)
     {
@@ -161,7 +161,8 @@ void showBlockSums(std::ostream &os, bool isCategorical,
     }
   }
 
-void showGeneBlockByBlocks(std::ostream &os, bool isCategorical, std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec)
+void showGeneBlockByBlocks(std::ostream &os, bool isCategorical,
+        std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec)
   {
     for (unsigned i = 0; i < blocks.size(); i++)
     {
@@ -171,8 +172,6 @@ void showGeneBlockByBlocks(std::ostream &os, bool isCategorical, std::vector<Blo
       }
     }
   }
-
-
 
 
 bool BlocksComparator::operator()(const BlockSummary *pb1, const BlockSummary *pb2) const
@@ -299,7 +298,7 @@ void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
         // If geneName is defined, only process the lines containing that gene name in the gene name list,
         // unless geneName = "*", in which case it reads all blocks.
 
-        if (!geneName || (find(rdr.begin() + 7, rdr.end(), geneName) != rdr.end()))
+        if (!geneName || (std::find(rdr.begin() + 7, rdr.end(), geneName) != rdr.end()))
         {
 
             BlockSummary *pBlock = new BlockSummary(strdup(rdr.getToken(0).c_str()),
@@ -375,7 +374,7 @@ void showGeneBlockSums(std::ostream &os, bool isCategorical, std::vector<BlockSu
                 for (; giit != geneIsCodingMap.end(); giit++)
                 {
                     std::string gname = giit->first;
-                    if (find(genesOver.begin(), genesOver.end(), gname) != genesOver.end())
+                    if (std::find(genesOver.begin(), genesOver.end(), gname) != genesOver.end())
                     {
                         continue;
                     }
@@ -1022,7 +1021,7 @@ void filterGoTerms(char *fname, std::vector<std::string> terms)
         }
         for (int i = 1; i < numtoks; i++)
         {
-            if (find(startT, endT, rdr.getToken(i)) != endT)
+            if (std::find(startT, endT, rdr.getToken(i)) != endT)
             {
                 geneTable[geneName]->isIgnored = false;
             }

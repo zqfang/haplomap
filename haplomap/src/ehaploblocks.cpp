@@ -62,7 +62,7 @@ EblockOptions *parseEblockOptions(int argc, char **argv)
     // default values
     opts->minBlockSNPs = 4;
 
-    const char *usage = "usage:\n eblocks [options]\n"
+    const char *usage = "usage: eblocks [options]\n"
                         "\nrequired arguments:\n" 
                         "    -s, --strains_file     <name of strains file>\n"
                         "    -a, --alleles_file     <name of alleles file>\n"
@@ -93,6 +93,7 @@ EblockOptions *parseEblockOptions(int argc, char **argv)
             case 'h':
             {
                 cout << usage << endl;
+                exit(0);
                 break;
             }
 
@@ -154,24 +155,29 @@ EblockOptions *parseEblockOptions(int argc, char **argv)
                 abort();
         }
     }
+    if (argc == 1)
+    {
+        std::cout<<usage<<std::endl;
+        exit(1);
+    }
 
     // isn't there some way to do this automatically based on above info?
     if (NULL == opts->strainsFileName)
     {
-        cerr << "Required arg missing: strains file name (-s)" << endl;
         cerr << usage << endl;
+        cerr << "Required arg missing: strains file name (-s)" << endl;
         exit(1);
     }
     else if (NULL == opts->allelesFileName)
     {
-        cerr << "Required arg missing: alleles file name (-a)" << endl;
         cerr << usage << endl;
+        cerr << "Required arg missing: alleles file name (-a)" << endl;
         exit(1);
     }
     else if (NULL == opts->blocksFileName)
     {
-        cerr << "Required arg missing: blocks file name (-o)" << endl;
         cerr << usage << endl;
+        cerr << "Required arg missing: blocks file name (-o)" << endl;
         exit(1);
     }
     // else if (NULL == opts->blockSNPsFileName)

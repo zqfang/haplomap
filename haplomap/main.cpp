@@ -58,19 +58,14 @@ static void usage(){
         }
         i++;
     }
-    std::cout <<
-    "Program: haplomap (haplotype-based computational genetic mapping, a.k.a HBCGM)\n"
-    "Version: "<<__HAPLOMAP_VER__<<"\n"<<
-    "Compiled by "<<__COMPILER__<<" "<<__VERSION__<<std::endl;
-    std::cout <<"\n"<<
+    std::cout <<"Program: haplomap (haplotype-based computational genetic mapping, a.k.a HBCGM)\n\n"
     "Usage:    haplomap <subcommand> [options]\n\n"
     "Subcommands:\n"
     "    eblocks        find all maximal haploblocks\n"
-    "    ghmap          statistical testing for hapbloblock with trait\n"
+    "    ghmap          statistical testing between haplotype and phenotype\n"
     "Optional arguments:\n"
     "    -v, --version  show program's version number and exit\n"
-    "    -h --help      show help message and exit."
-              << std::endl;
+    "    -h --help      show help message and exit."<< std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -79,8 +74,10 @@ int main(int argc, char **argv) {
 
     if (std::strcmp(argv[1], "version") == 0 || std::strcmp(argv[1], "--version") == 0 || std::strcmp(argv[1], "-v") == 0)
     {
-        std::cout<< "HAPLOMAP: "<<  __HAPLOMAP_VER__ << std::endl;
-        std::cout<<__COMPILER__<<" "<< __VERSION__<<std::endl;
+        std::cout <<
+                  "Program: haplomap (haplotype-based computational genetic mapping, a.k.a HBCGM)\n"
+                  "Version: "<<__HAPLOMAP_VER__<<"\n\n"<<
+                  "Compiled by "<<__COMPILER__<<" "<<__VERSION__<<std::endl;
         return 0;
     }
     else if (std::strcmp(argv[1], "help") == 0 || std::strcmp(argv[1], "--help") == 0 || std::strcmp(argv[1], "-h") == 0)
