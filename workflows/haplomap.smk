@@ -13,10 +13,9 @@ GENETIC_REL = config['HBCGM']['GENETIC_REL']
 # eblock input
 STRAIN_ANNO = config['HBCGM']['STRAIN_ANNO']
 SNPDB = config['HBCGM']['SNPS_DIR']
-ANNOVAR = config['HBCGM']['ANNOVAR'], 
-KNOWNGENE_META = config['HBCGM']['KNOWNGENE_REF'], 
-KNOWNGENE = config['HBCGM']['KNOWNGENE'],
-GENE_ANNO = config['HBCGM']['GENE_ANNO']
+ANNOVAR = config['HBCGM']['ANNOVAR'] 
+KNOWNGENE_META = config['HBCGM']['KNOWNGENE_META']
+KNOWNGENE = config['HBCGM']['KNOWNGENE']
 GENE_EXPRS = config['HBCGM']['GENE_EXPRS']
 # open chromatin regions input
 ATAC_PEAKS = glob.glob(config['HBCGM']['ATAC_PEAKS'])
@@ -69,22 +68,22 @@ rule strain2trait:
 
 rule annotateSNPs:
     input:
-        strains = "MPD_{ids}/strain.{ids}.txt"
+        strains = "MPD_{ids}/strain.{ids}.txt",
         snps = os.path.join(SNPDB, "chr{i}.txt"), 
         annodb = ANNOVAR, 
         kgxref = KNOWNGENE_META, 
         knowngene= KNOWNGENE,
     output:
-        hgnc = "MPD_{ids}/strain.{ids}.anno.genename.txt",
-        ensemble = "MPD_{ids}/strain.{ids}.anno.geneid.txt",
+        hgnc = "MPD_{ids}/chr{i}.genename.txt",
+        ensemble = "MPD_{ids}/chr{i}.geneid.txt",
     script:
-        "../scripts/annotatSNPs.py"
+        "../scripts/annotateSNPs.py"
 
 # find haplotypes
 rule eblocks:
     input: 
         snps = os.path.join(SNPDB, "chr{i}.txt"),
-        gene_anno = "MPD_{ids}/strain.{ids}.anno.genename.txt",
+        gene_anno = "MPD_{ids}/chr{i}.genename.txt",
         strains = "MPD_{ids}/strain.{ids}.txt",
     output: 
         hb = protected("MPD_{ids}/chr{i}.hblocks.txt"),
@@ -114,7 +113,7 @@ rule ghmap:
         categorical = "-c" if os.path.exists(params.cat) else ''
         cats = "catogorical" if os.path.exists(params.cat) else ''
         cmd = "{params.bin}/haplomap ghmap %s "%categorical +\
-              "-e {input.gene_exprs} -r {input.rel}" +\
+              "-e {input.gene_exprs} -r {input.rel} " +\
               "-p {input.trait} -b {input.hb} -o {output} " +\
               "-n MPD_{wildcards.ids}_%s -v > {log}"%cats
         shell(cmd)

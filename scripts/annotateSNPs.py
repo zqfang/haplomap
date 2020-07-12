@@ -63,6 +63,6 @@ def get_annotation(strains, snpdb, annodb, kgxref, knowngene, ofile1, ofile2):
     out_name.close()
 
 # snpdb, annodb, kgxref, knowngene, ensemble, hgnc
-strain2trait(snakemake.input['strains'], snakemake.input['snpdb'], snakemake.input['annodb'], 
+get_annotation(snakemake.input['strains'], snakemake.input['snps'], snakemake.input['annodb'], 
              snakemake.input['kgxref'], snakemake.input['knowngene'], 
              snakemake.output['ensemble'], snakemake.output['hgnc'])

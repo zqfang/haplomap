@@ -64,12 +64,12 @@ See more detail in ``haplomap`` subfolder: [Install](haplomap/README.md)
 
 ### 2. Edit the `config.yaml` file path in `workflows` folder:
 
-only edit `hbcgm` section.
+only edit `HBCGM` section.
 ```yaml
 HBCGM:
     # working directory
     WORKSPACE: "/data/bases/fangzq/MPD/results_drug_diet"
-    # path to eblocks, ghmap
+    # path to haplomap
     BIN: "/home/fangzq/github/HBCGM/build/bin"
     
     # ghmap input
@@ -92,8 +92,10 @@ HBCGM:
     STRAIN_ANNO: "/data/bases/shared/haplomap/PELTZ_20200429/strains.metadata.csv"
     # path to SNP database
     SNPS_DIR: "/data/bases/shared/haplomap/PELTZ_20200429/SNPs"
-    # Gene name file
-    GENE_ANNO: "/data/bases/shared/haplomap/PELTZ_20200429/gene_coding.txt"
+    # SNP annotations for all genes
+    ANNOVAR: "/data/bases/shared/haplomap/PELTZ_20200429/AA_by_strains.pkl" 
+    KNOWNGENE_META: "/data/bases/shared/haplomap/PELTZ_20200429/mm10_kgXref.txt" 
+    KNOWNGENE: "/data/bases/shared/haplomap/PELTZ_20200429/mm10_knownGene.txt" 
 ```
 
 ### 3. run haplomap
@@ -103,12 +105,12 @@ Install `snakemake` first. You need `Miniconda` if conda is not installed
 conda create -n hbcgm -f environment.yaml
 ```
 
-run your pipline in a 
+run your pipeline in a 
 ```shell
 conda activate hbcgm
 # modify the file path in haplomap and run with 24 cores
 snakemake -s workflows/haplomap.smk \
-          --configfile workflows/config.yaml \
+          --configfile workflows/config.yaml 
           -k -p -j 24   
 ```
 
