@@ -75,7 +75,7 @@ void MANOVA::readMat(const char* filename, gsl_matrix *Mat)
 int MANOVA::numHaplotypes(char *pattern)
 {
     int numHap = -1;
-    for (int str1 = 0; str1 < _numStrains; str1++)
+    for (unsigned int str1 = 0; str1 < _numStrains; str1++)
     {
         char hap = pattern[str1];
         if (pattern[str1] != '?' && numHap < hap)
@@ -95,7 +95,7 @@ std::string MANOVA::removeQMark(char *pattern)
     /// MARK: pattern is unprintable => strlen() = 0
     _numDefined = _numStrains;
     // remove all '?'
-    int i = 0;
+    unsigned int i = 0;
     while (i < _numDefined) {
         char hap = newpat[i];
         if (hap != '?') {
@@ -110,8 +110,10 @@ std::string MANOVA::removeQMark(char *pattern)
 //    for (int i=0; i < _numDefined; ++i)
 //        std::cout << (char)(newpatt[i]+'0'); // ASCII -> char
 //    std::cout<<std::endl;
-    //_pattern = _pat; // error! local memory
-    return std::string(newpat);
+    //_pattern = newpat; // don't 
+    std::string s(newpat);
+    free(newpat);
+    return s;
 }
 
 void MANOVA::setEigen()
@@ -151,7 +153,7 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<std::string>& haploStrainAbbr)
 
     // define _numDefined, and get new pattern
     //this->removeQMark(pattern);
-    for (int i = 0; i < _numStrains; i++)
+    for (unsigned int i = 0; i < _numStrains; i++)
     {
         if (pattern[i] != '?')
             _numDefined ++;
@@ -189,9 +191,9 @@ void MANOVA::extractNonQMarkMat(gsl_matrix* M, char* pattern)
     //_Mat = gsl_matrix_alloc(_SubMat->size1, _SubMat->size2);
     _Mat = gsl_matrix_alloc(_numDefined, this->L);
     // skip '?' strains
-    int rindex = 0, idx;
+    unsigned int rindex = 0, idx;
     std::string strain_abbr;
-    for (int str1 = 0; str1 < _numStrains; str1++)
+    for (unsigned int str1 = 0; str1 < _numStrains; str1++)
     {
         char hap = pattern[str1]; // 0,1,2,3,4, ?
         if ('?' != hap) {
@@ -199,7 +201,7 @@ void MANOVA::extractNonQMarkMat(gsl_matrix* M, char* pattern)
             //strains abbrevs exclude '?' ones
             _MatRowNames.push_back(strain_abbr);
             idx = _CorMat->rownames.indexOf(strain_abbr);
-            for (int cindex=0; cindex < this->L; ++cindex)
+            for (unsigned int cindex=0; cindex < this->L; ++cindex)
             {
                 double value = gsl_matrix_get(M, idx, cindex);
                 gsl_matrix_set(_Mat, rindex, cindex, value);
@@ -250,7 +252,7 @@ void MANOVA::pillaiTrace(float & FStat, float &PValue )
                    1.0, _Mat, _Mat, 0.0, tss);
 
     gsl_matrix* _grandMean = gsl_matrix_alloc(haploMean->size1, haploMean->size2);
-    for (int i = 0; i< _numHaplo; i++)
+    for (unsigned int i = 0; i< _numHaplo; i++)
         gsl_matrix_set_row(_grandMean, i, grandMean);
     // Y_{j} - Y_bar
     gsl_matrix_sub(haploMean, _grandMean);
@@ -289,7 +291,7 @@ void MANOVA::pillaiTrace(float & FStat, float &PValue )
                  <<" numStrains: "<<_numStrains
                  <<" pattern: ";
 
-        for (int i=0; i < _numStrains; ++i) {
+        for (unsigned int i=0; i < _numStrains; ++i) {
             char hap = _pattern[i];
             if (hap != '?')
                 std::cerr << (char) (hap + '0'); // ASCII -> char
@@ -319,9 +321,9 @@ void MANOVA::pillaiTrace(float & FStat, float &PValue )
 }
 
 void MANOVA::sqrt(gsl_matrix * M) {
-    for(int i = 0; i < M->size1; ++i)
+    for(unsigned int i = 0; i < M->size1; ++i)
     {
-        for (int j = 0; j< M->size2; ++j)
+        for (unsigned int j = 0; j< M->size2; ++j)
         {
             double x = gsl_matrix_get(M, i, j);
             gsl_matrix_set(M, i,j,std::sqrt(x));
@@ -331,7 +333,7 @@ void MANOVA::sqrt(gsl_matrix * M) {
 
 double MANOVA::trace(const gsl_matrix *M) {
     double vv = 0;
-    for (int i = 0; i< M->size1;++i)
+    for (unsigned int i = 0; i< M->size1;++i)
         vv += gsl_matrix_get(M,i,i);
 
     return vv;
@@ -343,9 +345,9 @@ void MANOVA::groupMean(const gsl_matrix *M, char *pattern, gsl_matrix* _haploMea
     gsl_matrix_set_zero(_haploSize);
 
     // FIXME: assert(M->size1 == strlen(pattern));
-    for (int j = 0; j < M->size2; j++)
+    for (unsigned int j = 0; j < M->size2; j++)
     {
-        for (int i = 0; i < M->size1; i++)
+        for (unsigned int i = 0; i < M->size1; i++)
         {
             char hap = pattern[i]; // 0,1,2,3,4, ?
             if ('?' != hap)
@@ -369,7 +371,7 @@ void MANOVA::colMean(gsl_matrix * M, gsl_vector * mean)
 {
     gsl_vector_set_zero(mean);
     // calculate the mean of each column
-    for (int j=0; j < M->size2; j++)
+    for (unsigned int j=0; j < M->size2; j++)
     {
         //get current column as vector
         gsl_vector_view myColumn = gsl_matrix_column(M, j);
@@ -383,7 +385,7 @@ void MANOVA::colMean(gsl_matrix * M, gsl_vector * mean)
 void MANOVA::colTotalSumSquares(gsl_matrix *M, gsl_vector *tss) {
     gsl_vector_set_zero(tss);
     // calculate the mean of each column
-    for (int j=0; j < M->size2; j++) {
+    for (unsigned int j=0; j < M->size2; j++) {
         //get current column as vector
         gsl_vector_view myColumn = gsl_matrix_column(M, j);
         double t = gsl_stats_tss(myColumn.vector.data,myColumn.vector.stride, myColumn.vector.size);
@@ -397,8 +399,8 @@ void MANOVA::scale(gsl_matrix *M, double c) {
     unsigned int rows = M->size1;
     unsigned int cols = M->size2;
 
-    for (int i=0; i < rows; i++){
-      for(int j=0; j < cols; j++){
+    for (unsigned int i=0; i < rows; i++){
+      for(unsigned int j=0; j < cols; j++){
           double myDobule = gsl_matrix_get(M, i, j);
           myDobule *= c;
           // update matrix
@@ -423,7 +425,7 @@ void MANOVA::matmul(const gsl_matrix *A, const gsl_matrix *B, gsl_matrix *C)
 std::ostream& operator<<(std::ostream &os, const MANOVA& aov)
 {
     // for debugging
-    for (int i=0; i < aov._numStrains; ++i)
+    for (unsigned int i=0; i < aov._numStrains; ++i)
     {
         char hap = aov._pattern[i];
         if (hap != '?')
