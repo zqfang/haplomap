@@ -105,8 +105,8 @@ void readPerlegenSNPvsmgene(const char *fname)
     // Insert a blank SNPEntry in the table with snpName
     // pair<hash_map<string, SNPInfo *>::iterator, bool> snpLookup =
     //   snpMap.insert(pair<string, SNPInfo *>(snpName, pSNPInfo));
-    pair<std::unordered_map<string, SNPInfo *>::iterator, bool> snpLookup =
-        snpMap.insert(pair<string, SNPInfo *>(snpName, pSNPInfo));
+    std::pair<std::unordered_map<string, SNPInfo *>::iterator, bool> snpLookup =
+        snpMap.insert(std::pair<string, SNPInfo *>(snpName, pSNPInfo));
     // The file has multiple entries when there are multiple genes.  Just insert
     // the first, and don't check for duplicates.
     // if (!snpLookup.second) {
@@ -274,8 +274,8 @@ void readAlleleInfoCompact(char *fname)
       // Insert a blank SNPEntry in the table with snpName
       //     pair<hash_map<string, SNPInfo *>::iterator, bool> snpLookup =
       // snpMap.insert(pair<string, SNPInfo *>(snpName, pSNPInfo));
-      pair<std::unordered_map<string, SNPInfo *>::iterator, bool> snpLookup =
-          snpMap.insert(pair<string, SNPInfo *>(snpName, pSNPInfo));
+      std::pair<std::unordered_map<string, SNPInfo *>::iterator, bool> snpLookup =
+          snpMap.insert(std::pair<string, SNPInfo *>(snpName, pSNPInfo));
 
       if (!snpLookup.second)
       {
@@ -287,7 +287,7 @@ void readAlleleInfoCompact(char *fname)
       for (int strIdx = 0; strIdx < numStrains; strIdx++)
       {
         //string strain = relevantStrains.eltOf(strIdx);
-        string strain = strainAbbrevs.eltOf(strIdx);
+        std::string strain = strainAbbrevs.eltOf(strIdx);
         // will report error if relevant strain was not in data.
         int aStrIdx = allStrains.indexOf(strain);
         char alleleChr = alleleStr[aStrIdx];
@@ -2286,7 +2286,7 @@ void releaseLock(int fid)
 void writeBlockSummary(char *fileName, int minBlockSNPs)
 {
   int fid = acquireLock();
-  ofstream os(fileName);
+  std::ofstream os(fileName);
   if (!os.is_open())
   {
     cerr << "Open of file \"" << fileName << "\" failed: ";

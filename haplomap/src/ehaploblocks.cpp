@@ -218,12 +218,11 @@ int main_eblocks(int argc, char **argv)
   beginPhase("reading compact alleles file");
   readAlleleInfoCompact(opts->allelesFileName);
   endPhase();
-  string chr = chromosomes.eltOf(0);
+  std::string chr = chromosomes.eltOf(0);
   // if no gene names file specified, don't read it, omit gene names.
   if (opts->genesFileName)
   {
     beginPhase("reading SNP gene names file");
-    // FIXME: make this an option.
     // readAlleleInfoCompact(opts->geneNamesFile);
     readSNPGeneNames(opts->genesFileName);
     endPhase();
@@ -270,7 +269,7 @@ int main_eblocks(int argc, char **argv)
     updateStats();
     reportStats();
   }
-
+  delete opts;
   return 0;
 }
 

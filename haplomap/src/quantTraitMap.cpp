@@ -437,6 +437,7 @@ int main_ghmap(int argc, char **argv)
     }
 
     endPhase();
+    delete opts;
 
     return 0;
 }

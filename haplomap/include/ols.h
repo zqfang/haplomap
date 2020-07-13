@@ -8,23 +8,6 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_multifit.h>
 
-
-gsl_matrix* pca(const gsl_matrix* data, unsigned int L);
-
-// matrix multiplication GSL_BLAS
-// https://www.gnu.org/software/gsl/doc/html/blas.html
-// s,d,c, z = double precision ...
-// ge = general matrices 
-// mm = matrix-matrix multiplication 
-// gsl_blas_dgemm (CblasNoTrans, CblasNoTrans, 1.0, &A.matrix, &B.matrix, 0.0, &C.matrix); 
-// example
-gsl_matrix_complex *multiply(gsl_matrix_complex *A, gsl_matrix_complex *B);
-
-// or
-// matrix multiplication 
-// c=a*b, a: M*N,b: N*L, then c: M*L.
-void gsl_matrix_matmul(gsl_matrix *a,gsl_matrix *b,gsl_matrix *c);
-
 // matrix inverse
 void gsl_matrix_inv(gsl_matrix *a);
 

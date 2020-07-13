@@ -142,13 +142,19 @@ int main_eigen(int argc, char **argv) {
     // write output file
     std::ofstream output;
     output.open(opts->outputFileName);
-    if (output.is_open()) {
-        for (int i = 0; i < results->size1; ++i) {
-            for (int j = 0; j < results->size2; ++j)
-                output << gsl_matrix_get(results, i, j) << "\t";
-            output << std::endl;
-        }
+    if (!output.is_open())
+    {
+        std::cerr << "Open of file \"" << opts->outputFileName << "\" failed: ";
+        std::perror("");
+        exit(1);
     }
+
+    for (int i = 0; i < results->size1; ++i) {
+        for (int j = 0; j < results->size2; ++j)
+            output << gsl_matrix_get(results, i, j) << "\t";
+        output << std::endl;
+    }
+
     output.close();
     gsl_matrix_free(results);
     std::cout<<"Job done."<<std::endl;
