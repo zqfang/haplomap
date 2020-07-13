@@ -195,7 +195,7 @@ void EigenMat::calcVariance() {
 gsl_matrix* EigenMat::pca(unsigned int L)
 {
     assert(data != NULL);
-    assert(L > 0 && L < data->size1);
+    assert(L > 0 && L < data->size2);
 
     unsigned int i;
     unsigned int rows = data->size1;

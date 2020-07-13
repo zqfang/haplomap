@@ -34,10 +34,11 @@ std::shared_ptr<EigenOptions> parseEigenOptions(int argc, char **argv)
             {"dimension", optional_argument, reinterpret_cast<int *>(4), 'd'},
             {0, 0,                           0,                          0}};
 
-    const char *usage = "usage: eigen [options]\n"
+    const char *usage = "Perform reduction on the data dimension (rows)\n"
+                        "\nusage: pca [options]\n"
                         "\nrequired arguments:\n"
                         "    -i, --input           input file (M x N matrix)\n"
-                        "    -o, --output          output file (L x N matrix)\n\n"
+                        "    -o, --output          output file (L x N matrix)\n"
                         "\noptional arguments:\n"
                         "    -d, --dimension       dimensions of reduction, default 4.\n"
                         "    -v, --verbose\n"
