@@ -26,17 +26,21 @@ typedef struct
     const char *alias, *help;
 } cmd_t;
 
-
 static cmd_t cmds [] = {
         {
             .func = main_eblocks,
             .alias = "eblocks",
-            .help = "find haploblocks"
+            .help = "Find maximal haplotype blocks."
         },
         {
             .func = main_ghmap,
             .alias = "ghmap",
-            .help = "run ghmap"
+            .help = "Haplotype association test (ANOVA)."
+        },
+        {
+            .func = main_eigen,
+            .alias = "pca",
+            .help = "Principal component analysis."
         },
         {
             .func=NULL,
@@ -45,8 +49,8 @@ static cmd_t cmds [] = {
         }
 };
 
-static void usage(){
-
+static void usage()
+{
     int i = 0;
     const char * sep = NULL;
     while (cmds[i].alias)
@@ -54,15 +58,17 @@ static void usage(){
         if (!cmds[i].func) sep = cmds[i].alias;
         if (sep)
         {
-            std::cout<<"\n"<<sep<<std::endl;
+            std::cout<<sep<<" : "<<cmds[i].help<<std::endl;
         }
         i++;
     }
-    std::cout <<"Program: haplomap (haplotype-based computational genetic mapping, a.k.a HBCGM)\n\n"
+    std::cout <<
+    "Program: haplomap (haplotype-based computational genetic mapping, a.k.a HBCGM)\n\n"
     "Usage:    haplomap <subcommand> [options]\n\n"
     "Subcommands:\n"
     "    eblocks        find all maximal haploblocks\n"
-    "    ghmap          statistical testing between haplotype and phenotype\n"
+    "    ghmap          haplotype association test (ANOVA)\n"
+    "    pca            principal component analysis\n\n"
     "Optional arguments:\n"
     "    -v, --version  show program's version number and exit\n"
     "    -h --help      show help message and exit."<< std::endl;
@@ -75,9 +81,9 @@ int main(int argc, char **argv) {
     if (std::strcmp(argv[1], "version") == 0 || std::strcmp(argv[1], "--version") == 0 || std::strcmp(argv[1], "-v") == 0)
     {
         std::cout <<
-                  "Program: haplomap (haplotype-based computational genetic mapping, a.k.a HBCGM)\n"
-                  "Version: "<<__HAPLOMAP_VER__<<"\n\n"<<
-                  "Compiled by "<<__COMPILER__<<" "<<__VERSION__<<std::endl;
+        "Program: haplomap (haplotype-based computational genetic mapping, a.k.a HBCGM)\n"
+        "Version: "<<__HAPLOMAP_VER__<<"\n\n"<<
+        "Compiled by "<<__COMPILER__<<" "<<__VERSION__<<std::endl;
         return 0;
     }
     else if (std::strcmp(argv[1], "help") == 0 || std::strcmp(argv[1], "--help") == 0 || std::strcmp(argv[1], "-h") == 0)

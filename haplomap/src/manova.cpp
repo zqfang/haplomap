@@ -86,7 +86,7 @@ int MANOVA::numHaplotypes(char *pattern)
     return numHap + 1;
 }
 
-char* MANOVA::removeQMark(char *pattern)
+std::string MANOVA::removeQMark(char *pattern)
 {
     /// MARK:: now newpat could be returned
     char * newpat = (char *)malloc(_numStrains);
@@ -110,8 +110,8 @@ char* MANOVA::removeQMark(char *pattern)
 //    for (int i=0; i < _numDefined; ++i)
 //        std::cout << (char)(newpatt[i]+'0'); // ASCII -> char
 //    std::cout<<std::endl;
-    //_pattern = _pat; // local memory
-    return newpat;
+    //_pattern = _pat; // error! local memory
+    return std::string(newpat);
 }
 
 void MANOVA::setEigen()
@@ -432,28 +432,4 @@ std::ostream& operator<<(std::ostream &os, const MANOVA& aov)
             os << hap;
     }
     return os;
-}
-
-
-namespace HBCGM {
-    // debugging
-    void print_gvec(gsl_vector* M)
-    {
-        std::cout<<"trace vector: "<<std::endl;
-        for (int i = 0; i < M->size; ++i)
-        {
-            std::cout<<gsl_vector_get(M, i)<<" ";
-        }
-        std::cout<<std::endl;
-    }
-
-    void print_gmat(gsl_matrix* M){
-        std::cout << "trace matrix: "<<std::endl;
-        for (int i = 0; i < M->size1; ++i){
-            for (int j=0; j < M->size2; ++j) {
-                std::cout<< gsl_matrix_get(M, i, j) << " ";
-            }
-            std::cout<<std::endl;
-        }
-    }
 }

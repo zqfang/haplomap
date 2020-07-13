@@ -8,7 +8,8 @@
 #include <string>
 #include "dynum.h"
 
-struct EigenMat {
+struct EigenMat
+{
     size_t size1;
     size_t size2;
     Dynum<std::string> rownames;
@@ -16,8 +17,10 @@ struct EigenMat {
     gsl_matrix* eigenvectors = nullptr;
     gsl_vector* eigenvalues = nullptr;
     gsl_vector* variances = nullptr;
+
     /// read correlation matrix(grm.rel) and rowname (grm.rel.id) files from PLink output,
     EigenMat(const char* MatrixFile, const char* RowNamesFile);
+    EigenMat(const char* MatrixFile, bool header, const std::string delimimiter  = "\t");
     /// init with STL vector
     explicit EigenMat(const std::vector<std::vector<double>> &Mat);
     /// init with GSL matrix

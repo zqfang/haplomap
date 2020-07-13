@@ -58,7 +58,7 @@ public:
     void writeMat(const char* filename, gsl_matrix * Mat);
 
     /// return new pattern without '?'. order remained.
-    char* removeQMark(char *pattern);
+    std::string removeQMark(char *pattern);
     /// print haplotype pattern
     friend std::ostream& operator<<(std::ostream &os, const MANOVA& aov);
 

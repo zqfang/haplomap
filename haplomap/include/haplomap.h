@@ -25,5 +25,5 @@ using namespace std;
 
 int main_eblocks(int argc, char **argv);
 int main_ghmap(int argc, char **argv);
-
+int main_eigen(int argc, char **argv);
 #endif //HBCGM_HAPLOMAP_H

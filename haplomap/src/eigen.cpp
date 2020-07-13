@@ -10,8 +10,39 @@
 #include "ColumnReader.h"
 #include "eigen.h"
 
-EigenMat::EigenMat(const char* MatrixFile, const char* RowNamesFile)
-{
+namespace HBCGM {
+    // debugging
+    void print_vec(std::vector<double> &M)
+    {
+        std::cout<<"trace vector: "<<std::endl;
+        for (auto &v: M) {
+            std::cout<<v<<" ";
+        }
+        std::cout<<std::endl;
+    }
+    void print_gvec(gsl_vector* M)
+    {
+        std::cout<<"trace gsl vector: "<<std::endl;
+        for (int i = 0; i < M->size; ++i)
+        {
+            std::cout<<gsl_vector_get(M, i)<<" ";
+        }
+        std::cout<<std::endl;
+    }
+
+    void print_gmat(gsl_matrix* M){
+        std::cout << "trace gsl matrix: "<<std::endl;
+        for (int i = 0; i < M->size1; ++i){
+            for (int j=0; j < M->size2; ++j) {
+                std::cout<< gsl_matrix_get(M, i, j) << " ";
+            }
+            std::cout<<std::endl;
+        }
+    }
+}
+
+
+EigenMat::EigenMat(const char* MatrixFile, const char* RowNamesFile){
     // read row names file
     ColumnReader rdr(RowNamesFile, (char *)"\t");
     int numtoks;
@@ -24,7 +55,6 @@ EigenMat::EigenMat(const char* MatrixFile, const char* RowNamesFile)
             std::cout << "Undefined strain abbrev: " << strain_abbrev << std::endl;
         }
     }
-    // read matrix file
     ColumnReader rmat(MatrixFile, (char *)"\t");
     data = gsl_matrix_alloc(rownames.size(), rownames.size());
     int i = 0;
@@ -37,15 +67,50 @@ EigenMat::EigenMat(const char* MatrixFile, const char* RowNamesFile)
     }
     size1 = data->size1;
     size2 = data->size2;
-
-    //    std::ifstream input(filename);
-    //    string line;
-    //    if (input.is_open()) {
-    //        while (getline(input, line))
-    //            std::cout << line <<'\n';
-    //    }
-    //    input.close();
 }
+
+EigenMat::EigenMat(const char* filename, bool header, const std::string delimimiter )
+{
+    int numtoks;
+    std::vector<std::vector<double>> temp_mat;
+    // read matrix file
+    ColumnReader rmat(filename, (char *)delimimiter.c_str());
+    // get first line
+    numtoks = rmat.getLine();
+    if (numtoks < 0)
+        std::invalid_argument("Empty input file");
+
+    std::vector<double> temp;
+    // read header
+    if (header) {
+        for (int t = 0; t < numtoks; t++)
+            rownames.addElementIfNew(rmat.getToken(t));
+    } else {
+        for (int t = 0; t < numtoks; t++)
+            temp.push_back(std::stod(rmat.getToken(t)));
+        temp_mat.push_back(temp);
+        temp.clear();
+    }
+    // read the rest of file
+    while ((numtoks = rmat.getLine()) >= 0) {
+        temp.clear();
+        for (int t = 0; t < numtoks; t++) {
+            temp.push_back(std::stod(rmat.getToken(t)));
+        }
+        temp_mat.push_back(temp);
+    }
+    size1 = temp_mat.size();
+    size2 = temp_mat[0].size();
+    this->data = gsl_matrix_alloc(size1, size2);
+    for (int i = 0; i < size1; ++i) {
+        for (int j = 0; j < size2; ++j) {
+            gsl_matrix_set(this->data, i, j, temp_mat[i][j]);
+            //std::cout << temp_mat[i][j] << " ";
+        }
+        //std::cout<<std::endl;
+    }
+}
+
 EigenMat::EigenMat(const std::vector<std::vector<double>> &Mat)
 {
     size1 = Mat.size();
@@ -70,12 +135,13 @@ EigenMat::~EigenMat()
 {
     gsl_matrix_free(data);
     if (eigenvectors != nullptr)
+    {
         gsl_vector_free(eigenvalues);
         gsl_matrix_free(eigenvectors);
+    }
     if (variances != nullptr)
         gsl_vector_free(variances);
 }
-
 
 void EigenMat::eigen(){
     if (data == nullptr) {
@@ -106,7 +172,8 @@ void EigenMat::calcVariance() {
         return;
     }
 
-    if (eigenvectors == nullptr) {
+    if (eigenvectors == nullptr)
+    {
         this->eigen();
     }
     if (variances != nullptr)
@@ -128,19 +195,29 @@ void EigenMat::calcVariance() {
 gsl_matrix* EigenMat::pca(unsigned int L)
 {
     assert(data != NULL);
-    assert(L > 0 && L < data->size2);
+    assert(L > 0 && L < data->size1);
+
     unsigned int i;
     unsigned int rows = data->size1;
     unsigned int cols = data->size2;
+    //HBCGM::print_gmat(data);
     gsl_vector* mean = gsl_vector_alloc(rows);
-
+    // FIXME: why could not allocate memory here
+    // get row means
     for(i = 0; i < rows; i++) {
-        gsl_vector_set(mean, i, gsl_stats_mean(data->data + i * cols, 1, cols));
+        //get current column as vector
+        gsl_vector_view myRow = gsl_matrix_row(this->data, i);
+        // calc mean
+        double avg = gsl_stats_mean(myRow.vector.data, myRow.vector.stride, myRow.vector.size);
+        // assign
+        gsl_vector_set(mean, i, avg);
+
+        //gsl_vector_set(mean, i, gsl_stats_mean(data->data + i * cols, 1, cols));
     }
 
     // Get mean-substracted data into matrix mean_substracted_data.
     gsl_matrix* mean_substracted_data = gsl_matrix_alloc(rows, cols);
-    gsl_matrix_memcpy(mean_substracted_data, data);
+    gsl_matrix_memcpy(mean_substracted_data, this->data);
     for(i = 0; i < cols; i++) {
         gsl_vector_view mean_substracted_point_view = gsl_matrix_column(mean_substracted_data, i);
         gsl_vector_sub(&mean_substracted_point_view.vector, mean);
@@ -154,22 +231,20 @@ gsl_matrix* EigenMat::pca(unsigned int L)
     gsl_matrix_free(mean_substracted_data);
 
     // Get eigenvectors, sort by eigenvalue.
-    gsl_vector* _eigenvalues = gsl_vector_alloc(rows);
-    gsl_matrix* _eigenvectors = gsl_matrix_alloc(rows, rows);
+    eigenvalues = gsl_vector_alloc(rows);
+    eigenvectors = gsl_matrix_alloc(rows, rows);
     gsl_eigen_symmv_workspace* workspace = gsl_eigen_symmv_alloc(rows);
-    gsl_eigen_symmv(covariance_matrix, _eigenvalues, _eigenvectors, workspace);
+    gsl_eigen_symmv(covariance_matrix, eigenvalues, eigenvectors, workspace);
     gsl_eigen_symmv_free(workspace);
     gsl_matrix_free(covariance_matrix);
 
     // Sort the eigenvectors
-    gsl_eigen_symmv_sort(_eigenvalues, _eigenvectors, GSL_EIGEN_SORT_ABS_DESC);
-    gsl_vector_free(_eigenvalues);
+    gsl_eigen_symmv_sort(eigenvalues, eigenvectors, GSL_EIGEN_SORT_ABS_DESC);
 
     // Project the original dataset
     gsl_matrix* result = gsl_matrix_alloc(L, cols);
-    gsl_matrix_view L_eigenvectors = gsl_matrix_submatrix(_eigenvectors, 0, 0, rows, L);
+    gsl_matrix_view L_eigenvectors = gsl_matrix_submatrix(eigenvectors, 0, 0, rows, L);
     gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1.0, &L_eigenvectors.matrix, data, 0.0, result);
-    gsl_matrix_free(_eigenvectors);
     // Result is n LxN matrix, each column is the original data vector with reduced dimension from M to L
     return result;
 }
