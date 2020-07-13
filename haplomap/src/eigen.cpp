@@ -23,7 +23,7 @@ namespace HBCGM {
     void print_gvec(gsl_vector* M)
     {
         std::cout<<"trace gsl vector: "<<std::endl;
-        for (int i = 0; i < M->size; ++i)
+        for (unsigned i = 0; i < M->size; ++i)
         {
             std::cout<<gsl_vector_get(M, i)<<" ";
         }
@@ -32,8 +32,8 @@ namespace HBCGM {
 
     void print_gmat(gsl_matrix* M){
         std::cout << "trace gsl matrix: "<<std::endl;
-        for (int i = 0; i < M->size1; ++i){
-            for (int j=0; j < M->size2; ++j) {
+        for (unsigned i = 0; i < M->size1; ++i){
+            for (unsigned j=0; j < M->size2; ++j) {
                 std::cout<< gsl_matrix_get(M, i, j) << " ";
             }
             std::cout<<std::endl;
@@ -102,8 +102,8 @@ EigenMat::EigenMat(const char* filename, bool header, const std::string delimimi
     size1 = temp_mat.size();
     size2 = temp_mat[0].size();
     this->data = gsl_matrix_alloc(size1, size2);
-    for (int i = 0; i < size1; ++i) {
-        for (int j = 0; j < size2; ++j) {
+    for (unsigned i = 0; i < size1; ++i) {
+        for (unsigned j = 0; j < size2; ++j) {
             gsl_matrix_set(this->data, i, j, temp_mat[i][j]);
             //std::cout << temp_mat[i][j] << " ";
         }
@@ -183,7 +183,7 @@ void EigenMat::calcVariance() {
     gsl_vector_memcpy(variances, eigenvalues);
 
     double _sumEigen = 0;
-    for (int i = 0; i < size1; ++i)
+    for (unsigned i = 0; i < size1; ++i)
         _sumEigen += gsl_vector_get(variances, i);
     gsl_vector_scale(variances, 100.0/_sumEigen);
 }

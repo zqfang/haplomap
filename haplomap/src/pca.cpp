@@ -149,8 +149,8 @@ int main_eigen(int argc, char **argv) {
         exit(1);
     }
 
-    for (int i = 0; i < results->size1; ++i) {
-        for (int j = 0; j < results->size2; ++j)
+    for (size_t i = 0; i < results->size1; ++i) {
+        for (size_t j = 0; j < results->size2; ++j)
             output << gsl_matrix_get(results, i, j) << "\t";
         output << std::endl;
     }
