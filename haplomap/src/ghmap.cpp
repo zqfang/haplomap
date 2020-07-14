@@ -1055,7 +1055,7 @@ void writeSortedPattern(std::ostream &os, char *pattern, std::vector<int> &strOr
         }
     }
     // memory leak?
-    //free(sortedEqMap);
+    free(sortedEqMap);
 }
 
 // Some vector arithmetic.
