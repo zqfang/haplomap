@@ -26,7 +26,7 @@ std::shared_ptr<EigenOptions> parseEigenOptions(int argc, char **argv)
 
     std::shared_ptr<EigenOptions> opts(new EigenOptions());
 
-    static struct option long_options_ghmap[] = {
+    static struct option long_options_pca[] = {
             {"help", no_argument,            0,                          'h'},
             {"verbose", no_argument,         0,                          'v'},
             {"input", required_argument,     0,                          'i'},
@@ -48,7 +48,7 @@ std::shared_ptr<EigenOptions> parseEigenOptions(int argc, char **argv)
     {
 
         int option_index = 0;
-        c = getopt_long(argc, argv, "hvi:o:d:", long_options_ghmap, &option_index);
+        c = getopt_long(argc, argv, "hvi:o:d:", long_options_pca, &option_index);
 
         /* Detect the end of the options. */
         if (c == -1)

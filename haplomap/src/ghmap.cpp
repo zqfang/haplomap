@@ -261,8 +261,8 @@ bool BlocksComparator::operator()(const BlockSummary *pb1, const BlockSummary *p
       }
 
       // otherwise, in numerical order
-      int numChr1 = std::stoi(chr1);
-      int numChr2 = std::stoi(chr2);
+      int numChr1 = std::atoi(chr1); // char* to integer
+      int numChr2 = std::atoi(chr2);
       if (numChr1 < numChr2)
       {
         return true;
@@ -311,7 +311,6 @@ void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
             // Add to blocks.
             blocks.push_back(pBlock);
             BlockSummary *pLastBlock = blocks.back();
-
             // For each gene, add gene summary to the gene table (if not there already),
             // and insert block in the block set.
             // This iterates over list of alternating gene name/codon tokens.
@@ -770,7 +769,7 @@ int numHaplotypes(char *pattern)
     int numHap = -1;
     for (int str1 = 0; str1 < numStrains; str1++)
     {
-        char hap = pattern[str1];
+        int hap = pattern[str1];
         if (pattern[str1] != '?' && numHap < hap)
         {
             numHap = hap;
@@ -1056,7 +1055,7 @@ void writeSortedPattern(std::ostream &os, char *pattern, std::vector<int> &strOr
         }
     }
     // memory leak?
-    free(sortedEqMap);
+    //free(sortedEqMap);
 }
 
 // Some vector arithmetic.

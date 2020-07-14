@@ -6,22 +6,25 @@
 
 #include "ColumnReader.h"
 
+
 ColumnReader::ColumnReader(const char *fname, char *delimiters)
 {
-  _in.open(fname);
-  _delimiters = delimiters;
-  if (!_in.is_open())
-  {
+    //_in.imbue(std::locale());
+    _in.open(fname, std::ios::in);
+    _delimiters = delimiters;
+    if (!_in.is_open())
+    {
     std::cerr << "Open of file \"" << fname << "\" failed: ";
     perror("");
     exit(1);
-  }
-  _lineno = 0;
+    }
+    _lineno = 0;
+
 };
 
 ColumnReader::~ColumnReader()
 {
-  _in.close();
+    _in.close();
 }
 
 // General function -- perhaps it should go in another class.

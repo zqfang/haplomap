@@ -27,13 +27,12 @@ struct GhmapOptions
     char *goTermFile;
     char *goFilter;
     char *geneticRelationMatrix;
-    char *geneticRelationIDs;
     // constructor
     GhmapOptions() : isCategorical(false), filterCoding(false), haploBlocks(false),
                      geneBlocks(false), pvalueCutoff(0.05),datasetName((char *)"Unnamed_dataset"),
                      phenotypeFileName(NULL), blocksFileName(NULL), outputFileName(NULL), geneName(NULL),
                      equalFile(NULL), goTermFile(NULL), goFilter(NULL),
-                     geneticRelationMatrix(NULL), geneticRelationIDs(NULL) {};
+                     geneticRelationMatrix(NULL) {};
 };
 
 GhmapOptions *parseGhmapOptions(int argc, char **argv)
@@ -275,18 +274,18 @@ int main_ghmap(int argc, char **argv)
     beginPhase("reading blocks summary file");
     readBlockSummary(opts->blocksFileName, opts->geneName, opts->goTermFile);
     endPhase();
-    std::vector<std::vector<float>> phenvec(numStrains);
 
     std::shared_ptr<MANOVA> aov;
     if (opts->geneticRelationMatrix != NULL) {
         beginPhase("reading genetic relation matrix");
-        char *_relid = strdup(opts->geneticRelationMatrix);
-        opts->geneticRelationIDs = std::strcat(_relid, ".id");
-        aov = std::make_shared<MANOVA>(opts->geneticRelationMatrix, opts->geneticRelationIDs, 4);
+        std::string _relid(opts->geneticRelationMatrix);
+        _relid += ".id";
+        aov = std::make_shared<MANOVA>(opts->geneticRelationMatrix, _relid.c_str(), 4);
         aov->setEigen(); // calculate eigenvectors
         endPhase();
     }
 
+    std::vector<std::vector<float>> phenvec(numStrains);
     beginPhase("reading phenotype file");
     if (opts->isCategorical)
     {
@@ -357,6 +356,9 @@ int main_ghmap(int argc, char **argv)
           bool ok = aov->setNonQMarkMat(pBlock->pattern, strainAbbrevs);
           if (ok)
               aov->pillaiTrace(pBlock->relFStat, pBlock->relPvalue);
+          else {
+              std::cout<<"Error entry: "<<pBlock->chrName<<" "<<pBlock->chrBegin<<" "<<pBlock->chrEnd<<std::endl;
+          }
       }
       if (pBlock->FStat == INFINITY && pBlock->effect < 0.0)
       {
@@ -437,7 +439,17 @@ int main_ghmap(int argc, char **argv)
     }
 
     endPhase();
+
+    // free memory
     delete opts;
+    for (auto & block : blocks)
+    {
+        delete block;
+    }
+
+    for (auto & git : geneTable){
+        delete git.second;
+    }
 
     return 0;
 }

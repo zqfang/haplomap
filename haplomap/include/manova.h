@@ -63,11 +63,11 @@ public:
     friend std::ostream& operator<<(std::ostream &os, const MANOVA& aov);
 
 
-private:
+
     /// returns maximum eq. class + 1.
     int numHaplotypes(char *pattern);
 
-
+private:
     /// init _Mat, return new pattern without '?'
     void extractNonQMarkMat(gsl_matrix* M, char*pattern);
 

@@ -137,11 +137,11 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<std::string>& haploStrainAbbr)
 {
     //_numStrains = strlen(pattern);
     _numStrains = haploStrainAbbr.size();
+    _pattern = pattern;
+    //std::memcpy(_pattern, pattern, _numStrains); // error!
     _haploStrainsAbbrevs = std::make_shared<Dynum<std::string>>(haploStrainAbbr);
     // called strdup to make makeUnprintable work
     _numHaplo = this->numHaplotypes(pattern);
-    _pattern = pattern;
-
     // advoid memory leak
     if (_Mat != nullptr)
     {
@@ -159,7 +159,14 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<std::string>& haploStrainAbbr)
             _numDefined ++;
     }
     
-    assert(_numDefined >= _numHaplo);
+    if (_numDefined < _numHaplo) {
+        // FIXME: debugging
+        std::cout<<" numHaplo "<<_numHaplo
+                 <<", numDefined "<<_numDefined
+                 <<", numStrains "<<_numStrains
+                 <<", pattern "<<std::endl;
+        return false;
+    }
     // Stop run if
     if (_numDefined < _numStrains/2 || _numDefined < this->L)
     {
@@ -193,7 +200,7 @@ void MANOVA::extractNonQMarkMat(gsl_matrix* M, char* pattern)
     // skip '?' strains
     unsigned int rindex = 0, idx;
     std::string strain_abbr;
-    for (unsigned int str1 = 0; str1 < _numStrains; str1++)
+    for (size_t str1 = 0; str1 < _numStrains; str1++)
     {
         char hap = pattern[str1]; // 0,1,2,3,4, ?
         if ('?' != hap) {

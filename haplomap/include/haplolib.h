@@ -1,7 +1,7 @@
 // -*-c++-*-
 
 // Various useful functions from nhaploblocks
-#pragma once
+//#pragma once
 #include <fstream>
 #include <iostream>
 #include <iomanip>

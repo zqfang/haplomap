@@ -7,7 +7,6 @@
 #include "gsl/gsl_math.h"
 #include "ghmap.h"
 
-
 std::vector<float> sumVector(std::vector<float> &vec) {
     std::vector<float> res(1,0.0F);
     //res[0] = std::accumulate(vec.begin(), vec.end(), 0.0F);
@@ -27,7 +26,6 @@ void ANOVA(std::vector<std::vector<float>> &phenvec, char *pattern, float &FStat
     int numHaplo = numHaplotypes(pattern);
     // array haplotype -> num strains in haplotype.
     std::vector<int> haploNum(numHaplo, 0);
-
     // array haplotype -> mean (std::vector<float>) for each haplotype
     std::vector<std::vector<float>> haploMean(numHaplo, std::vector<float>(numCategories, 0.0F)); // size 1
 
@@ -107,7 +105,6 @@ void ANOVA(std::vector<std::vector<float>> &phenvec, char *pattern, float &FStat
     {
         std::vector<float> diff = haploMean[hap]; // copy so we don't destroy haploMeans
         subtractVectors(diff, mean);         // (haplotype mean) - mean
-        // FIXME: why haploNum[hap] here? SStotal = SSB + SSW
         float sq = haploNum[hap] * dotVectors(diff, diff);
         SSB += sq;
     }
@@ -141,6 +138,12 @@ void ANOVA(std::vector<std::vector<float>> &phenvec, char *pattern, float &FStat
     FStat = MSB / MSW;
 
     // out parameter for pvalue
+    if (gsl_isnan(FStat)) {
+        std::cout<<numHaplo<<" "<<numStrains<<" "<<numDefined<<std::endl;
+        for (int i=0; i < numStrains; ++i)
+            std::cout << (char)(pattern[i]+'0'); // ASCII -> char
+
+    }
     pvalue = (float)gsl_cdf_fdist_Q((double)FStat,(double)dfB,(double)dfW);
     if (gsl_isnan(pvalue))
         pvalue = 1.0;
@@ -166,8 +169,8 @@ void ANOVA(std::vector<std::vector<float>> &phenvec, char *pattern, float &FStat
 }
 
 
-// old code
-//void ANOVA(vector<vector<float>> &phenvec, char *pattern, float &FStat, float &pvalue, float &effect)
+//// old code
+//void ANOVA(std::vector<std::vector<float>> &phenvec, char *pattern, float &FStat, float &pvalue, float &effect)
 //{
 //    int numHaplo = numHaplotypes(pattern);
 //    // array haplotype -> num strains in haplotype.
@@ -272,7 +275,6 @@ void ANOVA(std::vector<std::vector<float>> &phenvec, char *pattern, float &FStat
 //    // WARNING: This divides by 0 if SSW is 0.
 //    // Which seems to work ok (F <- "inf").
 //    FStat = MSB / MSW;
-//
 //    // out parameter for pvalue
 //    pvalue = (float)gsl_cdf_fdist_Q((double)FStat,
 //                                    (double)(numHaplo - 1),
