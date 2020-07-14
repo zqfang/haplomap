@@ -270,6 +270,11 @@ int main_eblocks(int argc, char **argv)
     reportStats();
   }
   delete opts;
+  for (auto & snp: snpMap)
+      delete snp.second;
+  for (auto & b: chosenHaploBlocks)
+      delete b;
+
   return 0;
 }
 

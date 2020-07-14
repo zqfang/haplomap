@@ -102,16 +102,14 @@ void readPerlegenSNPvsmgene(const char *fname)
       abort();
     }
 
-    // Insert a blank SNPEntry in the table with snpName
-    // pair<hash_map<string, SNPInfo *>::iterator, bool> snpLookup =
-    //   snpMap.insert(pair<string, SNPInfo *>(snpName, pSNPInfo));
-    // std::pair<std::unordered_map<string, SNPInfo *>::iterator, bool> snpLookup =
-    //     snpMap.insert(std::pair<string, SNPInfo *>(snpName, pSNPInfo));
-    // The file has multiple entries when there are multiple genes.  Just insert
-    // the first, and don't check for duplicates.
-    // if (!snpLookup.second) {
-    //   cerr << "WARNING: Duplicate SNP names?" << localID << endl;
-    // }
+     //Insert a blank SNPEntry in the table with snpName
+     //std::pair<std::unordered_map<string, SNPInfo *>::iterator, bool> snpLookup =
+     snpMap.insert(std::pair<string, SNPInfo *>(snpName, pSNPInfo));
+     //The file has multiple entries when there are multiple genes.  Just insert
+     //the first, and don't check for duplicates.
+     //if (!snpLookup.second) {
+     //  cerr << "WARNING: Duplicate SNP names?" << snpName << endl;
+     //}
   }
 }
 
@@ -272,8 +270,6 @@ void readAlleleInfoCompact(char *fname)
       }
 
       // Insert a blank SNPEntry in the table with snpName
-      //     pair<hash_map<string, SNPInfo *>::iterator, bool> snpLookup =
-      // snpMap.insert(pair<string, SNPInfo *>(snpName, pSNPInfo));
       std::pair<std::unordered_map<string, SNPInfo *>::iterator, bool> snpLookup =
           snpMap.insert(std::pair<string, SNPInfo *>(snpName, pSNPInfo));
 
@@ -391,7 +387,7 @@ bool goodSNP(char *alleles, SNPInfo *SNPInfo)
     return false;
   }
   else if (numDefined >= minDefined)
-  {
+    {
     return true;
   }
   else
@@ -426,10 +422,8 @@ void readChromosomeInfo(char *fname)
       abort();
     }
 
-    // pair<hash_map<string, SNPInfo *>::iterator, bool> snpLookup =
-    //   snpMap.insert(pair<string, SNPInfo*>(snpName, pSNPInfo));
-    pair<std::unordered_map<string, SNPInfo *>::iterator, bool> snpLookup =
-        snpMap.insert(pair<string, SNPInfo *>(snpName, pSNPInfo));
+    std::pair<std::unordered_map<string, SNPInfo *>::iterator, bool> snpLookup =
+        snpMap.insert(std::pair<string, SNPInfo *>(snpName, pSNPInfo));
     if (!snpLookup.second)
     {
       cerr << "WARNING: Duplicate SNP names?" << snpName << endl;
