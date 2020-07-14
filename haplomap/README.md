@@ -29,8 +29,24 @@ bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
        - format: <SNP_{chr}_{postion}>  <gene_name>  < SNP_cateogry> 
 
 2. ghmap:
-    - Trait file (-p):  column1 -> abbrev, column2 -> value
-    - eblock output (-o): haplotype blocks
+    - Trait file (-p):  
+        - format: <abbrev> <value>
+        - the <abbrev> <value> pair order should match to (-b).
+        - same <abbrev> <value> pair could be set multiple times to input individual animal data. Example:
+        ```$xslt
+           129S1	18.2
+           129S1	19.1
+           129S1	14.3
+           129S1	17.2
+           A_J	19.3
+           A_J	18.2
+           AKR	22.1
+           AKR	20.0
+           AKR	24.6
+           AKR	21.4
+        ```
+    - haploblocks (-b): eblocks output file
+    - genetic relation (-r): optional file, could obtain from plink pca
 
 ## Output
 
@@ -60,7 +76,7 @@ bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
 |4 |Effect       | Genetic Effect ( Omega^2 )   |
 |5 |FDR          | Benjamini Hochberg. If categorical, skip |
 |6 |popPvalue    | Pillai’s Trace Pvalue |
-|7 |popFDR       |   Pillai’s Trace FDR |
+|7 |popFDR       | Pillai’s Trace FDR |
 |8 |popYes       | Pillai’s Trace FDR Rejection | 
 |9 |Chrom        | Chromosome idx      |
 |10 |ChrBeg      | HaploBlock begin idx|
@@ -71,9 +87,6 @@ bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
 
 BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | CondingMap ...
 
-## TODO
-[X] MPD trait data curation  
-[-] Unified commandline interface 
 
 ## Changelog
 v0.1
