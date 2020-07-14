@@ -140,7 +140,6 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<std::string>& haploStrainAbbr)
     _pattern = pattern;
     //std::memcpy(_pattern, pattern, _numStrains); // error!
     _haploStrainsAbbrevs = std::make_shared<Dynum<std::string>>(haploStrainAbbr);
-    // called strdup to make makeUnprintable work
     _numHaplo = this->numHaplotypes(pattern);
     // advoid memory leak
     if (_Mat != nullptr)

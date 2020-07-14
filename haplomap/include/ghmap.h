@@ -53,9 +53,8 @@ public:
   std::map<std::string, std::string> geneIsInteresting; // gene name -> codon change, by gene BY
   std::map<std::string, std::string> geneIsCodingMap;   // gene name -> coding bit
   // constructor
-  BlockSummary(char *chrnm, int num, int start, int size,
-               int chrbeg, int chrend, char *pat);
-  BlockSummary();
+  BlockSummary(const char *chrnm, int num, int start, int size,
+               int chrbeg, int chrend, const char *pat);
   ~BlockSummary();
 
   std::string updateCodonScore(std::string str);

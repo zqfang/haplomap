@@ -18,20 +18,24 @@ int traceFStat = false;
 
 
 // constructor
-BlockSummary::BlockSummary(char *chrnm, int num, int start, int size,
-             int chrbeg, int chrend, char *pat):
-          chrName(chrnm), blockIdx(num), blockStart(start), blockSize(size),
-          chrBegin(chrbeg), chrEnd(chrend), pattern(pat), isIgnored(false),
+BlockSummary::BlockSummary(const char *chrnm, int num, int start, int size,
+             int chrbeg, int chrend, const char *pat):
+          blockIdx(num), blockStart(start), blockSize(size),
+          chrBegin(chrbeg), chrEnd(chrend), isIgnored(false),
           FStat(INFINITY), pvalue(1.0), FDR(1.0), effect(0.0),
           relFStat(INFINITY), relPvalue(1.0), relFDR(1.0), relReject(false),
-          numHaplo(-1), numInteresting(-1) {}
-BlockSummary::BlockSummary():
-          FStat(INFINITY), pvalue(1.0), FDR(1.0), effect(0.0),
-          relFStat(INFINITY), relPvalue(1.0), relFDR(1.0), relReject(false),
-          numHaplo(-1), numInteresting(-1) {}
+          numHaplo(-1), numInteresting(-1)
+{
+    chrName = strdup(chrnm);
+    pattern = strdup(pat);
+}
 
-
-BlockSummary::~BlockSummary() {}
+BlockSummary::~BlockSummary()
+{
+    /// FIXME: need to free memory if called strdup()
+    free(pattern);
+    free(chrName);
+}
 
 // summary of a block, read for the file.
 std::string BlockSummary::updateCodonScore(std::string str)
@@ -301,13 +305,13 @@ void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
         if (!geneName || (std::find(rdr.begin() + 7, rdr.end(), geneName) != rdr.end()))
         {
 
-            BlockSummary *pBlock = new BlockSummary(strdup(rdr.getToken(0).c_str()),
+            BlockSummary *pBlock = new BlockSummary(rdr.getToken(0).c_str(),
                                                     std::stoi(rdr.getToken(1)),
                                                     std::stoi(rdr.getToken(2)),
                                                     std::stoi(rdr.getToken(3)),
                                                     std::stoi(rdr.getToken(4)),
                                                     std::stoi(rdr.getToken(5)),
-                                                    strdup(rdr.getToken(6).c_str()));
+                                                    rdr.getToken(6).c_str());
             // Add to blocks.
             blocks.push_back(pBlock);
             BlockSummary *pLastBlock = blocks.back();

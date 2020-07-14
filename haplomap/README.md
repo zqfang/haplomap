@@ -77,11 +77,36 @@ BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Patt
 
 ## Changelog
 v0.1
-* ghmap: population structure testing (Pillai’s Trace)
-* ghmap: multiple hypothesis testing correction. Benjamini Hochberg procedure
-* ghmap: support raw animaldata (individual data) input, which will give more statistical power..
+* A brand new cmdline interface `haplomap`, including sub-commands.
+  - eblocks: find maximal haploblocks.
+  - ghmap: haplotype statistical testing
+  - pca: principal component analysis
+  
 * Refactor source code, Cross-platform support (Linux, MacOS)
-* Refactor to modern C++11
+  - replace all linux platform specific functions with STL
+  - refactor to use modern C++11
+  - fixed namespace contamination
+  - re-design the whole source code, to make it more modularise and extensible 
+  - add cmake support
+  - add unitest support, much easier for debugging and development 
+
+* ghmap:
+  - cmdline usage improvement
+  - add population structure testing (Pillai’s Trace)
+  - add multiple hypothesis testing correction for annova and pillai's trace (Benjamini Hochberg procedure)
+  - add support for raw animal data (individual data) input, which will give more statistical power..
+  - fixed memory leak 
+* eblocks:
+  - cmdline usage improvement
+  - fixed memory leak
+  - make cmdline option (-p) become optional. 
+* pca: 
+  - add a new sub-command 
+  - could be used for getting genetic relationship 
+ 
+
+
+
 
 v0.0
-* the first version of haplomap
+* The original version of haplomap

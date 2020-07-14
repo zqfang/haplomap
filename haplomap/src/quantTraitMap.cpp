@@ -212,9 +212,6 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
             case 'r':
             {
                 opts->geneticRelationMatrix = optarg;
-                ///MARK: if set .id file here, cmdline could not parse relative path
-                //char* ids = strdup(optarg);
-                //opts->geneticRelationIDs = std::strcat(ids, ".id");
                 break;
             }
             case '?':
