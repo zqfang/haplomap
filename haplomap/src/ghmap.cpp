@@ -67,9 +67,9 @@ std::string BlockSummary::updateCodonScore(std::string str)
     }
     if (count > 0)
     {
-      return "significant_codon_change";
+      return "codon_change";
     }
-    return "non_significant_codon_change";
+    return "no_codon_change";
   }
 
 void updateGeneIsInteresting(BlockSummary *pb)
@@ -111,8 +111,9 @@ void showBlockSum(std::ostream &os, bool isCategorical, BlockSummary *pb, std::v
     }
     os << std::endl;
   }
-  // BY addition, output as such:
-  // gene	codon_flag	pattern	pval	effect	chromosome	begin	end	blockIdx	blockStart	blockSize	expression
+
+// BY addition, output as such:
+// gene	codon_flag	pattern	pval	effect	chromosome	begin	end	blockIdx	blockStart	blockSize	expression
 void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb, std::vector<int> &strOrderVec)
   {
     updateGeneIsInteresting(pb);
@@ -155,7 +156,7 @@ void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb
 
 void showBlockSums(std::ostream &os, bool isCategorical,
         std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec)
-  {
+{
     for (unsigned i = 0; i < blocks.size(); i++)
     {
       if (!isCutoff(isCategorical, cutoff, blocks[i]))
@@ -163,7 +164,7 @@ void showBlockSums(std::ostream &os, bool isCategorical,
         showBlockSum(os, isCategorical, blocks[i], strOrderVec);
       }
     }
-  }
+}
 
 void showGeneBlockByBlocks(std::ostream &os, bool isCategorical,
         std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec)
@@ -471,6 +472,11 @@ void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetN
               std::bind(&std::unordered_map<std::string, GeneSummary *>::value_type::second, std::placeholders::_1 ));
 
     sort(genes.begin(), genes.end(), gcomp);
+    // write header
+//    blockout << "gene_name\tcondon\tpattern\t";
+//    blockout << (isCategorical ? "FStat" : "pvalue");
+//    blockout << "\teffect\tFDR\tpopPvalue\tpopFDR\tpop\tchr\tstart\tend\t";
+//    blockout << "blockIdx\tblockSize\tgene_expression\n";
     showGeneBlockSums(blockout, isCategorical, blocks, pvalueCutoff, strOrderVec, genes);
 }
 
@@ -520,6 +526,10 @@ void writeGeneBlockByBlocks(bool isCategorical, char *outputFileName, char *data
     }
     blockout << std::endl;
 
+    blockout << "gene_name\tcondon\tpattern\t";
+    blockout << (isCategorical ? "FStat" : "pvalue");
+    blockout << "\teffect\tFDR\tpopPvalue\tpopFDR\tpop\tchr\tstart\tend\t";
+    blockout << "blockIdx\tblockSize\tgene_expression\n";
     showGeneBlockByBlocks(blockout, isCategorical, blocks, pvalueCutoff, strOrderVec);
 }
 
@@ -579,6 +589,10 @@ void writeBlockSums(bool isCategorical, char *outputFileName,
         }
     }
     blockout << std::endl;
+//    // write header
+//    blockout <<"blockIdx\tblockStart\tblockSize\tchr\tstart\tend\tpattern\t";
+//    blockout <<(isCategorical ? "FStat":"pvalue");
+//    blockout <<"\teffect\tFDR\tpopPvalue\tpopFDR\tpop\tgene_name\tmutate\tcondon\n";
 
     showBlockSums(blockout, isCategorical, blocks, pvalueCutoff, strOrderVec);
 }
@@ -650,7 +664,10 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
     transform(geneTable.begin(), geneTable.end(), back_inserter(genes),
               std::bind(&std::unordered_map<std::string, GeneSummary *>::value_type::second, std::placeholders::_1 ));
     sort(genes.begin(), genes.end(), gcomp);
-
+    // write header
+//    genesout <<"gene_name\tcondon\tpattern\t";
+//    genesout << (isCategorical ? "FStat" : "pvalue");
+//    genesout << "\teffect\tFDR\tpopPvalue\tpopFDR\tpop\tchr\tstart\tend\tgene_expression\n";
     // write them out.
     for (std::vector<GeneSummary *>::iterator git = genes.begin(); git != genes.end(); git++)
     {

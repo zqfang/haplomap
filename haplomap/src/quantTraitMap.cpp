@@ -272,16 +272,6 @@ int main_ghmap(int argc, char **argv)
     readBlockSummary(opts->blocksFileName, opts->geneName, opts->goTermFile);
     endPhase();
 
-    std::shared_ptr<MANOVA> aov;
-    if (opts->geneticRelationMatrix != NULL) {
-        beginPhase("reading genetic relation matrix");
-        std::string _relid(opts->geneticRelationMatrix);
-        _relid += ".id";
-        aov = std::make_shared<MANOVA>(opts->geneticRelationMatrix, _relid.c_str(), 4);
-        aov->setEigen(); // calculate eigenvectors
-        endPhase();
-    }
-
     std::vector<std::vector<float>> phenvec(numStrains);
     beginPhase("reading phenotype file");
     if (opts->isCategorical)
@@ -324,6 +314,16 @@ int main_ghmap(int argc, char **argv)
     readEqualFile(opts->equalFile, equalClass);
     filterEqualBlocks(equalClass);
     endPhase();
+    }
+
+    std::shared_ptr<MANOVA> aov;
+    if (opts->geneticRelationMatrix != NULL) {
+        beginPhase("reading genetic relation matrix");
+        std::string _relid(opts->geneticRelationMatrix);
+        _relid += ".id";
+        aov = std::make_shared<MANOVA>(opts->geneticRelationMatrix, _relid.c_str(), 4);
+        aov->setEigen(strainAbbrevs); // calculate eigenvectors for selected strains
+        endPhase();
     }
 
     beginPhase("computing ANOVA p-values");

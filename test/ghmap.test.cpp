@@ -48,30 +48,7 @@ void print_gslmat(gsl_matrix* M){
 }
 
 
-char* removeQMark(char *pattern, size_t _numDefined, char c)
-{
-    /// MARK:: now newpat could be returned
-    char * newpat = (char *)malloc(_numDefined);
-    std::memcpy(newpat, pattern, _numDefined);
 
-    // remove all '?'
-    int i = 0;
-    while (i < _numDefined) {
-        char hap = newpat[i];
-        if (hap != c) {
-            // move left 1 step
-            std::memmove(newpat+i, newpat+i+1, _numDefined - i);
-            _numDefined --;
-        } else {
-            i++;
-        }
-    }
-    //// debug reduced pattern
-    for (int i=0; i < _numDefined; ++i)
-        std::cout << (char)(newpat[i]); // ASCII -> char
-    std::cout<<std::endl;
-    return newpat;
-}
 
 
 
@@ -171,7 +148,7 @@ TEST(CorMat_READ, DISABLED_cormat_test)
 
 }
 
-TEST(MANOVA_READ, DISABLED_manova_test) {
+TEST(MANOVA_READ, manova_test) {
 
     std::string pmat = "../../data/mouse54_grm.rel";
     std::string pmatid = "../../data/mouse54_grm.rel.id";
@@ -192,14 +169,22 @@ TEST(MANOVA_READ, DISABLED_manova_test) {
     }
     //EXPECT_TRUE(aov);
     float P = 0,F=0;
-    const char* pattern = "??000001000000000?1000000000000?";
+    const char* pattern = "00000001110000000000101000100000";
     char* pat = strdup(pattern);
     int N = strlen(pattern);
+    /// MARK:: now newpat could be returned
+    //char * pat = (char *)malloc(N);
+    //std::memcpy(pat, pattern, N);
     std::cout<<"pattern length: "<<N<<std::endl;
-    makeUnprintable(pat);
 
+
+    makeUnprintable(pat);
+    char * pat2 = pat; // secondary pointer
+    numStrains = N;
+    std::cout<<"first "<<numHaplotypes(pat)<<std::endl;
     MANOVA aov(pmat.c_str(), pmatid.c_str(), 4);
-    aov.setEigen();
+    aov.setEigen(strains);
+    std::cout<<"second "<<aov.numHaplotypes(pat)<<std::endl;
     bool ok = aov.setNonQMarkMat(pat, strains);
     if (ok)
         aov.pillaiTrace(F, P);
@@ -209,11 +194,13 @@ TEST(MANOVA_READ, DISABLED_manova_test) {
     std::cout<<aov<<std::endl;
     EXPECT_GT(F,0);
     EXPECT_GT(P, 0);
+    //free(pat);
 
 }
 
 
-TEST(REMOVE_qmark, rmqmark_test) {
+
+TEST(REMOVE_qmark, DISABLED_rmqmark_test) {
     char* pat = (char*)"??2000010001000000?1?2000010000?";
     char* pattern = strdup(pat);
     int len = strlen(pattern);
@@ -221,6 +208,8 @@ TEST(REMOVE_qmark, rmqmark_test) {
     //std::memmove(&pattern[1], &pattern[1+1], (len -1));
     printf("pattern: %s \n",pattern);
     //makeUnprintable(pattern);
+    numStrains = len;
+    std::cout<<numHaplotypes(pattern)<<std::endl;
 
     int i = 0;
     while (i < len) {
@@ -237,13 +226,6 @@ TEST(REMOVE_qmark, rmqmark_test) {
 //    for (int i=0; i < len; ++i)
 //        std::cout << (char)(pattern[i]+'0'); // ASCII -> char
 //    std::cout<<std::endl;
-
-    char* newp = removeQMark(pattern, len2+1, '?');
-
-    printf("new pattern:\n");
-    for (int i=0; i < len; ++i)
-        std::cout << (char)(newp[i]+'0'); // ASCII -> char
-    std::cout<<std::endl;
 
 }
 

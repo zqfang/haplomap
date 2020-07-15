@@ -37,7 +37,6 @@ public:
     /// read correlation matrix(grm.rel) and rowname (grm.rel.id) files from PLink output,
     /// set dimension reduction to L
     MANOVA(const char* MatFile, const char* RowNameFile, unsigned int L=4);
-
     /// init with GSL matrix, set dimension reduction to L
     MANOVA(gsl_matrix* M, unsigned int L=4);
     MANOVA() = default;
@@ -48,7 +47,7 @@ public:
     int setNonQMarkMat(char* pattern, Dynum<std::string>& haploStrainAbbr);
 
     /// calculate non negative eigenvalues
-    void setEigen();
+    void setEigen(Dynum<std::string>& haploStrainAbbr);
 
     /// get FSTAT and Pvalue using pilla's trace
     void pillaiTrace(float & FStat, float &PValue);

@@ -13,6 +13,7 @@ struct EigenMat
     size_t size1;
     size_t size2;
     Dynum<std::string> rownames;
+    Dynum<std::string> eigenames;
     gsl_matrix* data = nullptr; // original
     gsl_matrix* eigenvectors = nullptr;
     gsl_vector* eigenvalues = nullptr;
@@ -29,6 +30,7 @@ struct EigenMat
     ~EigenMat();
     /// calculate eigenvectors and eigenvlaues
     void eigen();
+    void eigen(Dynum<std::string> & strainAbbrev);
     /// call eigen() first, and set negative value to 0
     void calcVariance();
 

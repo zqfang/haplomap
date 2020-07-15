@@ -116,11 +116,11 @@ std::string MANOVA::removeQMark(char *pattern)
     return s;
 }
 
-void MANOVA::setEigen()
+void MANOVA::setEigen(Dynum<std::string>& haploStrainAbbr)
 {
     assert(_CorMat != nullptr);
     _useEigen = true;
-    _CorMat->eigen();
+    _CorMat->eigen(haploStrainAbbr);
     _CorMat->calcVariance();
 
     /// explained variance
@@ -206,7 +206,7 @@ void MANOVA::extractNonQMarkMat(gsl_matrix* M, char* pattern)
             strain_abbr = _haploStrainsAbbrevs->eltOf(str1);
             //strains abbrevs exclude '?' ones
             _MatRowNames.push_back(strain_abbr);
-            idx = _CorMat->rownames.indexOf(strain_abbr);
+            idx = _CorMat->eigenames.indexOf(strain_abbr);
             for (unsigned int cindex=0; cindex < this->L; ++cindex)
             {
                 double value = gsl_matrix_get(M, idx, cindex);
@@ -221,6 +221,12 @@ void MANOVA::extractNonQMarkMat(gsl_matrix* M, char* pattern)
 
 void MANOVA::pillaiTrace(float & FStat, float &PValue )
 {
+    // FIXME: need expertise to get PValue penalized.
+    if (_numDefined != numStrains) {
+        FStat = INFINITY;
+        PValue = 1.0;
+        return;
+    }
     assert(_Mat != nullptr);
     int cols = _Mat->size2;
     int rows = _Mat->size1;

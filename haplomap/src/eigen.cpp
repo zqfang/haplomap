@@ -166,6 +166,40 @@ void EigenMat::eigen(){
     gsl_eigen_symmv_sort(eigenvalues, eigenvectors, GSL_EIGEN_SORT_ABS_DESC);
 }
 
+void EigenMat::eigen(Dynum<std::string> &strainAbbrev) {
+    if (data == nullptr) {
+        std::cerr<<"Error! data not found!";
+        return;
+    }
+
+    eigenames = strainAbbrev;
+    // already calculated
+    if (eigenvectors != nullptr)
+        return;
+
+     std::string strain_abbr;
+     int newind;
+     gsl_matrix *subdata = gsl_matrix_alloc(strainAbbrev.size(), strainAbbrev.size());
+     for (size_t str1=0; str1<strainAbbrev.size(); str1++){
+         strain_abbr = strainAbbrev.eltOf(str1);
+         newind = rownames.indexOf(strain_abbr);
+         for (int cind = 0; cind < strainAbbrev.size(); cind ++)
+             gsl_matrix_set(subdata, str1, cind, gsl_matrix_get(data, newind, cind));
+     }
+    // calc
+    unsigned int rows = subdata->size1;
+    // unsigned int cols = data->size2;
+    // Get eigenvectors, sort by eigenvalue.
+    eigenvalues = gsl_vector_alloc(rows);
+    eigenvectors = gsl_matrix_alloc(rows, rows);
+    gsl_eigen_symmv_workspace* workspace = gsl_eigen_symmv_alloc(rows);
+    gsl_eigen_symmv(subdata, eigenvalues, eigenvectors, workspace);
+    gsl_eigen_symmv_free(workspace);
+    // Sort the eigenvectors
+    gsl_eigen_symmv_sort(eigenvalues, eigenvectors, GSL_EIGEN_SORT_ABS_DESC);
+    gsl_matrix_free(subdata);
+}
+
 void EigenMat::calcVariance() {
     if (data == nullptr) {
         std::cerr<<"Error! data not found!";
@@ -179,11 +213,11 @@ void EigenMat::calcVariance() {
     if (variances != nullptr)
         return;
 
-    variances = gsl_vector_alloc(size1);
+    variances = gsl_vector_alloc(eigenvalues->size);
     gsl_vector_memcpy(variances, eigenvalues);
 
     double _sumEigen = 0;
-    for (unsigned i = 0; i < size1; ++i)
+    for (unsigned i = 0; i < eigenvalues->size; ++i)
         _sumEigen += gsl_vector_get(variances, i);
     gsl_vector_scale(variances, 100.0/_sumEigen);
 }
