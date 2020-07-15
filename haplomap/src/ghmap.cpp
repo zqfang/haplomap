@@ -526,10 +526,10 @@ void writeGeneBlockByBlocks(bool isCategorical, char *outputFileName, char *data
     }
     blockout << std::endl;
 
-    blockout << "gene_name\tcondon\tpattern\t";
-    blockout << (isCategorical ? "FStat" : "pvalue");
-    blockout << "\teffect\tFDR\tpopPvalue\tpopFDR\tpop\tchr\tstart\tend\t";
-    blockout << "blockIdx\tblockSize\tgene_expression\n";
+    // blockout << "gene_name\tcondon\tpattern\t";
+    // blockout << (isCategorical ? "FStat" : "pvalue");
+    // blockout << "\teffect\tFDR\tpopPvalue\tpopFDR\tpop\tchr\tstart\tend\t";
+    // blockout << "blockIdx\tblockSize\tgene_expression\n";
     showGeneBlockByBlocks(blockout, isCategorical, blocks, pvalueCutoff, strOrderVec);
 }
 
