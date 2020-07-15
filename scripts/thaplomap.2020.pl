@@ -21,6 +21,8 @@ use IO::Handle;
 use CGI ':all';
 use CGI::Carp qw ( fatalsToBrowser );
 
+use URI::Escape;
+
 use Data::Dumper;
 
 use Digest::MD5  qw(md5 md5_hex md5_base64);
@@ -28,6 +30,8 @@ use Digest::MD5  qw(md5 md5_hex md5_base64);
 use File::Copy;
 
 use Time::HiRes qw(gettimeofday);
+use HTML::Tooltip::Javascript;
+use XML::Twig;
 
 # System-dependent directories.
 my $binDir = ".";	# executables for haploblocks, phmap
@@ -38,8 +42,9 @@ my $longnames;			# Prefix for generating hashes for caching
 my $geneCodingFile;		# File with gene info
 my $goFileFull;			# gene ontology file.
 my $expressionFileFull;		# gene expression file
+my $popFileFull;           # genetic relation file 
 
-my $haplomapURL = "http://peltz-app-01.stanford.edu/cgi-bin/haplomap/";
+my $haplomapURL = "http://peltz-app-02.stanford.edu/cgi-bin/haplomap/";
 
 # batch_query should be a file name.  If it is set, we get all parameters
 # from that file (no "param", web forms, etc.) and generate the output files
@@ -218,6 +223,339 @@ elsif ($SNPdata eq 'SANGER_PELTZ') {
     $geneCodingFile = "$dataDirPath/sanger_gene_coding.txt";
     $goFileFull = "$dataDirPath/genes_to_go_terms.txt";
     $longnames = "SANGER_PELTZ_EX";
+    $expressionFileFull = "$dataDirPath/" . "compact_gene_expr.txt";
+}
+elsif ($SNPdata eq 'PELTZ_20121212') {
+    $strains = {
+        "C57BL/6J" => "C57/6J", #reference
+	"129P2" => "129P2",
+	"129S1" => "129S1",
+	"129S5" => "129S5",
+	"A_J" => "A/J",
+	"AKR" => "AKR",
+	"BALB" => "B_C",
+	"C3H" => "C3H",
+	"C57BL6NJ" => "C57BL6NJ",
+	"CBA" => "CBA",
+	"DBA" => "DBA",
+	"FVB" => "FVB",
+	"LPJ" => "LPJ",
+	"NOD" => "NOD",
+	"NZO" => "NZO",
+	"B10" => "B10",
+	"FVB" => "FVB",
+	"LGJ" => "LGJ",
+	"MAMy" => "MAMy",
+	"MRL" => "MRL",
+	"NZB" => "NZB",
+	"NZW" => "NZW",
+	"SMJ" => "SMJ",
+	"SJL" => "SJL",
+	"BTBR" => "BTBR",
+	"BUB" => "BUB",
+	"SWR" => "SWR",
+	"SMJ" => "SMJ",
+	"CAST" => "CAST",
+	"PWK" => "PWK",
+	"SPRET" => "SPRET",
+	"WSB" => "WSB",
+	};
+    $dataDirPath = "PELTZ_20121212"; # location for data files.
+    $geneCodingFile = "$dataDirPath/gene_coding.txt";
+    $goFileFull = "$dataDirPath/genes_to_go_terms.txt";
+    $longnames = "PELTZ_20121212_EX";
+    $expressionFileFull = "$dataDirPath/" . "compact_gene_expr.txt";
+}
+elsif ($SNPdata eq 'PELTZ_20131216') {
+    $strains = {
+        "C57BL/6J" => "C57/6J", #reference
+	"129P2" => "129P2",
+	"129S1" => "129S1",
+	"129S5" => "129S5",
+	"AKR" => "AKR",
+	"A_J" => "A/J",
+	"B10" => "B10",
+	"BALB" => "BALB",
+	"BTBR" => "BTBR",
+	"BUB" => "BUB",
+	"C3H" => "C3H",
+	"C57BL6NJ" => "C57BL6NJ",
+	"CAST" => "CAST",
+	"CBA" => "CBA",
+	"CEJ" => "CEJ",
+	"DBA" => "DBA",
+	"DBA1J" => "DBA1J",
+	"FVB" => "FVB",
+	"KK" => "KK",
+	"LGJ" => "LGJ",
+	"LPJ" => "LPJ",
+	"MAMy" => "MAMy",
+	"MRL" => "MRL",
+	"NOD" => "NOD",
+	"NON" => "NON",
+	"NUJ" => "NUJ",
+	"NZB" => "NZB",
+	"NZO" => "NZO",
+	"NZW" => "NZW",
+	"PJ" => "PJ",
+	"PLJ" => "PLJ",
+	"PWK" => "PWK",
+	"RFJ" => "RFJ",
+	"RHJ" => "RHJ",
+	"RIIIS" => "RIIIS",
+	"SJL" => "SJL",
+	"SMJ" => "SMJ",
+	"SMJ" => "SMJ",
+	"SPRET" => "SPRET",
+	"SWR" => "SWR",
+	"WSB" => "WSB",
+	};
+    $dataDirPath = "PELTZ_20131216"; # location for data files.
+    $geneCodingFile = "$dataDirPath/gene_coding.txt";
+    $goFileFull = "$dataDirPath/genes_to_go_terms.txt";
+    $longnames = "PELTZ_20131216_EX";
+    $expressionFileFull = "$dataDirPath/" . "compact_gene_expr.txt";
+}
+elsif ($SNPdata eq 'PELTZ_20180101') {
+    $strains = {
+        "C57BL/6J" => "C57/6J", #reference
+	"129P2" => "129P2",
+	"129S1" => "129S1",
+	"129S5" => "129S5",
+	"AKR" => "AKR",
+	"A_J" => "A/J",
+	"B10" => "B10",
+	"BALB" => "BALB",
+	"BTBR" => "BTBR",
+	"BUB" => "BUB",
+	"C3H" => "C3H",
+	"C57BL6NJ" => "C57BL6NJ",
+	"CAST" => "CAST",
+	"CBA" => "CBA",
+	"CEJ" => "CEJ",
+	"DBA" => "DBA",
+	"DBA1J" => "DBA1J",
+	"FVB" => "FVB",
+	"KK" => "KK",
+	"LGJ" => "LGJ",
+	"LPJ" => "LPJ",
+	"MAMy" => "MAMy",
+	"MRL" => "MRL",
+	"NOD" => "NOD",
+	"NON" => "NON",
+	"NUJ" => "NUJ",
+	"NZB" => "NZB",
+	"NZO" => "NZO",
+	"NZW" => "NZW",
+	"PJ" => "PJ",
+	"PLJ" => "PLJ",
+	"PWK" => "PWK",
+	"RFJ" => "RFJ",
+	"RHJ" => "RHJ",
+	"RIIIS" => "RIIIS",
+	"SJL" => "SJL",
+	"SMJ" => "SMJ",
+	"SMJ" => "SMJ",
+	"SPRET" => "SPRET",
+	"SWR" => "SWR",
+	"WSB" => "WSB",
+	"C57BL10J" => "C57BL10J",
+	"C57BRcd" => "C57BRcd",
+	"C57LJ" => "C57LJ",
+	"C58" => "C58",
+	"ILNJ" => "ILNJ",
+	"SEA" => "SEA",
+	"ST" => "ST",
+	};
+    $dataDirPath = "PELTZ_20180101"; # location for data files.
+    $geneCodingFile = "$dataDirPath/gene_coding.txt";
+    $goFileFull = "$dataDirPath/genes_to_go_terms.txt";#?
+    $longnames = "PELTZ_20131216_EX"; #?
+    $expressionFileFull = "$dataDirPath/" . "compact_gene_expr.txt";
+}
+elsif ($SNPdata eq 'PELTZ_20190301') {
+    $strains = {
+        "C57BL/6J" => "C57/6J", #reference
+	"129P2" => "129P2",
+	"129S1" => "129S1",
+	"129S5" => "129S5",
+	"AKR" => "AKR",
+	"A_J" => "A/J",
+	"B10" => "B10",
+	"BALB" => "BALB",
+	"BTBR" => "BTBR",
+	"BUB" => "BUB",
+	"C3H" => "C3H",
+	"C57BL6NJ" => "C57BL6NJ",
+	"CAST" => "CAST",
+	"CBA" => "CBA",
+	"CEJ" => "CEJ",
+	"DBA" => "DBA",
+	"DBA1J" => "DBA1J",
+	"FVB" => "FVB",
+	"KK" => "KK",
+	"LGJ" => "LGJ",
+	"LPJ" => "LPJ",
+	"MAMy" => "MAMy",
+	"MRL" => "MRL",
+	"NOD" => "NOD",
+	"NON" => "NON",
+	"NUJ" => "NUJ",
+	"NZB" => "NZB",
+	"NZO" => "NZO",
+	"NZW" => "NZW",
+	"PJ" => "PJ",
+	"PLJ" => "PLJ",
+	"PWK" => "PWK",
+	"RFJ" => "RFJ",
+	"RHJ" => "RHJ",
+	"RIIIS" => "RIIIS",
+	"SJL" => "SJL",
+	"SMJ" => "SMJ",
+	"SPRET" => "SPRET",
+	"SWR" => "SWR",
+	"WSB" => "WSB",
+	"C57BL10J" => "C57BL10J",
+	"C57BRcd" => "C57BRcd",
+	"C57LJ" => "C57LJ",
+	"C58" => "C58",
+	"ILNJ" => "ILNJ",
+	"SEA" => "SEA",
+	"ST" => "ST",
+	"NOR" => "NOR",
+	"TALLYHO" => "TALLYHO",
+	"RBF" => "RBF",
+	"BPL" => "BPL",
+	"BPN" => "BPN",
+	};
+    $dataDirPath = "PELTZ_20190301"; # location for data files.
+    $geneCodingFile = "$dataDirPath/gene_coding.txt";
+    $goFileFull = "$dataDirPath/genes_to_go_terms.txt";#?
+    $longnames = "PELTZ_20190301_EX"; #?
+    $expressionFileFull = "$dataDirPath/" . "compact_gene_expr.txt";
+}
+elsif ($SNPdata eq 'PELTZ_20200429') {
+    $strains = {
+        "C57BL/6J" => "C57/6J", #reference
+	"129P2" => "129P2",
+	"129S1" => "129S1",
+	"129S5" => "129S5",
+	"AKR" => "AKR",
+	"A_J" => "A/J",
+	"B10" => "B10",
+	"BALB" => "BALB",
+	"BTBR" => "BTBR",
+	"BUB" => "BUB",
+	"C3H" => "C3H",
+	"C57BL6NJ" => "C57BL6NJ",
+	"CAST" => "CAST",
+	"CBA" => "CBA",
+	"CEJ" => "CEJ",
+	"DBA" => "DBA",
+	"DBA1J" => "DBA1J",
+	"FVB" => "FVB",
+	"KK" => "KK",
+	"LGJ" => "LGJ",
+	"LPJ" => "LPJ",
+	"MAMy" => "MAMy",
+	"MRL" => "MRL",
+	"NOD" => "NOD",
+	"NON" => "NON",
+	"NUJ" => "NUJ",
+	"NZB" => "NZB",
+	"NZO" => "NZO",
+	"NZW" => "NZW",
+	"PJ" => "PJ",
+	"PLJ" => "PLJ",
+	"PWK" => "PWK",
+	"RFJ" => "RFJ",
+	"RHJ" => "RHJ",
+	"RIIIS" => "RIIIS",
+	"SJL" => "SJL",
+	"SMJ" => "SMJ",
+	"SPRET" => "SPRET",
+	"SWR" => "SWR",
+	"WSB" => "WSB",
+	"C57BL10J" => "C57BL10J",
+	"C57BRcd" => "C57BRcd",
+	"C57LJ" => "C57LJ",
+	"C58" => "C58",
+	"ILNJ" => "ILNJ",
+	"SEA" => "SEA",
+	"ST" => "ST",
+	"NOR" => "NOR",
+	"TALLYHO" => "TALLYHO",
+	"RBF" => "RBF",
+	"BPL" => "BPL",
+	"BPN" => "BPN",
+	};
+    $dataDirPath = "PELTZ_20200429"; # location for data files.
+    $geneCodingFile = "$dataDirPath/gene_coding.txt";
+    $goFileFull = "$dataDirPath/genes_to_go_terms.txt";#?
+    $longnames = "PELTZ_20200429_EX"; #?
+    $expressionFileFull = "$dataDirPath/" . "compact_gene_expr.txt";
+	$popFileFull="$dataDirPath/mouse54_grm.rel"
+}
+elsif ($SNPdata eq 'PELTZ_20200505') {
+    $strains = {
+        "C57BL/6J" => "C57/6J", #reference
+	"129P2" => "129P2",
+	"129S1" => "129S1",
+	"129S5" => "129S5",
+	"AKR" => "AKR",
+	"A_J" => "A/J",
+	"B10" => "B10",
+	"BALB" => "BALB",
+	"BTBR" => "BTBR",
+	"BUB" => "BUB",
+	"C3H" => "C3H",
+	"C57BL6NJ" => "C57BL6NJ",
+	"CAST" => "CAST",
+	"CBA" => "CBA",
+	"CEJ" => "CEJ",
+	"DBA" => "DBA",
+	"DBA1J" => "DBA1J",
+	"FVB" => "FVB",
+	"KK" => "KK",
+	"LGJ" => "LGJ",
+	"LPJ" => "LPJ",
+	"MAMy" => "MAMy",
+	"MRL" => "MRL",
+	"NOD" => "NOD",
+	"NON" => "NON",
+	"NUJ" => "NUJ",
+	"NZB" => "NZB",
+	"NZO" => "NZO",
+	"NZW" => "NZW",
+	"PJ" => "PJ",
+	"PLJ" => "PLJ",
+	"PWK" => "PWK",
+	"RFJ" => "RFJ",
+	"RHJ" => "RHJ",
+	"RIIIS" => "RIIIS",
+	"SJL" => "SJL",
+	"SMJ" => "SMJ",
+	"SPRET" => "SPRET",
+	"SWR" => "SWR",
+	"WSB" => "WSB",
+	"C57BL10J" => "C57BL10J",
+	"C57BRcd" => "C57BRcd",
+	"C57LJ" => "C57LJ",
+	"C58" => "C58",
+	"ILNJ" => "ILNJ",
+	"SEA" => "SEA",
+	"ST" => "ST",
+	"NOR" => "NOR",
+	"TALLYHO" => "TALLYHO",
+	"RBF" => "RBF",
+	"BPL" => "BPL",
+	"BPN" => "BPN",
+	"BALBBYJ" => "BALBBYJ",
+	};
+    $dataDirPath = "PELTZ_20200505"; # location for data files.
+    $geneCodingFile = "$dataDirPath/gene_coding.txt";
+    $goFileFull = "$dataDirPath/genes_to_go_terms.txt";#?
+    $longnames = "PELTZ_20200505_EX"; #?
     $expressionFileFull = "$dataDirPath/" . "compact_gene_expr.txt";
 }
 elsif ($SNPdata eq 'FLY') {
@@ -497,6 +835,27 @@ sub anumcmp {
     }
 }
 
+#populates genesToMesh so that it is a mapping from gene or protein product names to sets of mesh terms
+sub enterMappings {
+    my ($twig,$descrip,$genesToMeshRef) = @_;
+    my %meshSet = ();
+    foreach my $meshTerm ($descrip->first_child('MeshTermList')->children) {
+        $meshSet{$meshTerm->text} = 1;
+    }
+    $genesToMeshRef->{$descrip->first_child('Name')->text} = \%meshSet;
+    $descrip->purge();
+}
+
+#returns the tooltip text for the given gene
+sub tooltip_text {
+    my $text = "";
+    my ($geneName,$genesToMeshRef) = @_; 
+    foreach my $meshTerm (keys (%{$genesToMeshRef->{lc($geneName)}})) {
+        $text = $text." ".$meshTerm;
+    }
+    return($text);
+}
+
 # Uploads a bunch of param values from a file.
 # This is used for a form or for batch execution of files.
 # CGI's "lightweight filehandles" are very badly documented,
@@ -507,12 +866,21 @@ sub anumcmp {
 
 sub results_html {
     my @haploColors = ("red", "blue", "green", "orange", "violet", "yellow");
-    my @tisabbrevs = ("BC", "CB", "CD", "HP", "KD", "LV", "LN", "PF", "QD", "SC", "SP", "SA", "TC");
-    my @tissues = ("B Cell Basal", "Cerebellum", "Chondrocyte", 
-		   "Hippocampus", "Kidney", "Liver", "Lung", "Prefrontal Cortex",
-		   "Quadricep", "Spinal Cord", "Spleen", "Striatum", "T Cell Basal");
-    
-    
+    # my @tisabbrevs = ("BC", "CB", "CD", "HP", "KD", "LV", "LN", "PF", "QD", "SC", "SP", "SA", "TC");
+    # my @tissues = ("B Cell Basal", "Cerebellum", "Chondrocyte", 
+	# 	   "Hippocampus", "Kidney", "Liver", "Lung", "Prefrontal Cortex",
+	# 	   "Quadricep", "Spinal Cord", "Spleen", "Striatum", "T Cell Basal");
+
+	my @tisabbrevs = ("AOR", "ACO", "BSK", "BMA", "CBM", "CCX", "DCN", "DPM", "ENP", "EXP", "GFP", "HEA", "HLA", "HLRA", "HLV","HRA","HRV", 
+	                  "HIP","IBA","KNE","LMU","LIV","LUN","MAG","MAT","SPL", "STR","SAT","THY", "TOG","TRC", "URB");
+
+	my @tissues	= ("aorta","ascending colon","back skin","bone marrow","cerebellum","cerebral cortex","descending colon",
+			"diaphragm","endocrine pancreas","exocrine pancreas","gonadal fat pad","heart","heart left atrium",
+			"heart left atrium and heart right atrium","heart left ventricle","heart right atrium","heart right ventricle",
+			"hippocampus","interscapular brown adipose tissue","kidney","limb muscle","liver","lung","mammary gland",
+			"mesenteric adipose tissue","spleen","striatum","subcutaneous adipose tissue","thymus",
+			"tongue","trachea","urinary bladder");
+				
     
     my ($data_type, $resultsFileFull,  $prefix, $uniquePrefix, $p_value, @regionChoices) = @_;
     
@@ -626,7 +994,8 @@ sub results_html {
 	print "<TH width=\"100\">P-value</TH>\n";
     }
     my $hapWidth = $numStrains*7 + 2; # I think: 5 per color, one extra cell padding of 2.
-    print "<TH width=\"100\">Genetic Effect</TH><TH colspan=$numStrains width=\"$hapWidth\">Haplotype</TH>\n";
+    print "<TH width=\"100\">Genetic Effect</TH><TH width=\"100\">FDR</TH>\n";
+	print "<TH width=\"100\">pop P-value</TH><TH width=\"100\">pop FDR</TH><TH colspan=$numStrains width=\"$hapWidth\">Haplotype</TH>\n";
     print "<TH width=\"10\">Chr.</TH>\n<TH width=\"200\">Position</TH>\n\n";
 
     my $numtissues = scalar(@tisabbrevs);
@@ -647,10 +1016,24 @@ sub results_html {
 	    @tissueIndices = (@tissueIndices, $i);
 	}
     }
-    
+    my %genesToMesh = ();
+###    my $t = XML::Twig->new (twig_handlers =>
+###                            { Descriptor => sub{ enterMappings(@_,\%genesToMesh); } }
+###                        );
+###    $t->parsefile("forScripts/genes.xml");
+###    $t->purge();
+
+    my $tt = HTML::Tooltip::Javascript->new(
+        javascript_dir => '/u01/PeltzLabData/javascripts/',
+        options => {
+            default_tip => 'No mesh terms found',
+            delay => 1
+        },
+    );
+
     while (my $bline = <RESULTS>) {
 	my @fields = split(/\t/, $bline);
-	my $present = $fields[8];
+	my $present = $fields[12];
 	
 	my $skip = 0;
 	foreach my $index (@tissueIndices){
@@ -673,10 +1056,16 @@ sub results_html {
 	else {
 	    print ">";
 	}
+	
+	# watch out for spaces, etc. in data set name
+	my $datasetName_safe = uri_escape($datasetName);
 
-	my $showgeneblocksScript = $haplomapURL . "showgeneblocks.pl?prefix=$prefix&unique_prefix=$uniquePrefix&query_name=$datasetName&gene_name=$fields[0]&data_type=$data_type&p_value=$p_value";
-	print "<a href=$showgeneblocksScript>";
+	my $showgeneblocksScript = $haplomapURL . "showgeneblocks.pl?prefix=$prefix&unique_prefix=$uniquePrefix&query_name=$datasetName_safe&gene_name=$fields[0]&data_type=$data_type&p_value=$p_value";
+	my $meshTerms = tooltip_text($fields[0],\%genesToMesh);
+	my $meshTooltip = $tt->tooltip($meshTerms);
+	print "<a href=$showgeneblocksScript $meshTooltip>";
 	print "$fields[0]</a>";
+
 	if ($SNPdata eq 'FLY') {
 	    # this doesn't work, unfortunately.
 	    print " <a href=\"http://flybase.net/.bin/fbgenq.html?symbol=$fields[0]\">*</a>";
@@ -688,7 +1077,7 @@ sub results_html {
 	    print "</B></I>";
 	}
 	print "</TD>\n";		
-# p-value
+   # p-value
 	print "<TD>";
 	printf "%.2g", $fields[3];
 	print "</TD>\n";
@@ -697,7 +1086,19 @@ sub results_html {
 	print "<TD>";
 	printf "%.2g", $fields[4];
 	print "</TD>\n";
-	
+
+	# FDR
+	print "<TD>";
+	printf "%.2g", $fields[5];
+	print "</TD>\n";
+	# popPvalue
+	print "<TD>";
+	printf "%.2g", $fields[6];
+	print "</TD>\n";
+	# popFDR
+	print "<TD>";
+	printf "%.2g", $fields[7];
+	print "</TD>\n";
 	# print the colored haplotypes
 	my $pattern = $fields[2];
 	for (my $strIdx = 0; $strIdx < $numStrains; $strIdx++) {
@@ -710,9 +1111,9 @@ sub results_html {
 	}
 	print "</TD>";
 	
-	print "<TD>$fields[5]</TD>\n"; # chromosome name
-	my $fpos = commify($fields[6]);
-	my $lpos = commify($fields[7]);
+	print "<TD>$fields[9]</TD>\n"; # chromosome name
+	my $fpos = commify($fields[10]);
+	my $lpos = commify($fields[11]);
 	print "<TD>$fpos-$lpos</TD>\n"; # position of first-last SNPs in block
 
 	if ($expressionFileFull) {
@@ -737,6 +1138,7 @@ sub results_html {
     }
     close(RESULTS);
     print "</DIV>\n";
+    print $tt->at_end;
     print p, end_html;
 }
 
@@ -937,11 +1339,12 @@ sub output_display
 		    # I am the child
 		    # close(STDOUT);
 		    
-		    my $eblockscmd = "$binDir/eblocks $nonOverlappingFlag -a $SNPSdataDirPath/$chrname.txt -g $geneCodingFile -s $strainsFileFull -o $haploblocksFileTmp -p $blockSNPsFileTmp";
+		    my $eblockscmd = "$binDir/haplomap eblocks $nonOverlappingFlag -a $SNPSdataDirPath/$chrname.txt -g $geneCodingFile -s $strainsFileFull -o $haploblocksFileTmp -p $blockSNPsFileTmp";
 
 		    #print "Launching $eblockscmd<br>\n";
 		    {
 			local %ENV = ();
+
 			system($eblockscmd);
 		    }
 		    # FIXME: this needs to go in a log somewhere.
@@ -972,7 +1375,7 @@ sub output_display
 	# Concatenate blocks for individual chromosomes into one file.
 	my $catcmd = "cat $haploblocksFileFull" . "_" . '*' . "$$ > $haploblocksFileFull";
 	my $rmcmd = "rm $haploblocksFileFull" . "_" . '*' . "$$";
-	print "Cat cmd: $catcmd<br>\n";
+	# print "Cat cmd: $catcmd<br>\n";
 	{
 	    local %ENV = ();
 	    system($catcmd);
@@ -1031,9 +1434,10 @@ sub output_display
 	$goFlag = "-t $goFileFull -i $goFileTmp";
     }
 
-    my $phmapcmd = ("$binDir/ghmap $dtarg -l $p_value -n '$set_name' " .
+    my $phmapcmd = ("$binDir/haplomap ghmap $dtarg -l $p_value -n '$set_name' " .
 		    "-p $phenotypesFileFull -b $haploblocksFileFull " .
-		    ((defined $expressionFileFull) ? " -e $expressionFileFull " : " ") .
+			((defined $popFileFull) ? " -r $popFileFull" : "") .
+		    ((defined $expressionFileFull) ? " -e $expressionFileFull" : "") .
 		    " $codingOnlyFlag -o $resultsFileFull $eqClassFlag $goFlag");
 
     # unlink old file, so we know if we failed
@@ -1041,7 +1445,7 @@ sub output_display
 	unlink($resultsFileFull) || confess "Unlink of $resultsFileFull failed: $!\n";
     }
 
-    #print "<h2>$phmapcmd</h2>\n";
+    # print "<h2>$phmapcmd</h2>\n";
     {
 	local %ENV = ();
 	system($phmapcmd);
@@ -1146,11 +1550,18 @@ sub print_form
   if (defined $expressionFileFull) {
       print 'Show only genes expressed in these tissues:';
       print center checkbox_group(-name=>'regionChoices',
-				  -values=>["B Cell Basal", "Cerebellum", "Chondrocyte", 
-					    "Hippocampus", "Kidney", "Liver", "Lung", "Prefrontal Cortex",
-					    "Quadricep", "Spinal Cord", "Spleen", "Striatum", "T Cell Basal"],
+				  -values=>["aorta","ascending colon","back skin","bone marrow","cerebellum","cerebral cortex","descending colon",
+			"diaphragm","endocrine pancreas","exocrine pancreas","gonadal fat pad","heart","heart left atrium",
+			"heart left atrium and heart right atrium","heart left ventricle","heart right atrium","heart right ventricle",
+			"hippocampus","interscapular brown adipose tissue","kidney","limb muscle","liver","lung","mammary gland",
+			"mesenteric adipose tissue","spleen","striatum","subcutaneous adipose tissue","thymus",
+			"tongue","trachea","urinary bladder"],
 				  -columns=>5),p;
-      
+    #   print center checkbox_group(-name=>'regionChoices',
+	# 			  -values=>["B Cell Basal", "Cerebellum", "Chondrocyte", 
+	# 				    "Hippocampus", "Kidney", "Liver", "Lung", "Prefrontal Cortex",
+	# 				    "Quadricep", "Spinal Cord", "Spleen", "Striatum", "T Cell Basal"],
+	# 			  -columns=>5),p;
       print "Choose which strains must have the same haplotype:";
       my @values = sort anumcmp keys%{$strains};
       print center checkbox_group(-name=>'equalClass',

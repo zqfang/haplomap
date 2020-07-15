@@ -1198,7 +1198,7 @@ void bh_fdr(std::vector<BlockSummary *> & pval, float alpha, bool flag)
             }
             p /= factor;
             pval[i]->relFDR = std::min(p, previous_fdr);
-            previous_fdr = p;
+            previous_fdr = pval[i]->relFDR;
             k--; //Decrease rank
         }
 //        std::accumulate(pval.begin(), pval.end(), pBlock->mFDR,
