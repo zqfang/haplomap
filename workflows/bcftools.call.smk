@@ -136,3 +136,19 @@ rule vcf2niehs:
         heterzygote_cutoff = config['BCFTOOLS']['heterzygote_cutoff']
     script:
         "../scripts/vcf2NIEHS.py"
+
+rule annotateVCF:
+    input: 
+        vcf="VCFs/combined.{chrom}.hardfilter.pass.vcf.gz",
+        reference=GENOME,
+    output: "VCFs/combined.{chrom}.hardfilter.pass.VEP.vcf.gz"
+    params:
+        VEP="/your_path_to/ensembl-vep/vep",
+        tempdir=TMPDIR
+    shell:
+        ## emsemble-vep
+        # https://github.com/Ensembl/ensembl-vep
+        "{params.VEP} --fasta {reference} "
+        "--vcf --merged --fork 10 --hgvs --force_overwrite --everything "
+        "--offline --dir_cache {params.tempdir} "
+        "-i {input} -o {output}"

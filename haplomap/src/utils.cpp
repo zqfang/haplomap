@@ -7,7 +7,9 @@
 std::string GetCurrentWorkingDir( void )
 {
     char buff[FILENAME_MAX];
-    GetCurrentDir(buff, FILENAME_MAX);
+    char* curdir = GetCurrentDir(buff, FILENAME_MAX);
+    if (!curdir)
+        std::invalid_argument("fail to get current working directory");
     std::string current_working_dir(buff);
     return current_working_dir;
 }

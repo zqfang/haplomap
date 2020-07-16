@@ -1,7 +1,7 @@
 import os, glob
 ############################# Required ###################################
 # set output directory 
-#configfile: "config.yaml"
+configfile: "config.yaml"
 workdir: config['HBCGM']['WORKSPACE']
 HBCGM_BIN = config['HBCGM']['BIN']
 # MPD trait ids 

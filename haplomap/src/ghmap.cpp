@@ -526,10 +526,10 @@ void writeGeneBlockByBlocks(bool isCategorical, char *outputFileName, char *data
     }
     blockout << std::endl;
 
-    blockout << "gene_name\tcondon\tpattern\t";
-    blockout << (isCategorical ? "FStat" : "pvalue");
-    blockout << "\teffect\tFDR\tpopPvalue\tpopFDR\tpop\tchr\tstart\tend\t";
-    blockout << "blockIdx\tblockSize\tgene_expression\n";
+    // blockout << "gene_name\tcondon\tpattern\t";
+    // blockout << (isCategorical ? "FStat" : "pvalue");
+    // blockout << "\teffect\tFDR\tpopPvalue\tpopFDR\tpop\tchr\tstart\tend\t";
+    // blockout << "blockIdx\tblockSize\tgene_expression\n";
     showGeneBlockByBlocks(blockout, isCategorical, blocks, pvalueCutoff, strOrderVec);
 }
 
@@ -1198,7 +1198,7 @@ void bh_fdr(std::vector<BlockSummary *> & pval, float alpha, bool flag)
             }
             p /= factor;
             pval[i]->relFDR = std::min(p, previous_fdr);
-            previous_fdr = p;
+            previous_fdr = pval[i]->relFDR;
             k--; //Decrease rank
         }
 //        std::accumulate(pval.begin(), pval.end(), pBlock->mFDR,
