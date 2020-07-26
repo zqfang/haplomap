@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <functional>
 #include <numeric>
-#include <assert.h>
+#include <cassert>
 //#include "ghmap.h"
 
 /* Benjamini Hochberg procedure for controlling the FDR

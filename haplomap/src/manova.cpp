@@ -86,13 +86,14 @@ int MANOVA::numHaplotypes(char *pattern)
     return numHap + 1;
 }
 
-std::string MANOVA::removeQMark(char *pattern)
+char* MANOVA::removeQMark(char *pattern)
 {
-    /// MARK:: now newpat could be returned
-    char * newpat = (char *)malloc(_numStrains);
-    std::memcpy(newpat, pattern, _numStrains);
+    /// FIXME: don't use this function, it's not working here
+    /// MARK:: no null terminator in pattern, strlen, strdup won't work
+    char * newpat = (char *)malloc(_numStrains+1);
+    std::memcpy(newpat, pattern, _numStrains+1);
 
-    /// MARK: pattern is unprintable => strlen() = 0
+    /// MARK: no null terminator => strlen() = 0
     _numDefined = _numStrains;
     // remove all '?'
     unsigned int i = 0;
@@ -110,10 +111,9 @@ std::string MANOVA::removeQMark(char *pattern)
 //    for (int i=0; i < _numDefined; ++i)
 //        std::cout << (char)(newpatt[i]+'0'); // ASCII -> char
 //    std::cout<<std::endl;
-    //_pattern = newpat; // don't 
-    std::string s(newpat);
-    free(newpat);
-    return s;
+    //_pattern = newpat; // don't
+    //free(newpat);
+    return newpat;
 }
 
 void MANOVA::setEigen(Dynum<std::string>& haploStrainAbbr)
@@ -135,7 +135,7 @@ void MANOVA::setEigen(Dynum<std::string>& haploStrainAbbr)
 
 int MANOVA::setNonQMarkMat(char* pattern, Dynum<std::string>& haploStrainAbbr)
 {
-    //_numStrains = strlen(pattern);
+    // NO null terminator in pattern, strlen, strdup won't work
     _numStrains = haploStrainAbbr.size();
     _pattern = pattern;
     //std::memcpy(_pattern, pattern, _numStrains); // error!

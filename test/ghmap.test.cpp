@@ -148,7 +148,7 @@ TEST(CorMat_READ, DISABLED_cormat_test)
 
 }
 
-TEST(MANOVA_READ, manova_test) {
+TEST(MANOVA_READ, DISABLED_manova_test) {
 
     std::string pmat = "../../data/mouse54_grm.rel";
     std::string pmatid = "../../data/mouse54_grm.rel.id";
@@ -200,14 +200,19 @@ TEST(MANOVA_READ, manova_test) {
 
 
 
-TEST(REMOVE_qmark, DISABLED_rmqmark_test) {
+TEST(REMOVE_qmark, rmqmark_test) {
+    /// MARK: makesure input char* strings have "\0", or not work
     char* pat = (char*)"??2000010001000000?1?2000010000?";
-    char* pattern = strdup(pat);
+    //char* pattern = strdup(pat);
+    size_t len_ = strlen (pat) + 1;
+    char *pattern = (char*) malloc (len_); // malloc return void *
+    std::memcpy(pattern, pat, len_);
+
+    // testing
     int len = strlen(pattern);
     int len2 = len;
-    //std::memmove(&pattern[1], &pattern[1+1], (len -1));
     printf("pattern: %s \n",pattern);
-    //makeUnprintable(pattern);
+//    makeUnprintable(pattern);
     numStrains = len;
     std::cout<<numHaplotypes(pattern)<<std::endl;
 
@@ -223,9 +228,13 @@ TEST(REMOVE_qmark, DISABLED_rmqmark_test) {
     }
     printf("final pattern: %s\n",pattern);
 
+
+
 //    for (int i=0; i < len; ++i)
 //        std::cout << (char)(pattern[i]+'0'); // ASCII -> char
 //    std::cout<<std::endl;
+
+    free(pattern);
 
 }
 
