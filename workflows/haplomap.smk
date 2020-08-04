@@ -1,7 +1,7 @@
 import os, glob
 ############################# Required ###################################
 # set output directory 
-configfile: "config.yaml"
+#configfile: "config.yaml"
 workdir: config['HBCGM']['WORKSPACE']
 HBCGM_BIN = config['HBCGM']['BIN']
 # MPD trait ids 
@@ -36,8 +36,13 @@ CHROMOSOMES = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
 HBCGM =  expand("MPD_{ids}/chr{i}.results.txt", ids=IDS, i=CHROMOSOMES)
 HBLOCKS = expand("MPD_{ids}/chr{i}.hblocks.txt", ids=IDS, i=CHROMOSOMES)
 HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.open_region.bed", ids=IDS, i=CHROMOSOMES)
+
+# set rule not works on HPC
+localrules: target, traits  
+
+
 rule target:
-    input: HBCGM, HBCGM_NONCODING
+    input: HBCGM, #HBCGM_NONCODING
 
 
 # rule pheno:

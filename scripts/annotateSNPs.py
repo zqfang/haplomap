@@ -23,7 +23,8 @@ def get_annotation(strains, snpdb, annodb, kgxref, knowngene, ofile1, ofile2):
     trans2gene = {x.split('\t')[0]:x.split('\t')[4] for x in open(kgxref)}    
 
     #AA_by_strains = pickle.load(open("AA_by_strains.pkl", 'rb'))
-    AA_by_strains = pickle.load(open(annodb, 'rb'))
+    with open(annodb, 'rb') as apkl:    
+        AA_by_strains = pickle.load(apkl)
     # real_order = open("chr1.txt").readlines()[0].rstrip().split('\t') #replace with the snp file
     real_order = open(snpdb).readlines()[0].rstrip().split('\t')
     f = os.path.join(strains) # strain file name
@@ -66,3 +67,12 @@ def get_annotation(strains, snpdb, annodb, kgxref, knowngene, ofile1, ofile2):
 get_annotation(snakemake.input['strains'], snakemake.input['snps'], snakemake.input['annodb'], 
              snakemake.input['kgxref'], snakemake.input['knowngene'], 
              snakemake.output['ensemble'], snakemake.output['hgnc'])
+
+# if __name__ == "__main__":
+#     get_annotation("/scratch/users/fangzq/20200505/MPD_52401/strain.52401.txt", 
+#                    "/scratch/users/fangzq/PELTZ_20200429/SNPs/chr3.txt", 
+#                    "/scratch/users/fangzq/PELTZ_20200429/AA_by_strains.pkl", 
+#                    "/scratch/users/fangzq/PELTZ_20200429/mm10_kgXref.txt", 
+#                    "/scratch/users/fangzq/PELTZ_20200429/mm10_knownGene.txt",
+#                    "/scratch/users/fangzq/20200505/genesemble.txt",
+#                    "/scratch/users/fangzq/20200505/genesemble.id.txt")
