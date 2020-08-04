@@ -21,10 +21,10 @@ def get_annotation(strains, snpdb, annodb, kgxref, knowngene, ofile1, ofile2):
     trans_dir = {x.split('\t')[0]:x.split('\t')[2] for x in open(knowngene)}
     gene2trans = {x.split('\t')[4]:x.split('\t')[0] for x in open(kgxref)}
     trans2gene = {x.split('\t')[0]:x.split('\t')[4] for x in open(kgxref)}    
-
     #AA_by_strains = pickle.load(open("AA_by_strains.pkl", 'rb'))
-    with open(annodb, 'rb') as apkl:    
-        AA_by_strains = pickle.load(apkl)
+    with open(annodb, 'rb') as apkl: 
+        # oh, boy, it cost too much memory for this file. allocate 32G in HPC works   
+        AA_by_strains = pickle.load(apkl) 
     # real_order = open("chr1.txt").readlines()[0].rstrip().split('\t') #replace with the snp file
     real_order = open(snpdb).readlines()[0].rstrip().split('\t')
     f = os.path.join(strains) # strain file name

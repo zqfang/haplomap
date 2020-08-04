@@ -12,11 +12,11 @@ strain2trait:
     time_min: "30:00"
 
 annotateSNPs:
-    partition: bigmem
-    mem_mb: "16g"
+    mem_mb: 32g
+    cpus: 4
 
 eblocks:
-    mem_mb: 2000
+    mem_mb: 6000
 
 ghmap:
-    mem_mb: 2000
+    mem_mb: 4000

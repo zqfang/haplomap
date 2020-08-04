@@ -38,7 +38,7 @@ HBLOCKS = expand("MPD_{ids}/chr{i}.hblocks.txt", ids=IDS, i=CHROMOSOMES)
 HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.open_region.bed", ids=IDS, i=CHROMOSOMES)
 
 # set rule not works on HPC
-localrules: target, traits  
+localrules: target, traits, strain2trait  
 
 
 rule target:
