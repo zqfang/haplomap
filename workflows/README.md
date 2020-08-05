@@ -1,9 +1,10 @@
 # Snakemake pipeline for SNV calling
 
 ## Usage
-### Edit the `config.yaml` file for required files:
+### 1. Edit the `config.yaml` file for required files:
 Install `snakemake` first
 
+### 2 Run on local computer
 ```shell
 # modify the file path in haplomap and run with 12 cores
 snakemake -s bcftools.call.smk  --configfile config.yaml \

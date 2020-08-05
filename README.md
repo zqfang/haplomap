@@ -53,7 +53,7 @@ make
 ## Usage  
 See more detail in ``haplomap`` subfolder: [Install](haplomap/README.md)
 
-### 1. Prepare MPD `measnum` id file. Each id per row.Could have suffix for sex(f,n) e.g.
+### 1. Prepare MPD `measnum` id file. Each id per row. Suffix for sex(f,m) permitted. e.g.
 ```
 1501
 03504
@@ -98,21 +98,34 @@ HBCGM:
     KNOWNGENE: "/data/bases/shared/haplomap/PELTZ_20200429/mm10_knownGene.txt" 
 ```
 
-### 3. run haplomap
+### 3. run haplomap pipeline
 
 Install `snakemake` first. You need `Miniconda` if conda is not installed
+
+#### 3.1 create conda envs
 ```shell
 conda create -n hbcgm -f environment.yaml
 ```
 
-run your pipeline in a 
+#### 3.2 run on a local computing node.
+
 ```shell
-conda activate hbcgm
+source activate hbcgm
 # modify the file path in haplomap and run with 24 cores
 snakemake -s workflows/haplomap.smk \
           --configfile workflows/config.yaml 
           -k -p -j 24   
 ```
+#### 2.2 run on the HPC 
+
+e.g. Sherlock slurm
+1. edit `slurm.submit.sh`, change file path to `HBCGM/workflows`
+2. edit `workflows/slurm_config.yaml`, specify the resource you need.
+3. submit
+```
+sbatch slurm.submit.sh
+```
+
 
 
 ## Input
