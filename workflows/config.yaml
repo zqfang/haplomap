@@ -32,8 +32,8 @@ HBCGM:
     TRAIT_IDS: "/scratch/users/fangzq/Gary_tags.txt"
     # set to true if input individual animal data. Default: use strain means.   
     USE_RAWDATA: false 
-    # given file path, use input data instead of using MPD API to get data.
-    TRAIT_DATA:  "" #"/data/bases/shared/haplomap/AHresponse_strainmeans2.txt"
+    # use custom database instead of using MPD API to get data.
+    TRAIT_DATA:  "" # default: MPD database
     # genetic relation file from PLink output
     GENETIC_REL: "/scratch/users/fangzq/PELTZ_20200429/mouse54_grm.rel"
     GENETIC_REL_ID: "/scratch/users/fangzq/PELTZ_20200429/mouse54_grm.rel.id"
@@ -47,10 +47,11 @@ HBCGM:
     STRAIN_ANNO: "/scratch/users/fangzq/PELTZ_20200429/strains.metadata.csv"
     # path to SNP database
     SNPS_DIR: "/scratch/users/fangzq/PELTZ_20200429/SNPs"
-    # SNP annotations for all genes
-    ANNOVAR: "/scratch/users/fangzq/PELTZ_20200429/AA_by_strains.pkl" 
-    KNOWNGENE_META: "/scratch/users/fangzq/PELTZ_20200429/mm10_kgXref.txt" 
-    KNOWNGENE: "/scratch/users/fangzq/PELTZ_20200429/mm10_knownGene.txt" 
+    # PATH to SNP annotations for all genes
+    ANNOVAR: "/scratch/users/fangzq/PELTZ_20200429/SNP_Annotation" 
+    # snp, geneid,genename mapping
+    KNOWNGENE_META: "/scratch/users/fangzq/PELTZ_20200429/SNP_Annotation/mm10_kgXref.txt" 
+    KNOWNGENE: "/scratch/users/fangzq/PELTZ_20200429/SNP_Annotation/mm10_knownGene.txt" 
 
 
 GATK:

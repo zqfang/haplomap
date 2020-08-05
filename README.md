@@ -17,9 +17,9 @@ Haplomap:
 
 Germline Variant Calling
 * GATK 4.x
-* SAMtpols
+* SAMtools
 * BCFtools
-* BEDttols
+* BEDtools
 * BWA
 
 Running pipeline

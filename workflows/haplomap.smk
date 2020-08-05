@@ -75,7 +75,7 @@ rule annotateSNPs:
     input:
         strains = "MPD_{ids}/strain.{ids}.txt",
         snps = os.path.join(SNPDB, "chr{i}.txt"), 
-        annodb = ANNOVAR, 
+        annodb = os.path.join(ANNOVAR, "chr{i}.AA_by_strains.pkl"),
         kgxref = KNOWNGENE_META, 
         knowngene= KNOWNGENE,
     output:

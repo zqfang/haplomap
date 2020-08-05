@@ -12,8 +12,7 @@ strain2trait:
     time_min: "30:00"
 
 annotateSNPs:
-    mem_mb: 32g
-    cpus: 4
+    mem_mb: "8g"
 
 eblocks:
     mem_mb: 6000
