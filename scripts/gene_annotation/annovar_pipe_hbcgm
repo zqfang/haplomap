@@ -1,0 +1,62 @@
+#!/bin/usr/bash
+
+if [[ $# < 4 ]]
+then
+	echo "WRONG NUMBER OF ARGUMENTS. COMMAND LINE INPUTS MUST BE /path/to/mm10_knownGene.txt/and/fa/files /path/to/vcf /path/to/annovar/tool /path/to/snps/file (4 arguments)"
+	exit
+fi
+
+download_path=$1
+vcf_path=$2
+annovar_path=$3
+snp_file_path=$4
+
+
+echo "START WITH REMOVING UNFIT TRANSCRIPTS AND MAKING mm10 DIRECTORY"
+python remove_unfit_transcripts.py ${download_path} #path to fasta file and knownGene file
+
+cp ${download_path}/mm10_kgXref.txt mm10
+
+if [ $? != 0 ];
+then
+	echo "ERROR IN RUNNING STEP TO REMOVE UNFIT TRANSCRIPTS"
+	exit
+fi
+
+for vcf in `ls ${vcf_path}/*.vcf`
+do
+	name=`echo ${vcf} | awk -F '/' '{print $NF}' | awk -F '_' '{print $1}'`
+	tempdir=`mktemp -d`
+	${annovar_path}/convert2annovar.pl -format vcf4old ${vcf} > ${tempdir}/${name}.avinput
+	${annovar_path}/table_annovar.pl ${tempdir}/${name}.avinput mm10 -buildver mm10 -protocol knownGene -operation g -nastring . -out ${tempdir}/${name}.annotated
+	mv ${tempdir}/${name}.annotated.knownGene.exonic_variant_function ${name}.exonic_annotated
+	mv ${tempdir}/${name}.annotated.knownGene.variant_function ${name}.variant_annotated
+	rm -rf ${tempdir}
+done
+
+echo "FINISHED RUNNING ANNOVAR ANNOTATION STEP, MERGING OUTPUT FILES"
+
+if [[ ! -d merged_annotation ]]
+then
+    mkdir merged_annotation
+fi
+
+
+for i in `ls *.exonic_annotated | grep -v Y| grep -v MT`
+do
+    second=`echo $i | sed 's/exonic_/variant_/g'`
+    name=`echo $i | awk -F '/' '{print $NF}' | awk -F '.' '{print $1}'`
+	echo $name
+    python merge_two_annovar_outputs.py $i $second ${name}.txt merged_annotation/${name}.merged_annotated
+    python parse_annovar_result.py merged_annotation/${name}.merged_annotated > gene_annotation_${name}.txt
+	python merge_ANNOVAR_result_by_strain.py ${snp_file_path} ${name}
+	if [ $? != 0 ];
+	then
+		echo "ERROR IN RUNNING STEP TO MERGE ANNOVAR OUTPUT"
+		exit
+	fi
+done
+
+rm gene_annotation*.txt temp* *annotated
+
+
