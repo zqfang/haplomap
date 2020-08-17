@@ -23,13 +23,13 @@ STRAINS: ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10',
 
 HBCGM:
     # working directory
-    WORKSPACE: "/scratch/users/fangzq/20200505/gary_taged"
+    WORKSPACE: "/scratch/users/fangzq/20200816"
     # path to haplomap
     BIN: "/scratch/users/fangzq/HBCGM/build/bin"
     
     # ghmap input
     # MPD trait ids 
-    TRAIT_IDS: "/scratch/users/fangzq/Gary_tags.txt"
+    TRAIT_IDS: "/scratch/users/fangzq/mpd_clean.split.90.txt"
     # set to true if input individual animal data. Default: use strain means.   
     USE_RAWDATA: false 
     # use custom database instead of using MPD API to get data.

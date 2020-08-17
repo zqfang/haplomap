@@ -16,7 +16,15 @@ source activate base
 
 # run jobs
 snakeflow="/scratch/users/fangzq/HBCGM/workflows"
-snakemake -s ${snakeflow}/haplomap.smk --configfile ${snakeflow}/config.yaml \
-          --nolock -k -p -j 666 \
-          --cluster-config ${snakeflow}/slurm_config.yaml \
-          --cluster "sbatch --time={cluster.time_min} -p {cluster.partition} --mem={cluster.mem_mb} -c {cluster.cpus} "
+
+ls /scratch/users/fangzq/mpd_clean.split.*.txt | while read tags 
+do
+    echo -e "split: ${tags}"
+    snakemake --nolock -k -p -j 666 -s ${snakeflow}/haplomap.smk \
+        --configfile ${snakeflow}/config.yaml \
+        --cluster "sbatch --time={cluster.time_min} -p {cluster.partition} --mem={cluster.mem_mb} -c {cluster.cpus} " \
+        --cluster-config ${snakeflow}/slurm_config.yaml \
+        --config TRAIT_IDS=${tags}
+        
+    echo -e "finished ${tags}"
+done

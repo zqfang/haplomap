@@ -15,7 +15,7 @@ annotateSNPs:
     mem_mb: "8g"
 
 eblocks:
-    mem_mb: 6000
+    mem_mb: 4000
 
 ghmap:
     mem_mb: 4000

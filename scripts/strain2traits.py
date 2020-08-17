@@ -287,9 +287,9 @@ def strain2trait(trait, strain, measnum, outdir, use_rawdata=False):
             for s in sex: 
                 os.makedirs(os.path.join(outdir,f"MPD_{tid}-{s}"), exist_ok=True)
                 write(temp.query(f'sex == "{s}"'), meta, f"{tid}-{s}", data)
-        
-        #temp[data] = temp[data].astype(float)
-        #temp = temp.groupby(['strain_abbr', 'strain'], as_index=False)['mean'].mean()
+        ## if only one sex present, ignore splitted id.
+        # temp[data] = temp[data].astype(float)
+        # temp = temp.groupby(['strain_abbr', 'strain'], as_index=False)[data].mean()
         os.makedirs(os.path.join(outdir,f"MPD_{tid}"), exist_ok=True)
         write(temp, meta, tid, data)
 

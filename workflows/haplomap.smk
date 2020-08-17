@@ -4,8 +4,12 @@ import os, glob
 #configfile: "config.yaml"
 workdir: config['HBCGM']['WORKSPACE']
 HBCGM_BIN = config['HBCGM']['BIN']
-# MPD trait ids 
-TRAIT_IDS = config['HBCGM']['TRAIT_IDS']
+# MPD trait ids
+if 'TRAIT_IDS' in config:
+    TRAIT_IDS = config['TRAIT_IDS'] # input by --config TRAIT_IDS="ids.txt"
+else:
+    TRAIT_IDS = config['HBCGM']['TRAIT_IDS']
+
 # ghmap input
 TRAIT_DATA =  config['HBCGM']['TRAIT_DATA']
 GENETIC_REL = config['HBCGM']['GENETIC_REL']
@@ -24,11 +28,18 @@ ATAC_PEAKS = glob.glob(config['HBCGM']['ATAC_PEAKS'])
 
 ## trait ids
 with open(TRAIT_IDS, 'r') as t:
-    IDS = t.read().strip().split()
-    assert len(IDS) >= 1
+    IDS_ = t.read().strip().split()
+    assert len(IDS_) >= 1
 ## skip run if already done
-pat = config['HBCGM']['WORKSPACE'] + "MPD_{ids}/chrX.results.txt"
-IDS =  [ mnum for mnum in IDS if not os.path.exists(pat.format(ids = mnum)) ]
+pat = config['HBCGM']['WORKSPACE'] + "MPD_{ids}{sex}/chrX.results.txt"
+IDS = []
+for mnum in IDS_:
+    found = []
+    for suf in ["","-f","-m"]:
+        found.append(os.path.exists(pat.format(ids = mnum, sex=suf)))
+    if not any(found):
+        IDS.append(mnum)
+
 
 CHROMOSOMES = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
 # output files
@@ -37,7 +48,7 @@ HBCGM =  expand("MPD_{ids}/chr{i}.results.txt", ids=IDS, i=CHROMOSOMES)
 HBLOCKS = expand("MPD_{ids}/chr{i}.hblocks.txt", ids=IDS, i=CHROMOSOMES)
 HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.open_region.bed", ids=IDS, i=CHROMOSOMES)
 
-# set rule not works on HPC
+# rules that not work in a new node
 localrules: target, traits, strain2trait  
 
 
