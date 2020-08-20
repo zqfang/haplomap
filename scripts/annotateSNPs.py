@@ -11,6 +11,15 @@ codons = {"TTT":"F", "TTC":"F", "TCT":"S", "TCC":"S", "TAT":"Y", "TAC":"Y", "TGT
           "GCC":"A", "GAT":"D", "GAC":"D", "GGT":"G", "GGC":"G", "GTA":"V", "GTG":"V", "GCA":"A", "GCG":"A", 
           "GAA":"E", "GAG":"E", "GGA":"G", "GGG":"G"}
 
+def unique(seq):
+    """Remove duplicates from a list in Python while preserving order.
+    :param seq: a python list object.
+    :return: a list without duplicates while preserving order.
+    """
+    seen = set()
+    seen_add = seen.add
+
+    return [x for x in seq if x not in seen and not seen_add(x)]
 
 def get_annotation(strains, snpdb, annodb, kgxref, knowngene, ofile1, ofile2):
 
@@ -26,9 +35,14 @@ def get_annotation(strains, snpdb, annodb, kgxref, knowngene, ofile1, ofile2):
         # oh, boy, it cost too much memory for this file. allocate 32G in HPC works   
         AA_by_strains = pickle.load(apkl) 
     # real_order = open("chr1.txt").readlines()[0].rstrip().split('\t') #replace with the snp file
-    real_order = open(snpdb).readlines()[0].rstrip().split('\t')
-    f = os.path.join(strains) # strain file name
-    new_order = [x.rstrip().split('\t')[0] for x in open(f)]
+    with open(snpdb, 'r') as snp:
+        real_order = snp.readline().rstrip().split('\t') # only read fist header line to save time
+    # real_order = open(snpdb).readlines()[0].rstrip().split('\t')
+
+   # strain file name
+    with open (strains, 'r') as sf:
+        new_order = [x.rstrip().split('\t')[0] for x in sf.read()]
+    new_order = unique(new_order)
     ref_index = real_order.index('C57BL/6J')
     by_case = {}
 
