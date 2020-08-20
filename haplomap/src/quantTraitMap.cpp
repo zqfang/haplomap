@@ -27,12 +27,13 @@ struct GhmapOptions
     char *goTermFile;
     char *goFilter;
     char *geneticRelationMatrix;
+    char *geneticRelationMatrixID;
     // constructor
     GhmapOptions() : isCategorical(false), filterCoding(false), haploBlocks(false),
                      geneBlocks(false), pvalueCutoff(0.05),datasetName((char *)"Unnamed_dataset"),
                      phenotypeFileName(NULL), blocksFileName(NULL), outputFileName(NULL), geneName(NULL),
                      equalFile(NULL), goTermFile(NULL), goFilter(NULL),
-                     geneticRelationMatrix(NULL) {};
+                     geneticRelationMatrix(NULL), geneticRelationMatrixID(NULL) {};
 };
 
 GhmapOptions *parseGhmapOptions(int argc, char **argv)
@@ -61,6 +62,7 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
             {"goterms_file", required_argument, 0, 'q'},
             {"goterms_include_file", required_argument, 0, 'q'},
             {"relation", required_argument, 0, 'r'},
+            {"relation_id", required_argument, 0, 'd'},
             /*{"version", no_argument, 0, 0},*/
             {0, 0, 0, 0}};
 
@@ -71,6 +73,7 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
                         "    -o, --output_file      <output file name>\n"
                         "\noptional arguments:\n"
                         "    -r, --relation         <genetic relation file .rel>  n x n matrix\n"
+                        "    -d, --relation_id         <genetic relation ID file .rel.id>  if -r is set this must also be given\n"
                         "    -n, --name             <name of phenotype dataset>\n"
                         "    -e, --expression_file  <name of file>\n"
                         "    -q, --equal_file       <name of file>\n"
@@ -91,7 +94,7 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
     {
 
         int option_index = 0;
-        c = getopt_long(argc, argv, "hvcfkman:p:b:l:o:g:e:q:t:i:r:", long_options_ghmap, &option_index);
+        c = getopt_long(argc, argv, "hvcfkman:p:b:l:o:g:e:q:t:i:r:d:", long_options_ghmap, &option_index);
 
         /* Detect the end of the options. */
         if (c == -1)
@@ -214,6 +217,11 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
                 opts->geneticRelationMatrix = optarg;
                 break;
             }
+			case 'd':
+			{
+				opts->geneticRelationMatrixID = optarg;
+				break;
+			}
             case '?':
             {
                 /* getopt_long already printed an error message. */
@@ -319,9 +327,15 @@ int main_ghmap(int argc, char **argv)
     std::shared_ptr<MANOVA> aov;
     if (opts->geneticRelationMatrix != NULL) {
         beginPhase("reading genetic relation matrix");
-        std::string _relid(opts->geneticRelationMatrix);
-        _relid += ".id";
-        aov = std::make_shared<MANOVA>(opts->geneticRelationMatrix, _relid.c_str(), 4);
+		if (opts->geneticRelationMatrixID == NULL){
+			cout << "Missing ID file, if relation matrix file is given the ID file must be given as well" << endl;
+			return 0;
+		}
+        //std::string _relid(opts->geneticRelationMatrix);
+        //_relid += ".id";
+		//cout << opts->geneticRelationMatrix << "\t" << _relid << endl;
+        //aov = std::make_shared<MANOVA>(opts->geneticRelationMatrix, _relid.c_str(), 4);
+        aov = std::make_shared<MANOVA>(opts->geneticRelationMatrix, opts->geneticRelationMatrixID, 4);
         aov->setEigen(strainAbbrevs); // calculate eigenvectors for selected strains
         endPhase();
     }
