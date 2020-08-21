@@ -674,7 +674,7 @@ sub results_html {
 	    print ">";
 	}
 
-	my $showgeneblocksScript = $haplomapURL . "showgeneblocks.pl?prefix=$prefix&unique_prefix=$uniquePrefix&query_name=$datasetName&gene_name=$fields[0]&data_type=$data_type&p_value=$p_value";
+	my $showgeneblocksScript = $haplomapURL . "showgeneblocks.2020.pl?prefix=$prefix&unique_prefix=$uniquePrefix&query_name=$datasetName&gene_name=$fields[0]&data_type=$data_type&p_value=$p_value";
 	print "<a href=$showgeneblocksScript>";
 	print "$fields[0]</a>";
 	if ($SNPdata eq 'FLY') {

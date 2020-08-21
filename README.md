@@ -45,7 +45,7 @@ set(GSL_LIBS /path/to/gsl/lib)
 3. build
 ```bash
 mkdir build && cd build
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 ```
 

@@ -493,8 +493,8 @@ elsif ($SNPdata eq 'PELTZ_20200429') {
     $geneCodingFile = "$dataDirPath/gene_coding.txt";
     $goFileFull = "$dataDirPath/genes_to_go_terms.txt";#?
     $longnames = "PELTZ_20200429_EX"; #?
-    $expressionFileFull = "$dataDirPath/" . "compact_gene_expr.txt";
-	$popFileFull="$dataDirPath/mouse54_grm.rel"
+    $expressionFileFull = "$dataDirPath/" . "tabulamuris_compact_gene_expr.txt";
+	$popFileFull="$dataDirPath/mouse_grm.rel"
 }
 elsif ($SNPdata eq 'PELTZ_20200505') {
     $strains = {
@@ -556,7 +556,9 @@ elsif ($SNPdata eq 'PELTZ_20200505') {
     $geneCodingFile = "$dataDirPath/gene_coding.txt";
     $goFileFull = "$dataDirPath/genes_to_go_terms.txt";#?
     $longnames = "PELTZ_20200505_EX"; #?
-    $expressionFileFull = "$dataDirPath/" . "compact_gene_expr.txt";
+    #$expressionFileFull = "$dataDirPath/" . "compact_gene_expr.txt";
+	$popFileFull="$dataDirPath/mouse_grm.rel";
+	$expressionFileFull = "$dataDirPath/" . "tabulamuris_compact_gene_expr.txt";
 }
 elsif ($SNPdata eq 'FLY') {
     $strains = {
@@ -995,7 +997,7 @@ sub results_html {
     }
     my $hapWidth = $numStrains*7 + 2; # I think: 5 per color, one extra cell padding of 2.
     print "<TH width=\"100\">Genetic Effect</TH><TH width=\"100\">FDR</TH>\n";
-	print "<TH width=\"100\">pop P-value</TH><TH width=\"100\">pop FDR</TH><TH colspan=$numStrains width=\"$hapWidth\">Haplotype</TH>\n";
+	print "<TH width=\"100\">PS pval</TH><TH width=\"100\">PS FDR</TH><TH colspan=$numStrains width=\"$hapWidth\">Haplotype</TH>\n";
     print "<TH width=\"10\">Chr.</TH>\n<TH width=\"200\">Position</TH>\n\n";
 
     my $numtissues = scalar(@tisabbrevs);
@@ -1060,7 +1062,7 @@ sub results_html {
 	# watch out for spaces, etc. in data set name
 	my $datasetName_safe = uri_escape($datasetName);
 
-	my $showgeneblocksScript = $haplomapURL . "showgeneblocks.pl?prefix=$prefix&unique_prefix=$uniquePrefix&query_name=$datasetName_safe&gene_name=$fields[0]&data_type=$data_type&p_value=$p_value";
+	my $showgeneblocksScript = $haplomapURL . "showgeneblocks.2020.pl?prefix=$prefix&unique_prefix=$uniquePrefix&query_name=$datasetName_safe&gene_name=$fields[0]&data_type=$data_type&p_value=$p_value&pop=$dataDirPath";
 	my $meshTerms = tooltip_text($fields[0],\%genesToMesh);
 	my $meshTooltip = $tt->tooltip($meshTerms);
 	print "<a href=$showgeneblocksScript $meshTooltip>";

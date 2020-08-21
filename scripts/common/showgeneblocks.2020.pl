@@ -33,6 +33,7 @@ if ($p_value eq "") {
     $p_value = 0.05;
 }
 my $gName = $q->param('gene_name');
+my $popDataDir = $q->param('pop');           # genetic relation file 
 
 my $isCategorical = ($data_type eq 'Categorical');
 
@@ -41,6 +42,8 @@ my $binDir = ".";	# executables for haploblocks, phmap
 my $dataPath = "TMPDATA";
 my $haploblocksFileFull = "$dataPath/$prefix" . "_haploblocks.txt";
 my $phenotypesFileFull = "$dataPath/$uniquePrefix" . "_phenotypes.txt";
+
+
 
 # generate unique file name for gene-specific block results.
 my $time = time();
@@ -95,7 +98,8 @@ sub results_html {
 	print "<TH  align=\"center\" width=\"30\">P-value</TH>\n";
     }
     my $hapWidth = $numStrains*3;
-    print "<TH align=\"center\" width=\"30\">Genetic Effect</TH><TH  align=\"center\" colspan=$numStrains width=\"$hapWidth\">Haplotype</TH>\n";
+    print "<TH align=\"center\" width=\"30\">Genetic Effect</TH><TH align=\"center\" width=\"30\">FDR</TH>\n";
+	print "<TH width=\"100\">PS pval</TH><TH width=\"100\">PS FDR</TH><TH  align=\"center\" colspan=$numStrains width=\"$hapWidth\">Haplotype</TH>\n";
     print "<TH align=\"center\" width=\"10\">Chr.</TH>\n<TH align=\"center\" width=\"30\">Position</TH>\n<TH align=\"center\" width=\"20\">#SNPs</TH>\n";
 
     # Find out maximum number of genes we're going to print.
@@ -110,8 +114,9 @@ sub results_html {
     close(RESULTS);
 
     for (my $i = 0; $i < $maxGenes; $i++) {
+		print "<TH align=\"center\" width=\"90\">Coding</TH>\n";
+	print "<TH align=\"center\" width=\"90\">Codon</TH>\n";
 	print "<TH align=\"center\" width=\"60\">Gene Name</TH>\n";
-	print "<TH align=\"center\" width=\"90\">Coding?</TH>\n";
     }
 
     open(RESULTS, "<$resultsFileFull") || die("<pre>Internal error: results file $resultsFileFull open failed: $! </pre>\n");
@@ -130,7 +135,7 @@ sub results_html {
 	my $firstpos=$fields[4];
 	my $lastpos=$fields[5];
 
-	print "<TR align=middle><TD align=\"center\" ><a href=\"showblockSNPs.pl?prefix=$prefix&unique_prefix=$uniquePrefix&blkIdx=$blkIdx&blkPat=$pattern&chrName=$chrName&firstpos=$firstpos&lastpos=$lastpos\">$blkIdx</a></TD>\n";
+	print "<TR align=middle><TD align=\"center\" ><a href=\"showblockSNPs.2020.pl?prefix=$prefix&unique_prefix=$uniquePrefix&blkIdx=$blkIdx&blkPat=$pattern&chrName=$chrName&firstpos=$firstpos&lastpos=$lastpos\">$blkIdx</a></TD>\n";
 
 	# p value
 	print "<TD align=\"center\" >";
@@ -140,6 +145,19 @@ sub results_html {
 	# effect
 	print "<TD align=\"center\" >";
 	printf "%.2g", $fields[8];
+	print "</TD>\n";
+
+	# FDR
+	print "<TD>";
+	printf "%.2g", $fields[9];
+	print "</TD>\n";
+	# popPvalue
+	print "<TD>";
+	printf "%.2g", $fields[10];
+	print "</TD>\n";
+	# popFDR
+	print "<TD>";
+	printf "%.2g", $fields[11];
 	print "</TD>\n";
 
 	# print the colored haplotypes
@@ -159,8 +177,8 @@ sub results_html {
 
 	# starting w/ field 9, there is an alternating list of gene names/coding flags.
 	# FIXME: for some reason, this is missing coding flags for genes after first in list.
-	my $numGeneCols = 2*$maxGenes+9;
-	for (my $i = 9; $i < $numGeneCols; $i=$i+2) {
+	my $numGeneCols = 2*$maxGenes+13;
+	for (my $i = 13; $i < $numGeneCols; $i=$i+2) {
 	    if ($i < scalar(@fields)) {
 		print "<TD align=\"center\" ";
 		my $a = $fields[$i + 1];
@@ -217,8 +235,11 @@ if ($data_type eq 'Categorical') {
     $dtarg = "-c ";
 }
 
+
+my $popFileFull = "$popDataDir/mouse_grm.rel";
+#print "yes run....";
 # build a file like the original block-oriented display, but only for the gene in question.
-my $phmapcmd = "$binDir/ghmap $dtarg -l $p_value -n '$set_name' -p $phenotypesFileFull -b $haploblocksFileFull -g $gName -o $geneBlocksFileFull";
+my $phmapcmd = "$binDir/haplomap ghmap $dtarg -l $p_value -n '$set_name'  -r $popFileFull -p $phenotypesFileFull -b $haploblocksFileFull -g $gName -o $geneBlocksFileFull";
 
 # print $phmapcmd, "\n";
 

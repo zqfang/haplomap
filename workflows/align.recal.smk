@@ -42,7 +42,7 @@ rule bwa_index:
 rule bwa_men:
     input:
         r1="fastq/{sample}_R1.fastq.gz",
-        r2="fastq/{sample}_R2.fastq.gz",,
+        r2="fastq/{sample}_R2.fastq.gz",
         index= GENOME + ".bwt"
     ouput: temp("{sample}.sam")
     threads: 8
