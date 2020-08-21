@@ -64,14 +64,14 @@ static void usage()
     }
     std::cout <<
     "Program: haplomap (haplotype-based computational genetic mapping, a.k.a HBCGM)\n\n"
-    "Usage:    haplomap <subcommand> [options]\n\n"
+    "Usage:   haplomap <subcommand> [options]\n\n"
     "Subcommands:\n"
     "    eblocks        find all maximal haploblocks\n"
     "    ghmap          haplotype association test (ANOVA)\n"
     "    pca            principal component analysis\n\n"
     "Optional arguments:\n"
     "    -v, --version  show program's version number and exit\n"
-    "    -h --help      show help message and exit."<< std::endl;
+    "    -h, --help     show help message and exit."<< std::endl;
 }
 
 int main(int argc, char **argv) {
