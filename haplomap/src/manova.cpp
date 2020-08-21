@@ -321,7 +321,11 @@ void MANOVA::pillaiTrace(float & FStat, float &PValue )
     double f_num = (2*n+s+1)*vv;
     double f_den = (2*m+s+1)*(s-vv);
     FStat = (float) ( f_num / f_den);
-    PValue = (float) gsl_cdf_fdist_Q(FStat, df_den, df_num);
+    if (gsl_isnan(FStat))
+        PValue = 1.0;
+    else
+        PValue = (float) gsl_cdf_fdist_Q(FStat, df_den, df_num);
+
     if (gsl_isnan(PValue))
         PValue =1.0;
 
