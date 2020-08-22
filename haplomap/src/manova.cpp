@@ -17,7 +17,7 @@
 namespace HBCGM {
     void print_gslvec(gsl_vector *M) {
         std::cout << "trace vector: " << std::endl;
-        for (int i = 0; i < M->size; ++i) {
+        for (size_t i = 0; i < M->size; ++i) {
             std::cout << gsl_vector_get(M, i) << " ";
         }
         std::cout << std::endl;
@@ -25,8 +25,8 @@ namespace HBCGM {
 
     void print_gslmat(gsl_matrix *M) {
         std::cout << "trace matrix: " << std::endl;
-        for (int i = 0; i < M->size1; ++i) {
-            for (int j = 0; j < M->size2; ++j) {
+        for (size_t i = 0; i < M->size1; ++i) {
+            for (size_t j = 0; j < M->size2; ++j) {
                 std::cout << gsl_matrix_get(M, i, j) << " ";
             }
             std::cout << std::endl;
@@ -99,7 +99,7 @@ void MANOVA::readMat(const char* filename, gsl_matrix *Mat)
 int MANOVA::numHaplotypes(char *pattern)
 {
     int numHap = -1;
-    for (int str1 = 0; str1 < _numStrains; str1++)
+    for (unsigned str1 = 0; str1 < _numStrains; str1++)
     {
         int hap = pattern[str1];
         if (pattern[str1] != '?' && numHap < hap)
@@ -250,7 +250,7 @@ void MANOVA::extractNonQMarkMat(gsl_matrix* M, char* pattern)
 void MANOVA::pillaiTrace(float & FStat, float &PValue )
 {
     // FIXME: need expertise to get PValue penalized.
-    if (_numDefined != numStrains) {
+    if (_numDefined != _numStrains) {
         FStat = INFINITY;
         PValue = 1.0;
         return;
