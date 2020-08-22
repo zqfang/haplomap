@@ -47,11 +47,6 @@ void print_gslmat(gsl_matrix* M){
     }
 }
 
-
-
-
-
-
 TEST(READ_PHENO, DISABLED_cat_and_quant_read) {
     int numStrains = 12;
     vector<vector<float>> phenvec(100);
@@ -152,7 +147,7 @@ TEST(MANOVA_READ, DISABLED_manova_test) {
 
     std::string pmat = "../../data/mouse54_grm.rel";
     std::string pmatid = "../../data/mouse54_grm.rel.id";
-    std::string pstrain = "../../data/MPD_39504/trait.39504.txt";
+    std::string pstrain = "../../data/14201_m_pheno.txt";
 
     Dynum<string> strains;
     // read row names file
@@ -169,7 +164,7 @@ TEST(MANOVA_READ, DISABLED_manova_test) {
     }
     //EXPECT_TRUE(aov);
     float P = 0,F=0;
-    const char* pattern = "00000001110000000000101000100000";
+    const char* pattern = "01022003040";
     char* pat = strdup(pattern);
     int N = strlen(pattern);
     /// MARK:: now newpat could be returned
@@ -181,11 +176,11 @@ TEST(MANOVA_READ, DISABLED_manova_test) {
     makeUnprintable(pat);
     char * pat2 = pat; // secondary pointer
     numStrains = N;
-    std::cout<<"first "<<numHaplotypes(pat)<<std::endl;
+    std::cout<<"first: "<<numHaplotypes(pat)<<std::endl;
     MANOVA aov(pmat.c_str(), pmatid.c_str(), 4);
     aov.setEigen(strains);
-    std::cout<<"second "<<aov.numHaplotypes(pat)<<std::endl;
     bool ok = aov.setNonQMarkMat(pat, strains);
+    std::cout<<"second: "<<aov.numHaplotypes(pat)<<std::endl;
     if (ok)
         aov.pillaiTrace(F, P);
 
@@ -199,28 +194,31 @@ TEST(MANOVA_READ, DISABLED_manova_test) {
 }
 
 
-
 TEST(REMOVE_qmark, rmqmark_test) {
     /// MARK: makesure input char* strings have "\0", or not work
-    char* pat = (char*)"??2000010001000000?1?2000010000?";
+    //char* pat = (char*)"??2000010001000000?1?2000010000?";
     //char* pattern = strdup(pat);
-    size_t len_ = strlen (pat) + 1;
+    //size_t len_ = strlen (pat) + 1;
+    char pat[7] = {'5','3','1','4','2','1','0'};
+    printf("pattern without terminator: %s \n", pat);
+    size_t len_ = 8;
     char *pattern = (char*) malloc (len_); // malloc return void *
-    std::memcpy(pattern, pat, len_);
+    std::memcpy(pattern, pat, 7);
 
+    pattern[7] = '\0';
+    printf("pattern add terminator: %s \n",pattern);
     // testing
     int len = strlen(pattern);
-    int len2 = len;
-    printf("pattern: %s \n",pattern);
-//    makeUnprintable(pattern);
+    //
+    //makeUnprintable(pattern);
     numStrains = len;
-    std::cout<<numHaplotypes(pattern)<<std::endl;
-
+    std::cout<<"number of haplotype: "<<numHaplotypes(pattern)<<std::endl;
+    printf("pattern before remove qmark: %s \n",pattern);
     int i = 0;
     while (i < len) {
         if (pattern[i] == '?'){
             std::memmove(&pattern[i], &pattern[i+1], len-i);
-            printf("pattern: %s \n",pattern);
+            printf("remove qmark at index %d, pattern now: %s \n",i, pattern);
             len --;
         } else {
             i ++;
@@ -228,11 +226,10 @@ TEST(REMOVE_qmark, rmqmark_test) {
     }
     printf("final pattern: %s\n",pattern);
 
-
-
-//    for (int i=0; i < len; ++i)
-//        std::cout << (char)(pattern[i]+'0'); // ASCII -> char
-//    std::cout<<std::endl;
+    std::cout<<"unprintable -> char: ";
+    for (int i=0; i < len; ++i)
+        std::cout << (char)(pattern[i]+'0'); // ASCII -> char
+    std::cout<<std::endl;
 
     free(pattern);
 
