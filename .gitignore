@@ -1,6 +1,5 @@
 *build
 *gsl
-*bin
 *.o
 *.ipynb
 *.vscode
