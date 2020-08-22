@@ -15,8 +15,8 @@ endif ()
 #else()
 #    set(STDCXXFS "stdc++fs")
 #endif()
-
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ggdb -O2 -m64")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -ggdb -O2 -m64")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ggdb -O2 -m64")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # add srcs, headers 
