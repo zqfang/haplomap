@@ -116,8 +116,8 @@ EigenMat::EigenMat(const std::vector<std::vector<double>> &Mat)
     size1 = Mat.size();
     size2 = Mat[0].size();
     data = gsl_matrix_alloc(size1, size2);
-    for (int i = 0; i < data->size1; ++i){
-        for (int j=0; j < data->size2; ++j){
+    for (size_t i = 0; i < data->size1; ++i){
+        for (size_t j=0; j < data->size2; ++j){
             gsl_matrix_set(data,i,j,Mat[i][j]);
         }
     }
@@ -180,7 +180,7 @@ void EigenMat::eigen(Dynum<std::string> &strainAbbrev) {
      std::string strain_abbr;
      int newind;
      gsl_matrix *subdata = gsl_matrix_alloc(strainAbbrev.size(), strainAbbrev.size());
-     for (size_t str1=0; str1<strainAbbrev.size(); str1++){
+     for (int str1=0; str1 < strainAbbrev.size(); str1++){
          strain_abbr = strainAbbrev.eltOf(str1);
          newind = rownames.indexOf(strain_abbr);
          for (int cind = 0; cind < strainAbbrev.size(); cind ++)

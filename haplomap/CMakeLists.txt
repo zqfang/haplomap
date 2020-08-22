@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # For profiler on Ubuntu
 if (CMAKE_BUILD_TYPE STREQUAL Debug AND NOT MSVC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -ggdb -O2 -m64")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ggdb -O2 -m64")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -g -O2 -m64")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -O2 -m64")
 endif ()
 
 # GCC need to link against stdc++fs

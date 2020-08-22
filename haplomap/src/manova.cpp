@@ -182,24 +182,22 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<std::string>& haploStrainAbbr)
     // _pattern = pattern;
     // define _numDefined, and get new pattern
     _pattern = this->removeQMark(pattern);
-//    for (unsigned int i = 0; i < _numStrains; i++)
-//    {
-//        if (pattern[i] != '?')
-//            _numDefined ++;
-//    }
     
-    if (_numDefined < _numHaplo) {
-        // FIXME: debugging
-        std::cout<<" numHaplo "<<_numHaplo
-                 <<", numDefined "<<_numDefined
-                 <<", numStrains "<<_numStrains
-                 <<", pattern "<<std::endl;
-        return false;
-    }
     // Stop run if
-    if (_numDefined < _numStrains/2 || _numDefined < this->L)
+    if (_numDefined <= _numHaplo || _numDefined < _numStrains/2 )
     {
-        std::cout<<"Skip too manny ? pattern: "<<this<<std::endl;
+        // std::cerr<<" numHaplo: "<<_numHaplo
+        //          <<", numDefined: "<<_numDefined
+        //          <<", numStrains "<<_numStrains
+        //          <<", pattern: ";
+        // for (unsigned int i=0; i < _numStrains; ++i) {
+        //     char hap = pattern[i];
+        //     if (hap != '?')
+        //         std::cerr << (char) (hap + '0'); // ASCII -> char
+        //     else
+        //         std::cerr << hap;
+        // }
+        // std::cerr<<std::endl;
         return false;
     }
 
@@ -220,6 +218,7 @@ void MANOVA::extractNonQMarkMat(gsl_matrix* M, char* pattern)
 {
     // get new _Mat without '?'
     //residuals have less rank, MANOVA cannot be performed"
+    /// FIXME: _numDefined - _numHaplo == 0 
     unsigned _minL = std::min(this->L, _numDefined - _numHaplo);
     // re-assign
     //_Mat = gsl_matrix_alloc(_SubMat->size1, _SubMat->size2);
@@ -329,16 +328,8 @@ void MANOVA::pillaiTrace(float & FStat, float &PValue )
         std::cerr<<"numHaplo: "<<_numHaplo
                  <<" numDefine: "<<_numDefined
                  <<" numStrains: "<<_numStrains
-                 <<" pattern without qmark: ";
-
-        for (unsigned int i=0; i < _numStrains; ++i) {
-            char hap = _pattern[i];
-            if (hap != '?')
-                std::cerr << (char) (hap + '0'); // ASCII -> char
-            else
-                std::cerr << hap;
-        }
-        std::cerr<<std::endl;
+                 <<" pattern without qmark: "
+                 <<*this<<std::endl;
         return;
     }
     double n = (e - p - 1) /2.0;

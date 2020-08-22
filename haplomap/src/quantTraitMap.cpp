@@ -353,9 +353,6 @@ int main_ghmap(int argc, char **argv)
           bool ok = aov->setNonQMarkMat(pBlock->pattern, strainAbbrevs);
           if (ok)
               aov->pillaiTrace(pBlock->relFStat, pBlock->relPvalue);
-          else {
-              std::cout<<"Error entry: "<<pBlock->chrName<<" "<<pBlock->chrBegin<<" "<<pBlock->chrEnd<<std::endl;
-          }
       }
       if (pBlock->FStat == INFINITY && pBlock->effect < 0.0)
       {
