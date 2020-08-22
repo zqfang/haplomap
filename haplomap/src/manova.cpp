@@ -13,6 +13,27 @@
 #include "manova.h"
 
 
+// debugging
+namespace HBCGM {
+    void print_gslvec(gsl_vector *M) {
+        std::cout << "trace vector: " << std::endl;
+        for (int i = 0; i < M->size; ++i) {
+            std::cout << gsl_vector_get(M, i) << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    void print_gslmat(gsl_matrix *M) {
+        std::cout << "trace matrix: " << std::endl;
+        for (int i = 0; i < M->size1; ++i) {
+            for (int j = 0; j < M->size2; ++j) {
+                std::cout << gsl_matrix_get(M, i, j) << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
+}
+
 MANOVA::MANOVA(const char* MatFile, const char* RowNameFile, unsigned int L):
 _Mat(nullptr), _useEigen(false),_numStrains(0),_numDefined(0),_numHaplo(0),_pattern(nullptr)
 {
@@ -54,6 +75,9 @@ MANOVA::~MANOVA()
 {
     if (_Mat != nullptr)
         gsl_matrix_free(_Mat);
+
+    if (_pattern != nullptr)
+        free(_pattern);
 }
 
 
@@ -75,9 +99,9 @@ void MANOVA::readMat(const char* filename, gsl_matrix *Mat)
 int MANOVA::numHaplotypes(char *pattern)
 {
     int numHap = -1;
-    for (unsigned int str1 = 0; str1 < _numStrains; str1++)
+    for (int str1 = 0; str1 < _numStrains; str1++)
     {
-        char hap = pattern[str1];
+        int hap = pattern[str1];
         if (pattern[str1] != '?' && numHap < hap)
         {
             numHap = hap ;
@@ -88,18 +112,21 @@ int MANOVA::numHaplotypes(char *pattern)
 
 char* MANOVA::removeQMark(char *pattern)
 {
-    /// FIXME: don't use this function, it's not working here
     /// MARK:: no null terminator in pattern, strlen, strdup won't work
     char * newpat = (char *)malloc(_numStrains+1);
-    std::memcpy(newpat, pattern, _numStrains+1);
+    std::memcpy(newpat, pattern, _numStrains);
+    /// MARK:: add \0 to the end
+    newpat[_numStrains] = '\0';
 
+//    if (_numDefined == _numStrains)
+//        return newpat;
     /// MARK: no null terminator => strlen() = 0
     _numDefined = _numStrains;
     // remove all '?'
     unsigned int i = 0;
     while (i < _numDefined) {
         char hap = newpat[i];
-        if (hap != '?') {
+        if (hap == '?') {
             // move left 1 step
             std::memmove(newpat+i, newpat+i+1, _numDefined - i);
             _numDefined --;
@@ -111,7 +138,7 @@ char* MANOVA::removeQMark(char *pattern)
 //    for (int i=0; i < _numDefined; ++i)
 //        std::cout << (char)(newpatt[i]+'0'); // ASCII -> char
 //    std::cout<<std::endl;
-    //_pattern = newpat; // don't
+    //_pattern = newpat;
     //free(newpat);
     return newpat;
 }
@@ -137,8 +164,6 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<std::string>& haploStrainAbbr)
 {
     // NO null terminator in pattern, strlen, strdup won't work
     _numStrains = haploStrainAbbr.size();
-    _pattern = pattern;
-    //std::memcpy(_pattern, pattern, _numStrains); // error!
     _haploStrainsAbbrevs = std::make_shared<Dynum<std::string>>(haploStrainAbbr);
     _numHaplo = this->numHaplotypes(pattern);
     // advoid memory leak
@@ -147,16 +172,21 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<std::string>& haploStrainAbbr)
         gsl_matrix_free(_Mat);
         _MatRowNames.clear();
         _Mat = nullptr;
-        _numDefined = 0;
+        //_numDefined = 0;
     }
 
-    // define _numDefined, and get new pattern
-    //this->removeQMark(pattern);
-    for (unsigned int i = 0; i < _numStrains; i++)
-    {
-        if (pattern[i] != '?')
-            _numDefined ++;
+    if (_pattern != nullptr){
+        free(_pattern);
+        _pattern = nullptr;
     }
+    // _pattern = pattern;
+    // define _numDefined, and get new pattern
+    _pattern = this->removeQMark(pattern);
+//    for (unsigned int i = 0; i < _numStrains; i++)
+//    {
+//        if (pattern[i] != '?')
+//            _numDefined ++;
+//    }
     
     if (_numDefined < _numHaplo) {
         // FIXME: debugging
@@ -172,9 +202,6 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<std::string>& haploStrainAbbr)
         std::cout<<"Skip too manny ? pattern: "<<this<<std::endl;
         return false;
     }
-
-    //std::cout<<"residuals have less rank, MANOVA cannot be performed"<<std::endl;
-    this->L = std::min(this->L, _numDefined - _numHaplo);
 
     gsl_matrix * pm;
     if (_useEigen)
@@ -192,10 +219,11 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<std::string>& haploStrainAbbr)
 void MANOVA::extractNonQMarkMat(gsl_matrix* M, char* pattern)
 {
     // get new _Mat without '?'
-
+    //residuals have less rank, MANOVA cannot be performed"
+    unsigned _minL = std::min(this->L, _numDefined - _numHaplo);
     // re-assign
     //_Mat = gsl_matrix_alloc(_SubMat->size1, _SubMat->size2);
-    _Mat = gsl_matrix_alloc(_numDefined, this->L);
+    _Mat = gsl_matrix_alloc(_numDefined, _minL);
     // skip '?' strains
     unsigned int rindex = 0, idx;
     std::string strain_abbr;
@@ -207,7 +235,7 @@ void MANOVA::extractNonQMarkMat(gsl_matrix* M, char* pattern)
             //strains abbrevs exclude '?' ones
             _MatRowNames.push_back(strain_abbr);
             idx = _CorMat->eigenames.indexOf(strain_abbr);
-            for (unsigned int cindex=0; cindex < this->L; ++cindex)
+            for (unsigned int cindex=0; cindex < _minL; ++cindex)
             {
                 double value = gsl_matrix_get(M, idx, cindex);
                 gsl_matrix_set(_Mat, rindex, cindex, value);
@@ -301,7 +329,7 @@ void MANOVA::pillaiTrace(float & FStat, float &PValue )
         std::cerr<<"numHaplo: "<<_numHaplo
                  <<" numDefine: "<<_numDefined
                  <<" numStrains: "<<_numStrains
-                 <<" pattern: ";
+                 <<" pattern without qmark: ";
 
         for (unsigned int i=0; i < _numStrains; ++i) {
             char hap = _pattern[i];
@@ -360,7 +388,7 @@ void MANOVA::groupMean(const gsl_matrix *M, char *pattern, gsl_matrix* _haploMea
     gsl_matrix_set_zero(_haploMean);
     gsl_matrix_set_zero(_haploSize);
 
-    // FIXME: assert(M->size1 == strlen(pattern));
+    // FIXME: assert(M->size1 == strlen(_pattern) == _numDefined);
     for (unsigned int j = 0; j < M->size2; j++)
     {
         for (unsigned int i = 0; i < M->size1; i++)
