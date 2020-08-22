@@ -173,9 +173,6 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<std::string>& haploStrainAbbr)
         return false;
     }
 
-    //std::cout<<"residuals have less rank, MANOVA cannot be performed"<<std::endl;
-    this->L = std::min(this->L, _numDefined - _numHaplo);
-
     gsl_matrix * pm;
     if (_useEigen)
     {
@@ -192,10 +189,11 @@ int MANOVA::setNonQMarkMat(char* pattern, Dynum<std::string>& haploStrainAbbr)
 void MANOVA::extractNonQMarkMat(gsl_matrix* M, char* pattern)
 {
     // get new _Mat without '?'
-
+    //std::cout<<"residuals have less rank, MANOVA cannot be performed"<<std::endl;
+    unsigned _minL = std::min(this->L, _numDefined - _numHaplo);
     // re-assign
     //_Mat = gsl_matrix_alloc(_SubMat->size1, _SubMat->size2);
-    _Mat = gsl_matrix_alloc(_numDefined, this->L);
+    _Mat = gsl_matrix_alloc(_numDefined, _minL);
     // skip '?' strains
     unsigned int rindex = 0, idx;
     std::string strain_abbr;
@@ -207,7 +205,7 @@ void MANOVA::extractNonQMarkMat(gsl_matrix* M, char* pattern)
             //strains abbrevs exclude '?' ones
             _MatRowNames.push_back(strain_abbr);
             idx = _CorMat->eigenames.indexOf(strain_abbr);
-            for (unsigned int cindex=0; cindex < this->L; ++cindex)
+            for (unsigned int cindex=0; cindex < _minL; ++cindex)
             {
                 double value = gsl_matrix_get(M, idx, cindex);
                 gsl_matrix_set(_Mat, rindex, cindex, value);
