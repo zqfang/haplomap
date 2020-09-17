@@ -391,7 +391,8 @@ void showGeneBlockSums(std::ostream &os, bool isCategorical, std::vector<BlockSu
                             {
                                 BlockSummary *pb_t = (*git)->blocks[j];
                                 updateGeneIsInteresting(pb_t);
-                                os << gname << "\t" << pb_t->geneIsInteresting[gname] << "\t";
+                                //os << gname << "\t" << pb_t->geneIsInteresting[gname] << "\t";
+                                os << gname << "\t" << pb_t->geneIsCodingMap[gname] << "\t";
                                 writeSortedPattern(os, pb_t->pattern, strOrderVec);
                                 os << "\t" << (isCategorical ? pb_t->FStat : pb_t->pvalue) <<"\t"<< pb_t->effect;
                                 os << "\t" << pb_t->FDR;
@@ -661,9 +662,9 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
     // Copy genesTable values into a vector and sort using GenesComparator
     std::vector<GeneSummary *> genes;
     genes.reserve(geneTable.size());
-    transform(geneTable.begin(), geneTable.end(), back_inserter(genes),
+    std::transform(geneTable.begin(), geneTable.end(), back_inserter(genes),
               std::bind(&std::unordered_map<std::string, GeneSummary *>::value_type::second, std::placeholders::_1 ));
-    sort(genes.begin(), genes.end(), gcomp);
+    std::sort(genes.begin(), genes.end(), gcomp);
     // write header
 //    genesout <<"gene_name\tcondon\tpattern\t";
 //    genesout << (isCategorical ? "FStat" : "pvalue");
@@ -719,7 +720,8 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
                     isCoding = true;
                 }
                 hasInteresting |= ((*blit)->numInteresting > 0);                                            //has a major amino acid change
-                hasSpliceChange |= (((*blit)->geneIsCodingMap[gname]).find("SPLICE_SITE") != std::string::npos); //if "SPLICE_SITE" was in there that means that the gene had a splice change
+                hasSpliceChange |= (((*blit)->geneIsCodingMap[gname]).find("SPLICE_SITE") != std::string::npos);
+                //if "SPLICE_SITE" was in there that means that the gene had a splice change
             }
         }
         //New thing: -1 means not coding, 0 means coding but not important
@@ -734,7 +736,9 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
         updateGeneIsInteresting(pBestBlock);
         if ((isCoding || !filterCoding) || hasSpliceChange)
         {
-            genesout << gname << "\t" << pBestBlock->geneIsInteresting[(*git)->name] << "\t";
+            //genesout << gname << "\t" << pBestBlock->geneIsInteresting[(*git)->name] << "\t";
+            //genesout << gname << "\t" << pBestBlock->geneIsCodingMap[gname] << "\t";
+            genesout << gname << "\t" << codingCode << "\t";
             writeSortedPattern(genesout, pBestBlock->pattern, strOrderVec);
             genesout << "\t" << (isCategorical ? pBestBlock->FStat : pBestBlock->pvalue);
             genesout << "\t" << pBestBlock->effect <<"\t"<< pBestBlock->FDR;
@@ -833,6 +837,8 @@ int interestingChanges(const std::map<std::string, std::string> &geneCodingMap)
         if (git->second == "0" || git->second == "1")
             continue;
         changeCount += scoreChanges(git->second);
+//        changeCount+=countInStr(git->second, "<->");
+//        changeCount+=countInStr(git->second, "SPLICE_SITE");
     }
     return changeCount;
 }
