@@ -5,7 +5,7 @@ NO,Official Strain Name,Abbr,Synonyms,Attributes,IDs,References,MPD
 4,A/J,A_J,A|AJ,inbred strain,MGI:2159747|JAX:000646|MPD:4,880,4
 5,A/J,A/J,A|AJ,inbred strain,MGI:2159747|JAX:000646|MPD:4,880,4
 6,AKR/J,AKR,AK|Soat1<hid>,inbred strain,MGI:2159745|JAX:000648|MPD:15,689,15
-7,B10.D2-H2<d>/n2SnJ,B10,,congenic|major histocompatibility congenic|mutant strain,MGI:2161770|JAX:000462,0,
+7,B10.D2-Hc<0> H2<d> H2-T18<c>/oSnJ,B10,B10.D2-Hc<0>|B10.D2/oSnJ,congenic|major histocompatibility congenic|mutant strain,MGI:2160070|JAX:000461|MPD:317,17,317
 8,BALB/cJ,BALB,BALBc|C,inbred strain,MGI:2159737|JAX:000651|MPD:5,1756,5
 9,BALB/cJ,B_C,BALBc|C,inbred strain,MGI:2159737|JAX:000651|MPD:5,1756,5
 10,BPL/1J,BPL,Blood Pressure Low|BPL/1@J,inbred strain,MGI:2164247|JAX:003006|MPD:19,8,19
