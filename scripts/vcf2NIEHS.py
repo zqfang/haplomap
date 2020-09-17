@@ -36,6 +36,7 @@ class VCF:
             if line.startswith("#CHROM"): 
                 strain_name = line.split("FORMAT")[-1]
                 strain_name = strain_name.replace("B_C", "BALB")
+                #strain_name = strain_name.replace("A_J", "A/J")
                 self.strains = strain_name.strip().split("\t")
                 self.outputdict.write("LOCAL_IDENTIFIER\tSS_ID\tCHROMOSOME\tACCESSION_NUM\tPOSITION\tSTRAND\tALLELES\t")
                 self.outputdict.write("C57BL/6J"+strain_name)

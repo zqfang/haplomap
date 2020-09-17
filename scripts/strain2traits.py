@@ -235,14 +235,14 @@ def strain2trait(trait, strain, measnum, outdir, use_rawdata=False):
     if traits.shape[0] == 0:
         sys.exit("ERROR! NOT Matched trait ids found !!!")
     
-    # FIXME: handle `strain` B10 , it does not have a MPD strainid!
-    # use JAX id instead
-    if pd.isna(strains.loc[strains.Abbr == 'B10','MPD']).any() or (strains.loc[strains.Abbr == 'B10','MPD'] == "").any():
-        strains.loc[strains.Abbr == 'B10','MPD'] = '462'  
-        strains['MPD'] = strains['MPD'].astype(float).astype(pd.Int16Dtype()).astype(str)
-        strains.loc[strains.Abbr == 'B10','MPD'] = '000462' 
-    # handle b10 strain id!
-    traits.loc[ traits['strain'].isin(['B10.D2-H2<d>/n2SnJ','B10']), 'strainid'] = '000462'
+    # # FIXME: handle `strain` B10 , it does not have a MPD strainid!
+    # # use JAX id instead
+    # if pd.isna(strains.loc[strains.Abbr == 'B10','MPD']).any() or (strains.loc[strains.Abbr == 'B10','MPD'] == "").any():
+    #     strains.loc[strains.Abbr == 'B10','MPD'] = '462'  
+    #     strains['MPD'] = strains['MPD'].astype(float).astype(pd.Int16Dtype()).astype(str)
+    #     strains.loc[strains.Abbr == 'B10','MPD'] = '000462' 
+    # # handle b10 strain id!
+    # traits.loc[ traits['strain'].isin(['B10.D2-H2<d>/n2SnJ','B10']), 'strainid'] = '000462'
     #
     mpd2strain = {v.loc['MPD'] : v.loc['Abbr'] for k,v in strains.iterrows()}
     # remove extra " ", it's no easy to detect this bug!
