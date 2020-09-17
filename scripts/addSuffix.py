@@ -187,133 +187,38 @@ class MPD:
         return res    
 
 
-def strain2trait(trait, strain, measnum, outdir, use_rawdata=False):
-    mpd = MPD()
-    ## parse ids already    
-    IDS_ORIG = measnum
-    ## ###
-    # required file: SNP database metadata 
-    # should have these columns:
-    # strain_fullname, strain_abbr, mpd_strainid
-   
-    if strain.endswith(".txt"):
-        strains = pd.read_table(strain, dtype=str)
-    else:
-        strains = pd.read_csv(strain, dtype=str)
-    
-    # contain columns:
-    # measnum, strain, strainid, mean
+    def add_suffix(self, measnum):
 
-    # FIXME: makesure all measnums existed in MPD
-    if (trait is None) or trait == "" or use_rawdata:
-        if measnum.find("-") != -1: 
-            measnum = measnum.split("-")[0]
+        # contain columns:
+        # measnum, strain, strainid, mean
+        outids = []
+        sex = self.get_measureinfo(measnum)['measures_info'][0]['sextested']
+        if sex == "both":
+            outids += [measnum+"-f", measnum+"-m"]
+        elif sex == "m":
+            outids.append(measnum+"-m")
+        elif sex == "f":
+            outids.append(measnum+"-f")
+        else:
+            print(f"MPD id: {measnum}, sex field is {sex}")
+        return outids
         
-        if use_rawdata:
-            traits = mpd.get_animaldata(measnum)
-        else:
-            traits = mpd.get_strain_means(measnum)  
-        # FIXME: Na could not convert to str
-        traits = traits.astype(str)
-    elif trait.endswith(".txt"):
-        traits  = pd.read_table(trait, dtype=str)
-    elif trait.endswith(".csv"):
-        traits  = pd.read_csv(trait, dtype=str)
-    else:
-        raise Exception("Trait file Error")
-
-    if 'measnumSex' in traits.columns:
-        measumid = traits.columns.get_loc('measnumSex')
-        IDS = IDS_ORIG
-    elif 'measnum' in traits.columns:
-        measumid = traits.columns.get_loc('measnum')
-        IDS = measnum
-    else:
-        sys.exit("Missing column measnum or measnumSex!") 
-        
-    traits = traits[traits.iloc[:, measumid] == IDS]
-    if traits.shape[0] == 0:
-        sys.exit("ERROR! NOT Matched trait ids found !!!")
-    
-    # # FIXME: handle `strain` B10 , it does not have a MPD strainid!
-    # # use JAX id instead
-    # if pd.isna(strains.loc[strains.Abbr == 'B10','MPD']).any() or (strains.loc[strains.Abbr == 'B10','MPD'] == "").any():
-    #     strains.loc[strains.Abbr == 'B10','MPD'] = '462'  
-    #     strains['MPD'] = strains['MPD'].astype(float).astype(pd.Int16Dtype()).astype(str)
-    #     strains.loc[strains.Abbr == 'B10','MPD'] = '000462' 
-    # # handle b10 strain id!
-    # traits.loc[ traits['strain'].isin(['B10.D2-H2<d>/n2SnJ','B10']), 'strainid'] = '000462'
-    #
-    mpd2strain = {v.loc['MPD'] : v.loc['Abbr'] for k,v in strains.iterrows()}
-    # remove extra " ", it's no easy to detect this bug!
-    traits['strainid'] = traits.strainid.str.strip()
-    traits['strain_abbr'] = traits.strainid.map(mpd2strain) 
-    traits = traits[traits.strain_abbr.isin(strains['Abbr'])]
-    # drop strains could not map to SNP database
-    traits.dropna(subset=['strain_abbr'], inplace=True)
-    trait_ids = traits.iloc[:, measumid].unique()
-
-    if len(trait_ids) == 0:
-        sys.exit("ERROR! NOT Matched trait ids found !!!")
-    if len(trait_ids) != 1:
-        print(f"Warning! ID Not Matched! Check file: {IDS}", file=sys.stderr)
-
-    ## split male and female
-    def write(temp, meta, tid, field):
-        os.makedirs(os.path.join(outdir,f"MPD_{tid}"), exist_ok=True)
-        temp.loc[:,['strain_abbr','strain']].to_csv(os.path.join(outdir,f"MPD_{tid}/strain.{tid}.txt"),
-                                                    index=False, header=None, sep="\t")
-        if meta['measures_info'][0]['datatype'] == 'categorical':
-            print("Cateogorical measure found!")
-            catout = os.path.join(outdir,f"MPD_{tid}/trait.{tid}.categorical")
-            os.system(f"touch {catout}")
-            temp[field] = temp[field].astype('category')
-            temp.loc[:,['strain_abbr',field]].to_csv(os.path.join(outdir,f"MPD_{tid}/trait.{tid}.txt"),
-                                                      index=False, header=None, sep="\t")
-        else:
-            temp.loc[:,['strain_abbr',field]].to_csv(os.path.join(outdir,f"MPD_{tid}/trait.{tid}.txt"), 
-                                                      index=False, header=None, sep="\t", float_format='%.7f')       
-    data = 'value' if use_rawdata else 'mean'
-    tid = IDS_ORIG
-    temp = traits.copy()
-    # get metadata from MPD
-    if tid.find("-") != -1:
-        m, s = tid.split("-") # measum and sex
-        meta = mpd.get_measureinfo(selector=m)
-        sex = temp.sex.unique()
-        if s in sex:
-            write(temp.query(f'sex == "{s}"'), meta, f"{m}-{s}", data)
-        else:
-            print(f"the suffix of {tid} represent sex? Should be: f or m ")
-        return
-    else:
-        meta = mpd.get_measureinfo(selector=tid)
-    #breakpoint()
-    # split male and female
-    if (tid.find("-") == -1) and (temp.sex.nunique() == 2):
-        sex = temp.sex.unique()
-        for s in sex: 
-            os.makedirs(os.path.join(outdir,f"MPD_{tid}-{s}"), exist_ok=True)
-            write(temp.query(f'sex == "{s}"'), meta, f"{tid}-{s}", data)
-
-        if len(sex) == 1: return # don't write duplicate outputs
-
-    ## if only one sex present, ignore splitted id.
-    # temp[data] = temp[data].astype(float)
-    # temp = temp.groupby(['strain_abbr', 'strain'], as_index=False)[data].mean()
-
-    # both sex exits, write an aggregated output
-    os.makedirs(os.path.join(outdir,f"MPD_{tid}"), exist_ok=True)
-    write(temp, meta, tid, data)
-
-
-
-# strain2trait(snakemake.params['trait'], snakemake.input['strain'], 
-#              snakemake.params['traitid'], snakemake.params['outdir'], 
-#              snakemake.params['rawdata'])
 
 
 if __name__ == "__main__":
-    strain2trait("", strain="/data/bases/shared/haplomap/PELTZ_20200429/strains.metadata.csv",
-                 measnum= "31870",
-                 outdir="/data/bases/shared/haplomap/PELTZ_20200429/test")
+        ## ###
+   
+    ## usage: generate_id.py measurm.txt neasum_suffixed.txt
+    traits = sys.argv[1]
+    outfile = sys.argv[2]
+    with open(traits,'r') as t:
+        trait_ids = t.read().strip().split()
+    mpd = MPD()
+    newids = []
+    for idx in trait_ids:
+        newids += mpd.add_suffix(idx)
+    
+    with open(outfile,'w') as out:
+        for n in newids:
+            out.write(n+"\n")
+
