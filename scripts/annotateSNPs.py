@@ -23,26 +23,30 @@ def unique(seq):
 
 def get_annotation(strains, snpdb, annodb, kgxref, knowngene, ofile1, ofile2):
 
-
-    # trans_dir = {x.split('\t')[0]:x.split('\t')[2] for x in open("mm10_knownGene.txt")}
-    # gene2trans = {x.split('\t')[4]:x.split('\t')[0] for x in open("mm10_kgXref.txt")}
-    # trans2gene = {x.split('\t')[0]:x.split('\t')[4] for x in open("mm10_kgXref.txt")}
     trans_dir = {x.split('\t')[0]:x.split('\t')[2] for x in open(knowngene)}
     gene2trans = {x.split('\t')[4]:x.split('\t')[0] for x in open(kgxref)}
     trans2gene = {x.split('\t')[0]:x.split('\t')[4] for x in open(kgxref)}    
-    #AA_by_strains = pickle.load(open("AA_by_strains.pkl", 'rb'))
+ 
     with open(annodb, 'rb') as apkl: 
         # oh, boy, it cost too much memory for this file. allocate 32G in HPC works   
         AA_by_strains = pickle.load(apkl) 
-    # real_order = open("chr1.txt").readlines()[0].rstrip().split('\t') #replace with the snp file
+
     with open(snpdb, 'r') as snp:
         real_order = snp.readline().rstrip().split('\t') # only read fist header line to save time
-    # real_order = open(snpdb).readlines()[0].rstrip().split('\t')
 
    # strain file name
     with open (strains, 'r') as sf:
         new_order = [x.rstrip().split('\t')[0] for x in sf.read()]
     new_order = unique(new_order)
+    
+    # If input C57/6J, A/J, need to handle this 
+    if 'C57/6J' in new_order:
+         idx = new_order.index('C57/6J')
+         new_order[idx] = 'C57BL/6J'
+    elif 'A/J' in new_order:
+        idx = new_order.index('A/J')
+        new_order[idx] = 'A_J'
+
     ref_index = real_order.index('C57BL/6J')
     by_case = {}
 
