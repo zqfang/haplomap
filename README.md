@@ -170,7 +170,7 @@ sbatch slurm.submit.sh
 | NO |Field | Explaination |
 |---| ---- | ------------ |
 |0 |GeneName     | Associated Gene     |
-|1 |CodonFlag    | condonChange ? 1:0  |
+|1 |CodonFlag    | -1,0,1,2            |
 |2 |Pattern      | Haplotype pattern   |
 |3 |FStat/Pvalue | isCategorical ? Fstat : Pvalue |
 |4 |Effect       | Genetic Effect ( Omega^2 )   |
@@ -185,4 +185,12 @@ sbatch slurm.submit.sh
 
   * block-oriented result file
 
-BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | CondingMap ...
+BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | CodingMap ...
+
+
+**CodonFlag**
+
+* -1: Non-condon change
+* 0: Synonymous (not important)
+* 1: missense/nonsense...
+* 2: Splicing site change]
