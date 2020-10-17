@@ -143,12 +143,16 @@ rule annotateVCF:
         reference=GENOME,
     output: "VCFs/combined.{chrom}.hardfilter.pass.VEP.vcf.gz"
     params:
-        VEP="/your_path_to/ensembl-vep/vep",
+        VEP="/home/fangzq/github/ensembl-vep/vep",
         tempdir=TMPDIR
+    threads: 32
     shell:
         ## emsemble-vep
         # https://github.com/Ensembl/ensembl-vep
-        "{params.VEP} --fasta {reference} "
-        "--vcf --merged --fork 10 --hgvs --force_overwrite --everything "
-        "--offline --dir_cache {params.tempdir} "
-        "-i {input} -o {output}"
+        "{params.VEP} --fasta {input.reference} -a GRCm38 --species mus_musculus "
+        "--format vcf --merged --fork {threads} --hgvs --force_overwrite "
+        "--uniprot --domains --symbol --regulatory --distance 1000 --biotype "
+        "--gene_phenotype MGI --check_existing  --pubmed --numbers "
+        "--offline --variant_class --dir_cache {params.tempdir} "
+        "--gencode_basic --no_intergenic --individual all "
+        "-i {input} -o {output} --tab "
