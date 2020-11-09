@@ -719,7 +719,7 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
                 { //if the gene had SNPs marked as NON_SYNONYMOUS_CODING, with <->, or as SPLICE_SITE, isCoding is true
                     isCoding = true;
                 }
-                hasInteresting |= ((*blit)->numInteresting > 0);                                            //has a major amino acid change
+                hasInteresting |= ((*blit)->numInteresting > 0);   //has a major amino acid change
                 hasSpliceChange |= (((*blit)->geneIsCodingMap[gname]).find("SPLICE_SITE") != std::string::npos);
                 //if "SPLICE_SITE" was in there that means that the gene had a splice change
             }

@@ -51,8 +51,9 @@ make
 
 
 ## Usage  
-See more detail in ``haplomap`` subfolder: [Install](haplomap/README.md)
+See more detail in ``haplomap`` subfolder: [Run haplomap standalone](haplomap/README.md)
 
+Use `snakemake` workflow to run
 ### 1. Prepare MPD `measnum` id file. Each id per row. Suffix for sex(f,m) permitted. e.g.
 ```
 1501

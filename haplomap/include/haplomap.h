@@ -8,22 +8,17 @@
 #include <getopt.h>
 #include <cstring>
 
-#ifndef __HAPLOMAP_VER__
-#define __HAPLOMAP_VER__ "0.1.0"
-#endif
-
-#if defined(__clang__)
-#define __COMPILER__ "clang++"
-#elif defined(WIN32)
-#define ___COMPILER__ "MSVC"
-#else
-#define __COMPILER__ "g++"
-#endif
-
 
 using namespace std;
+/// main entry point for subcommmands
 
+/// convert vcf to NIEHS Format as eblocks input
+int main_niehs(int argc, char **argv);
+/// finding haploblocks, see ehaploblocks.cpp
 int main_eblocks(int argc, char **argv);
+/// anova test, see quantTraitMap.cpp
 int main_ghmap(int argc, char **argv);
+/// genetic relation matrix, see pca.cpp
 int main_eigen(int argc, char **argv);
+
 #endif //HBCGM_HAPLOMAP_H

@@ -6,15 +6,21 @@ Haplotype-based computational genetic mapping
 
 
 ## Usage
+Saome example to run `haplomap`
+
 e.g.
 ```bash
-# find haplotypes
+# 1. convert vcf to niehs format for eblocks
+bin/haplomap niehs -i ${HOME}/data/VCFs/chr18.vcf \
+                   -o ${HOME}/data/SNPS/chr18.txt
+
+# 2. find haploblocks
 bin/haplomap eblocks -a ${HOME}/data/SNPS/chr18.txt \
                      -g ${HOME}/data/gene_coding.txt \
                      -s ${HOME}/TMPDATA/test_strains.txt \
                      -o ${HOME}/TMPDATA/test.SNPs.hb.txt
 
-# statistical testing with trait data
+# 3. statistical testing with trait data
 bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
                    -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
                    -o ${HOME}/TMPDATA/test.final.output.txt
@@ -24,13 +30,13 @@ bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
 ## Input
 1. eblocks:
     - Strain file (-s): column1 -> abbrev, column2 -> fullname
-    - Allele file (-a): NIEHS compact format
+    - Allele file (-a): NIEHS compact format (use subcmd `niehs` to convert vcf to niehs)
     - Gene Annotation (-g): 
        - format: <SNP_{chr}_{postion}>  <gene_name>  < SNP_cateogry> 
 
 2. ghmap:
     - Trait file (-p):  
-        - format: <abbrev> <value>
+        - tow column txt file: <abbrev> <value>
         - the <abbrev> <value> pair order should match to (-b).
         - same <abbrev> <value> pair could be set multiple times to input individual animal data. Example:
         ```$xslt
@@ -91,6 +97,7 @@ BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Patt
 ## Changelog
 v0.1
 * A brand new cmdline interface `haplomap`, including sub-commands.
+  - niehs: convert VCF to NIEHS compact format.
   - eblocks: find maximal haploblocks.
   - ghmap: haplotype statistical testing
   - pca: principal component analysis
@@ -116,10 +123,10 @@ v0.1
 * pca: 
   - add a new sub-command 
   - could be used for getting genetic relationship 
+* niehs:
+  - For historical reasons, eblocks use NIEHS compact format as input. 
+  - To use haplomap more friendly, we now do this for you.  
  
-
-
-
 
 v0.0
 * The original version of haplomap

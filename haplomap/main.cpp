@@ -28,6 +28,11 @@ typedef struct
 
 static cmd_t cmds [] = {
         {
+            .func = main_niehs,
+            .alias = "niehs",
+            .help = "Conver VCF to NIEHS compact format (eblocks input file)"
+        },
+        {
             .func = main_eblocks,
             .alias = "eblocks",
             .help = "Find maximal haplotype blocks."
@@ -66,6 +71,7 @@ static void usage()
     "Program: haplomap (haplotype-based computational genetic mapping, a.k.a HBCGM)\n\n"
     "Usage:   haplomap <subcommand> [options]\n\n"
     "Subcommands:\n"
+    "    niehs          convert vcf to niehs for eblocks input\n"
     "    eblocks        find all maximal haploblocks\n"
     "    ghmap          haplotype association test (ANOVA)\n"
     "    pca            principal component analysis\n\n"
