@@ -24,7 +24,25 @@
 
 std::string GetCurrentWorkingDir( void );
 std::vector<std::string> split(const std::string& s, char delimiter);
-std::string trim(const std::string& str, const std::string delimiter);
+//std::string trim(const std::string& str, const std::string delimiter);
+
+
+// modern version of string parsing
+inline std::string& ltrim(std::string& str, const std::string& delimiter = "\t\n\v\f\r ")
+{
+    str.erase(0, str.find_first_not_of(delimiter));
+    return str;
+}
+
+inline std::string& rtrim(std::string& str, const std::string& delimiter = "\t\n\v\f\r ")
+{
+    str.erase(str.find_last_not_of(delimiter) + 1);
+    return str;
+}
+inline std::string& trim(std::string& str, const std::string& delimiter = "\t\n\v\f\r ")
+{
+    return ltrim(rtrim(str, delimiter), delimiter);
+}
 
 
 class Singleton

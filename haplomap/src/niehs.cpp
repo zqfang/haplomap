@@ -160,9 +160,9 @@ struct Variant {
     std::unordered_map<std::string, std::string> infos;
     std::unordered_map<std::string, std::vector<std::string>> formats;
     Variant() = default;
-    explicit Variant(const std::string & record)
+    explicit Variant(std::string record)
     {
-        std::vector<std::string> rec = split(trim(record," \n\r"), '\t');
+        std::vector<std::string> rec = split(trim(record), '\t');
         chrom = rec[0];
         pos = std::stoi(rec[1]);
         ID = rec[2];
@@ -231,7 +231,7 @@ int main_niehs(int argc, char **argv)
         // starts with "#"
         if (line.find('#') == 0) {
             if (line.find("#CHROM") == 0) {
-                std::vector<std::string> header = split(trim(line," \n"),'\t');
+                std::vector<std::string> header = split(trim(line),'\t');
                 strains = std::vector<std::string>(header.begin()+9, header.end());
                 output<<outHeader;
                 for (auto &s: strains)
