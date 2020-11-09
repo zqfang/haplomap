@@ -6,25 +6,25 @@ Haplotype-based computational genetic mapping
 
 
 ## Usage
-Saome example to run `haplomap`
 
-e.g.
-```bash
-# 1. convert vcf to niehs format for eblocks
-bin/haplomap niehs -i ${HOME}/data/VCFs/chr18.vcf \
+### 1. convert vcf to niehs format for eblocks
+```shell
+build/bin/haplomap niehs -i ${HOME}/data/VCFs/chr18.vcf \
                    -o ${HOME}/data/SNPS/chr18.txt
 
 # support stdin, but slower
 zcat ${HOME}/data/VCFs/chr18.vcf.gz | bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.txt
-
-# 2. find haploblocks
-bin/haplomap eblocks -a ${HOME}/data/SNPS/chr18.txt \
+```
+### 2. find haploblocks
+```shell
+build/bin/haplomap eblocks -a ${HOME}/data/SNPS/chr18.txt \
                      -g ${HOME}/data/gene_coding.txt \
                      -s ${HOME}/TMPDATA/test_strains.txt \
                      -o ${HOME}/TMPDATA/test.SNPs.hb.txt
-
-# 3. statistical testing with trait data
-bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
+```
+### 3. statistical testing with trait data
+```shell
+build/bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
                    -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
                    -o ${HOME}/TMPDATA/test.final.output.txt
 ```
@@ -32,15 +32,17 @@ bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
 
 ## Input
 1. eblocks:
-    - Strain file (-s): column1 -> abbrev, column2 -> fullname
+    - Strain file (-s): 
+      - two column txt file: <abbrev> <fullname>
+      - see `test.strain.txt` in the example folder
     - Allele file (-a): NIEHS compact format (use subcmd `niehs` to convert vcf to niehs)
     - Gene Annotation (-g): 
-       - format: <SNP_{chr}_{postion}>  <gene_name>  < SNP_cateogry> 
+      - format: <SNP_{chr}_{postion}>  <gene_name>  < SNP_cateogry> 
 
 2. ghmap:
     - Trait file (-p):  
         - tow column txt file: <abbrev> <value>
-        - the <abbrev> <value> pair order should match to (-b).
+        - see `test.trait.txt` in the example folder
         - same <abbrev> <value> pair could be set multiple times to input individual animal data. Example:
         ```$xslt
            129S1	18.2
@@ -59,9 +61,9 @@ bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
 
 ## Output
 
-1. ebloks:
+1. eblocks:
 
-| NO | Field | Explaination |
+| NO | Field | Explanation |
 |--- | ---- | ------------ |
 |0 |chrom | chromosome idx      |
 |1 |Block | Block id            |
@@ -76,7 +78,7 @@ bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
 2. ghmap:
   * gene-oriented results file
 
-| NO |Field | Explaination |
+| NO |Field | Explanation |
 |---| ---- | ------------ |
 |0 |GeneName     | Associated Gene     |
 |1 |CodonFlag    | condonChange ? 1:0  |
