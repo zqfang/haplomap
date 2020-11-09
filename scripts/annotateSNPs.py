@@ -41,8 +41,8 @@ def get_annotation(strains, snpdb, annodb, kgxref, knowngene, ofile1, ofile2):
     
     # If input C57/6J, A/J, need to handle this 
     if 'C57/6J' in new_order:
-         idx = new_order.index('C57/6J')
-         new_order[idx] = 'C57BL/6J'
+        idx = new_order.index('C57/6J')
+        new_order[idx] = 'C57BL/6J'
     elif 'A/J' in new_order:
         idx = new_order.index('A/J')
         new_order[idx] = 'A_J'
