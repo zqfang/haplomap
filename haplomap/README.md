@@ -14,6 +14,9 @@ e.g.
 bin/haplomap niehs -i ${HOME}/data/VCFs/chr18.vcf \
                    -o ${HOME}/data/SNPS/chr18.txt
 
+# support stdin, but slower
+zcat ${HOME}/data/VCFs/chr18.vcf.gz | bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.txt
+
 # 2. find haploblocks
 bin/haplomap eblocks -a ${HOME}/data/SNPS/chr18.txt \
                      -g ${HOME}/data/gene_coding.txt \
