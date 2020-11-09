@@ -358,10 +358,10 @@ rule annotateVCF:
     shell:
         ## emsemble-vep
         # https://github.com/Ensembl/ensembl-vep
-        "{params.VEP} --fasta {input.reference} -a GRCm38 --species mus_musculus "
+        "bcftools view -f .,PASS {input} | {params.VEP} --fasta {input.reference} -a GRCm38 --species mus_musculus "
         "--format vcf --merged --fork {threads} --hgvs --force_overwrite "
         "--uniprot --domains --symbol --regulatory --distance 1000 --biotype "
         "--gene_phenotype MGI --check_existing  --pubmed --numbers "
         "--offline --variant_class --dir_cache {params.tempdir} "
         "--gencode_basic --no_intergenic --individual all "
-        "-i {input} -o {output} --tab "
+        "-o {output} --tab "
