@@ -84,11 +84,11 @@ build/bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
 |1 |Block | Block id            |
 |2 |Start | Block start idx     |
 |3 |Size  | Block size          |
-|4 |ChrBeg| Chrmosome begin idx |
+|4 |ChrBeg| Chromosome begin idx |
 |5 |ChrEnd| Chromosome end idx  |
 |6 |Pattern | Haplotype pattern |
 |7 |GeneName| Associated Gene   |
-|8 |Codon Map | Whether Change Condon |
+|8 |Codon Map | Whether Change Codon |
 
 2. ghmap:
   * gene-oriented results file
@@ -111,7 +111,7 @@ build/bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
 
   * block-oriented result file
 
-BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | CondingMap ...
+BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | CodingMap ...
 
 
 ## Changelog

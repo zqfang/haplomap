@@ -153,22 +153,22 @@ sbatch slurm.submit.sh
 
 1. ebloks:
 
-| NO |Field | Explaination |
+| NO |Field | Explanation |
 |--- | ---- | ------------ |
 |0 |chrom | chromosome idx      |
 |1 |Block | Block id            |
 |2 |Start | Block start idx     |
 |3 |Size  | Block size          |
-|4 |ChrBeg| Chrmosome begin idx |
+|4 |ChrBeg| Chromosome begin idx |
 |5 |ChrEnd| Chromosome end idx  |
 |6 |Pattern | Haplotype pattern |
 |7 |GeneName| Associated Gene   |
-|8 |Codon Map | Whether Change Condon |
+|8 |Codon Map | Whether Change Codon |
 
 2. ghmap:
   * gene-oriented results file
 
-| NO |Field | Explaination |
+| NO |Field | Explanation |
 |---| ---- | ------------ |
 |0 |GeneName     | Associated Gene     |
 |1 |CodonFlag    | -1,0,1,2            |
@@ -191,7 +191,7 @@ BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Patt
 
 **CodonFlag**
 
-* -1: Non-condon change
+* -1: Non-codon change
 * 0: Synonymous (not important)
 * 1: missense/nonsense...
 * 2: Splicing site change]
