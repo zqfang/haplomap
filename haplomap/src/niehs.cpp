@@ -41,11 +41,11 @@ std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv) {
             {"qual",          optional_argument, nullptr, 'q'},
             {nullptr, no_argument, nullptr,                           0}};
 
-    const char *usage = "Convert VCF to NIEHS compact format)\n"
+    const char *usage = "Convert VCF to NIEHS compact format\n"
                         "\nusage: vcf2niehs [options]\n"
                         "\nrequired arguments:\n"
-                        "    -i, --input           input VCF file, or 'stdin'\n"
-                        "    -o, --output          output NIEHS compact file\n"
+                        "    -i, --input           input sorted VCF file\n"
+                        "    -o, --output          output file name\n"
                         "\noptional arguments:\n"
                         "    -t, --hetero_thresh   heterozygous threshold, default 20.\n"
                         "    -q, --qual            qual field of VCF file, default 50.\n"
@@ -196,6 +196,7 @@ int main_niehs(int argc, char **argv)
 {
     std::shared_ptr<NIEHSOptions> opts = parseNIEHSOptions(argc, argv);
     std::string rawHeader;
+    // first allele is the reference
     std::string outHeader = "C57BL/6J";
     // output file
     std::ofstream output;
@@ -221,7 +222,7 @@ int main_niehs(int argc, char **argv)
                 << "Error message: ("
                 << std::strerror(errno)
                 << "). Exiting!" << std::endl;
-        exit (1);
+        exit(1);
     }
     input->ignore(); // for clearing newline in cin
 
@@ -245,6 +246,7 @@ int main_niehs(int argc, char **argv)
 
         if (variant.qual < opts->qual)
             continue;
+        // FIXME: IF GATK, there's no explicity INDEL keyword. you should pre-filter INDEL first
         // skip indels, check if key is present
         if (variant.ref.size() > 1 || variant.infos.find("INDEL") != variant.infos.end())
             continue;

@@ -67,8 +67,8 @@ static void usage()
         }
         i++;
     }
-    std::cout <<
-    "Program: haplomap (haplotype-based computational genetic mapping, a.k.a HBCGM)\n\n"
+    std::cout << "Program: haplomap (haplotype-based computational genetic mapping, a.k.a HBCGM)\n"
+    <<"Version: "<<__HAPLOMAP_VER__<<"\n\n"<<
     "Usage:   haplomap <subcommand> [options]\n\n"
     "Subcommands:\n"
     "    niehs          convert vcf to niehs for eblocks input\n"

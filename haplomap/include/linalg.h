@@ -2,17 +2,17 @@
 // Created by Zhuoqing Fang on 7/8/20.
 //
 
-#ifndef HBCGM_ARGSORT_H
-#define HBCGM_ARGSORT_H
+#ifndef HBCGM_LINALG_H
+#define HBCGM_LINALG_H
 #include <vector>
 #include <assert.h>
 
+// use STL to do vectorized math operation
+float dot_product(std::vector<float> & v1, std::vector<float> & v2);
+std::vector<float> add_vectors(std::vector<float> & v1, std::vector<float> & v2);
+std::vector<float> sub_vectors(std::vector<float> & v1, float c);
 
-/// argsort usage:
-///for (auto i: argsort(v))
-///{
-///   cout << v[i] << endl;
-///}
+/// CPP Not need to implement argsort, we could use pointers
 template <typename T>
 std::vector<size_t> argsort(const std::vector<T> &v)
 {
@@ -66,4 +66,4 @@ std::vector<size_t> argsort(_RAIter first, _RAIter last, _Compare comp) {
 
 
 
-#endif //HBCGM_ARGSORT_H
+#endif //HBCGM_LINALG_H
