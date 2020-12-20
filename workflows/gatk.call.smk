@@ -10,21 +10,24 @@ dbINDEL = config['dbINDEL']
 BAM_DIR = config['BAM_DIR']
 TMPDIR = config['TMPDIR']
 STRAINS = config['strains']
+HAPLOMAP = config['HBCGM']['BIN']# path to haplomap binary
+
 # with open(STRAINS_FILE, 'r') as s:
 #     STRAINS = s.read().strip().split()
-# STRAINS = ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10', 
-#         'BPL', 'BPN', 'BTBR', 'BUB', 'B_C', 'C3H', 'C57BL10J',
-#         'C57BL6NJ', 'C57BRcd', 'C57LJ', 'C58', 'CBA', 'CEJ', 
-#         'DBA', 'DBA1J', 'FVB', 'ILNJ', 'KK', 'LGJ', 'LPJ', 
-#         'MAMy', 'MRL','NOD', 'NON', 'NOR', 'NUJ', 'NZB', 'NZO', 'NZW', 
-#         'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF'] + \
-#          ['CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB']  # <- wild derived except MRL
+STRAINS = ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10', 
+        'BPL', 'BPN', 'BTBR', 'BUB', 'B_C', 'C3H', 'C57BL10J',
+        'C57BL6NJ', 'C57BRcd', 'C57LJ', 'C58', 'CBA', 'CEJ', 
+        'DBA', 'DBA1J', 'FVB', 'ILNJ', 'KK', 'LGJ', 'LPJ', 
+        'MAMy', 'MRL','NOD', 'NON', 'NOR', 'NUJ', 'NZB', 'NZO', 'NZW', 
+        'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF'] + \
+         ['CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB']  # <- wild derived except MRL
 #CHROMSOME = [ str(c) for c in range(1,20)] + ["X", "Y", "MT"]
 CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["MT", "X", "Y"]
 # OUTPUT
 VCF_VQSR = expand("VCFs/combined.chr{i}.VQSR.vcf.gz", i=CHROMSOME)
 VCF_HFILTER = expand("VCFs/combined.chr{i}.hardfilter.vcf.gz", i=CHROMSOME)
 VCF_HFILTER_PASS = expand("VCFs/combined.chr{i}.hardfilter.pass.vcf.gz", i=CHROMSOME)
+VEP = expand("VCFs/combined.chr{i}.hardfilter.pass.vep.txt", i=CHROMSOME)
 VCF_RAW = expand("VCFs/combined.chr{i}.raw.vcf", i=CHROMSOME)
 GVCF = expand("GVCF/{sample}.raw.g.vcf", sample=STRAINS)
 
@@ -34,7 +37,7 @@ SNPDB = expand("SNPs/chr{i}.txt", i=CHROMSOME)
 
 ############## Rules ##########################
 rule all:
-    input: VCF_HFILTER_PASS, SNPDB#VCF_VQSR
+    input: VCF_HFILTER_PASS, SNPDB, VEP#VCF_VQSR
 
 # include: "rules/gatk.getbam.smk"
 
@@ -332,25 +335,27 @@ rule vcf2strains:
     
 rule vcf2niehs:
     input:  
-        # vcf = "VCFs/combined.chr{i}.raw.vcf", 
-        vcf = "VCFs/combined.chr{i}.snp.filter.vcf",
-        strains = "SNPs/chr{i}.strains.temp"
+        "VCFs/combined.chr{i}.hardfilter.pass.vcf.gz",
     output: 
         protected("SNPs/chr{i}.txt")
     params:
         outdir= "SNPs",
         chrom="{i}",
-        qual_samtools=config['GATK']['qual'], 
-        heterzygote_cutoff = config['GATK']['heterzygote_cutoff']
-    script:
-        "../scripts/vcf2NIEHS.py"
+        qual_samtools=config['BCFTOOLS']['qual'], 
+        heterzygote_cutoff = config['BCFTOOLS']['heterzygote_cutoff'],
+        BIN = HAPLOMAP
+    #script:
+    #    "../scripts/vcf2NIEHS.py"
+    shell:
+        "{params.BIN}/haplomap niehs -i {input} -o {output} "
+        "-q {params.qual_samtools} -t {params.heterzygote_cutoff}"
 
 
 rule annotateVCF:
     input: 
         vcf="VCFs/combined.{chrom}.hardfilter.pass.vcf.gz",
         reference=GENOME,
-    output: "VCFs/combined.{chrom}.hardfilter.pass.VEP.vcf.gz"
+    output: "VCFs/combined.{chrom}.hardfilter.pass.vep.txt"
     params:
         VEP="/home/fangzq/github/ensembl-vep/vep",
         tempdir=TMPDIR

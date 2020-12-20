@@ -11,21 +11,25 @@ BAM_DIR = config['BAM_DIR']
 TMPDIR = config['TMPDIR']
 STRAINS = config['STRAINS']
 
+HAPLOMAP = config['HBCGM']['BIN']# path to haplomap binary
+
 #CHROMSOME = [ str(c) for c in range(1,20)] + ["X", "Y", "MT"]
 CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["X", "Y"]
 
 # with open(STRAINS_FILE, 'r') as s:
 #     STRAINS = s.read().strip().split()
  
-# STRAINS = ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10', 
-#         'BPL', 'BPN', 'BTBR', 'BUB', 'B_C', 'C3H', 'C57BL10J',
-#         'C57BL6NJ', 'C57BRcd', 'C57LJ', 'C58', 'CBA', 'CEJ', 
-#         'DBA', 'DBA1J', 'FVB', 'ILNJ', 'KK', 'LGJ', 'LPJ', 
-#         'MAMy', 'MRL','NOD', 'NON', 'NOR', 'NUJ', 'NZB', 'NZO', 'NZW', 
-#         'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF'] + \
-#          ['CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB']  # <- wild derived except MRL
-# OUTPUT
+STRAINS = ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10', 
+        'BPL', 'BPN', 'BTBR', 'BUB', 'B_C', 'C3H', 'C57BL10J',
+        'C57BL6NJ', 'C57BRcd', 'C57LJ', 'C58', 'CBA', 'CEJ', 
+        'DBA', 'DBA1J', 'FVB', 'ILNJ', 'KK', 'LGJ', 'LPJ', 
+        'MAMy', 'MRL','NOD', 'NON', 'NOR', 'NUJ', 'NZB', 'NZO', 'NZW', 
+        'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF'] + \
+         ['CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB']  # <- wild derived except MRL
 
+
+
+# OUTPUT
 VCF_HFILTER_PASS = expand("VCFs/combined.chr{i}.hardfilter.pass.vcf.gz", i=CHROMSOME)
 VEP = expand("VEP/combined.chr{i}.hardfilter.pass.vep.txt", i=CHROMSOME)
 VCF_RAW = expand("VCFs/combined.chr{i}.raw.vcf", i=CHROMSOME)
@@ -119,34 +123,22 @@ rule bcfcall_filtering:
         vcfi="VCFs/combined.{chr}.raw.vcf.gz.tbi"
     output: 
         "VCFs/combined.{chr}.hardfilter.pass.vcf.gz"
-    shell: 
-        # only selecet SNPs, that's what we want
-        "bcftools filter -Oz -o {output} -s LOWQUAL " 
-        "-i 'TYPE=\"snp\" && %QUAL>20' {input.vcf}"
-    
-rule vcf2niehs:
-    input:  
-        # vcf = "VCFs/combined.chr{i}.raw.vcf", 
-        vcf = "VCFs/combined.chr{i}.hardfilter.pass.vcf.gz",
-    output: 
-        protected("SNPs/chr{i}.txt")
     params:
-        outdir= "SNPs",
-        chrom="{i}",
-        qual_samtools=config['BCFTOOLS']['qual'], 
-        heterzygote_cutoff = config['BCFTOOLS']['heterzygote_cutoff']
-    script:
-        "../scripts/vcf2NIEHS.py"
-
+        filters='TYPE=\"snp\" && %QUAL>20'  # if only snp need
+    shell: 
+        # select snp and indels
+        "bcftools filter -Oz -o {output} -s LOWQUAL " 
+        "-i '%QUAL>20' {input.vcf}"
+    
+    
 rule annotateVCF:
     input: 
         vcf="VCFs/combined.{chrom}.hardfilter.pass.vcf.gz",
         reference=GENOME,
     output: "VCFs/combined.{chrom}.hardfilter.pass.vep.txt"
     params:
-        VEP="/home/fangzq/github/ensembl-vep/vep",
-        tempdir=TMPDIR
-    threads: 32
+        VEP="/home/fangzq/github/ensembl-vep/vep"
+    threads: 8
     shell:
         ## emsemble-vep
         # https://github.com/Ensembl/ensembl-vep
@@ -157,3 +149,21 @@ rule annotateVCF:
         "--offline --variant_class --dir_cache {params.tempdir} "
         "--gencode_basic --no_intergenic --individual all "
         "-o {output} --tab "
+        
+        
+rule vcf2niehs:
+    input:  
+        "VCFs/combined.chr{i}.hardfilter.pass.vcf.gz",
+    output: 
+        protected("SNPs/chr{i}.txt")
+    params:
+        outdir= "SNPs",
+        chrom="{i}",
+        qual_samtools=config['BCFTOOLS']['qual'], 
+        heterzygote_cutoff = config['BCFTOOLS']['heterzygote_cutoff'],
+        BIN = HAPLOMAP
+    #script:
+    #    "../scripts/vcf2NIEHS.py"
+    shell:
+        "{params.BIN}/haplomap niehs -i {input} -o {output} "
+        "-q {params.qual_samtools} -t {params.heterzygote_cutoff}"
