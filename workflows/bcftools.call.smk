@@ -27,6 +27,7 @@ CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,
 # OUTPUT
 
 VCF_HFILTER_PASS = expand("VCFs/combined.chr{i}.hardfilter.pass.vcf.gz", i=CHROMSOME)
+VEP = expand("VEP/combined.chr{i}.hardfilter.pass.vep.txt", i=CHROMSOME)
 VCF_RAW = expand("VCFs/combined.chr{i}.raw.vcf", i=CHROMSOME)
 VCF_STATS = expand("VCFs/combined.chr{i}.raw.vcf.gz.stats", i=CHROMSOME)
 
@@ -34,7 +35,7 @@ SNPDB = expand("SNPs/chr{i}.txt", i=CHROMSOME)
 
 ###########################################################################################
 rule target:
-    input: VCF_RAW, VCF_STATS, SNPDB
+    input: VCF_RAW, VCF_STATS, SNPDB, VEP
 
 # samtools-bcftools-calling
 rule faidx: 
@@ -141,7 +142,7 @@ rule annotateVCF:
     input: 
         vcf="VCFs/combined.{chrom}.hardfilter.pass.vcf.gz",
         reference=GENOME,
-    output: "VCFs/combined.{chrom}.hardfilter.pass.VEP.vcf.gz"
+    output: "VCFs/combined.{chrom}.hardfilter.pass.vep.txt"
     params:
         VEP="/home/fangzq/github/ensembl-vep/vep",
         tempdir=TMPDIR

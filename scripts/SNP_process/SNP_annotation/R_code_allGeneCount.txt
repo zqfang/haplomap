@@ -1,5 +1,0 @@
-setwd("\\\\peltz-app-01\\mzheng\\mzheng-data\\perl_prog\\SNP_process\\SNP_annotation");
-version = "v58";
-inputFileName = paste("gene_info_", version, ".txt", sep = "");
-x = read.table(inputFileName,header = F);
-print(length(levels(x[,1])));
