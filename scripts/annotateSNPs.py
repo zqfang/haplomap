@@ -21,7 +21,7 @@ def unique(seq):
 
     return [x for x in seq if x not in seen and not seen_add(x)]
 
-def get_annotation(strains, snpdb, annodb, kgxref, knowngene, ofile1, ofile2):
+def get_annotation(strains, snpdb, annodb, kgxref, knowngene, ofile1, ofile2, *args, **kwargs):
 
     trans_dir = {x.split('\t')[0]:x.split('\t')[2] for x in open(knowngene)}
     gene2trans = {x.split('\t')[4]:x.split('\t')[0] for x in open(kgxref)}
@@ -87,10 +87,13 @@ get_annotation(snakemake.input['strains'], snakemake.input['snps'], snakemake.in
              snakemake.output['ensemble'], snakemake.output['hgnc'])
 
 # if __name__ == "__main__":
-#     get_annotation("/scratch/users/fangzq/20200505/MPD_52401/strain.52401.txt", 
-#                    "/scratch/users/fangzq/PELTZ_20200429/SNPs/chr3.txt", 
-#                    "/scratch/users/fangzq/PELTZ_20200429/AA_by_strains.pkl", 
-#                    "/scratch/users/fangzq/PELTZ_20200429/mm10_kgXref.txt", 
+#     args = sys.argv[1:]
+#     get_annotation(*args)
+## example
+#     get_annotation("/scratch/users/fangzq/20200505/MPD_52401/strain.52401.txt",
+#                    "/scratch/users/fangzq/PELTZ_20200429/SNPs/chr3.txt",
+#                    "/scratch/users/fangzq/PELTZ_20200429/AA_by_strains.pkl",
+#                    "/scratch/users/fangzq/PELTZ_20200429/mm10_kgXref.txt",
 #                    "/scratch/users/fangzq/PELTZ_20200429/mm10_knownGene.txt",
 #                    "/scratch/users/fangzq/20200505/genesemble.txt",
 #                    "/scratch/users/fangzq/20200505/genesemble.id.txt")

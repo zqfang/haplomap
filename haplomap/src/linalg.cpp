@@ -5,7 +5,7 @@
 #include <numeric>
 #include <algorithm>
 #include <functional>
-#include "argsort.h"
+#include "linalg.h"
 
 // vector math
 float dot_product(std::vector<float> & v1, std::vector<float> & v2) {

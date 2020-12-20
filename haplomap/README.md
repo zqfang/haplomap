@@ -16,6 +16,21 @@ build/bin/haplomap niehs -i ${HOME}/data/VCFs/chr18.vcf \
 zcat ${HOME}/data/VCFs/chr18.vcf.gz | bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.txt
 ```
 ### 2. find haploblocks
+prepared SNP annotation file 
+
+1. generate strain level gene annotation database (only run once), see here: 
+[scripts/gene_annotation](../scripts/gene_annotation/README.md)
+    - this step generates 3 files for next step.
+      - AA_by_strains_chr*.pkl 
+      - mm10_kgXref.txt 
+      - mm10_knownGene.txt
+2. run `annotateSNPs.py` for each case (test_strains.txt) to get strain specific SNP annotation.
+```shell
+python scripts/annotateSNPs.py test_strains.txt chr18.txt \
+                    AA_by_strains_chr18.pkl mm10_kgXref.txt mm10_knownGene.txt
+                    genes_coding.txt genes_coding_transcript.txt
+```
+3. find haploblocks
 ```shell
 build/bin/haplomap eblocks -a ${HOME}/data/SNPS/chr18.txt \
                      -g ${HOME}/data/gene_coding.txt \
@@ -28,22 +43,22 @@ build/bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
                    -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
                    -o ${HOME}/TMPDATA/test.final.output.txt
 ```
-
+**Note:** strain order in (-p) should keep the same to the (-b). That's, eblocks (-s)
 
 ## Input
 1. eblocks:
     - Strain file (-s): 
-      - two column txt file: <abbrev> <fullname>
+      - two column txt file: |- abbrev -|- fullname -|
       - see `test.strain.txt` in the example folder
     - Allele file (-a): NIEHS compact format (use subcmd `niehs` to convert vcf to niehs)
     - Gene Annotation (-g): 
       - format: <SNP_{chr}_{postion}>  <gene_name>  < SNP_cateogry> 
+      - see above to prepare this file
 
 2. ghmap:
     - Trait file (-p):  
-        - tow column txt file: <abbrev> <value>
-        - see `test.trait.txt` in the example folder
-        - same <abbrev> <value> pair could be set multiple times to input individual animal data. Example:
+        - two column txt file: |- abbrev -|- value -|, see `test.trait.txt` in the example folder
+        - same `abbrev value` pair could be set multiple times, but need to keep same order to strain pattern of (-b). Example:
         ```$xslt
            129S1	18.2
            129S1	19.1
@@ -69,11 +84,11 @@ build/bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
 |1 |Block | Block id            |
 |2 |Start | Block start idx     |
 |3 |Size  | Block size          |
-|4 |ChrBeg| Chrmosome begin idx |
+|4 |ChrBeg| Chromosome begin idx |
 |5 |ChrEnd| Chromosome end idx  |
 |6 |Pattern | Haplotype pattern |
 |7 |GeneName| Associated Gene   |
-|8 |Codon Map | Whether Change Condon |
+|8 |Codon Map | Whether Change Codon |
 
 2. ghmap:
   * gene-oriented results file
@@ -96,7 +111,7 @@ build/bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
 
   * block-oriented result file
 
-BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | CondingMap ...
+BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | CodingMap ...
 
 
 ## Changelog
