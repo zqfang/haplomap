@@ -91,6 +91,18 @@ rule bcftools_call:
               "bcftools call -mv -f GQ,GP -Ov  > {output}"
         shell(cmd)
 
+
+
+rule bcftools_norm:
+    """
+    Left-align and normalize indels
+    """
+    input:  "VCFs/combined.chr{i}.raw.vcf.gz"
+    output: "VCFs/combined.chr{i}.norm.vcf.gz"
+    shell:
+        "bcftools norm -D -s -m+indels -Oz -o {ouput} {input} "
+
+
 rule tabix:
     input: "VCFs/combined.{chr}.raw.vcf"
     output: 
@@ -119,8 +131,8 @@ rule bcftools_plot:
 
 rule bcfcall_filtering:
     input: 
-        vcf="VCFs/combined.{chr}.raw.vcf.gz",
-        vcfi="VCFs/combined.{chr}.raw.vcf.gz.tbi"
+        vcf="VCFs/combined.{chr}.norm.vcf.gz",
+        vcfi="VCFs/combined.{chr}.norm.vcf.gz.tbi"
     output: 
         "VCFs/combined.{chr}.hardfilter.pass.vcf.gz"
     params:
