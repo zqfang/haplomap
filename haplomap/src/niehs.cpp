@@ -292,7 +292,8 @@ int main_niehs(int argc, char **argv)
             std::vector<float> PLs;
             std::transform(pls.begin(), pls.end(), std::back_inserter(PLs),
                             [](std::string &s) { return std::stof(s); });
-            // homozygous - heterozyous > heteroThereshold
+            // PL_hetro - PL_homo >= heteroThereshold
+            // PL: the lower, the more reliable GT
             for ( unsigned int p = 0; p < PLs.size(); p++)
             {
                 if (p == ind)
@@ -300,6 +301,7 @@ int main_niehs(int argc, char **argv)
                 if ((PLs[p] - PLs[ind]) < minScore)
                     minScore = PLs[p] - PLs[ind];
             }
+            // actually, we could just use AQ, it's same to PLs[p], then get -> minScore
 
             if (minScore >= opts->heteroThreshold)
             {
