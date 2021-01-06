@@ -23,14 +23,21 @@ struct NIEHSOptions
     char *inputFileName;
     char *outputFileName;
     char *sampleFileName;
-    float phredLikelihoodDifference;
-    float qual;
+    float phredLikelihoodDifference; // PL_other - PL_homo > 20
+    float qual;  // QUAL field
+    
+    /// allele depth of coverage (AD)
+    /// variants < AD set to be LowQual
+    float alleleDepth;
+    /// see here https://samtools.github.io/bcftools/howtos/variant-calling.html
+    /// ratio = %MAX(AD) / %MAX(DP). variants < ratio set to be LowQual
+    float ratio; 
     bool verbose;
 
     // constructor
     NIEHSOptions() : inputFileName(nullptr), outputFileName(nullptr), 
                      sampleFileName(nullptr), phredLikelihoodDifference(20.0), 
-                     qual(50.0), verbose(false) {};
+                     qual(50.0), alleleDepth(3.0), ratio(0.1), verbose(false) {};
 };
 
 
@@ -39,27 +46,29 @@ std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv)
 {
     std::shared_ptr<NIEHSOptions> opts = std::make_shared<NIEHSOptions>();
     static struct option long_options_niehs[] = {
-            {"help",       no_argument, nullptr,       'h'},
-            {"verbose",    no_argument, nullptr,       'v'},
-            {"input",      required_argument, nullptr, 'i'},
-            {"output",     required_argument, nullptr, 'o'},
-            {"samples",    optional_argument, nullptr, 's'},
-            {"pl-diff", optional_argument, nullptr, 'p'},
-            {"qual",       optional_argument, nullptr, 'q'},
-            {nullptr,      no_argument, nullptr,        0}};
+            {"help",           no_argument, nullptr,       'h'},
+            {"verbose",        no_argument, nullptr,       'v'},
+            {"input",          required_argument, nullptr, 'i'},
+            {"output",         required_argument, nullptr, 'o'},
+            {"samples",        optional_argument, nullptr, 's'},
+            {"pl-diff",        optional_argument, nullptr, 'p'},
+            {"qual",           optional_argument, nullptr, 'q'},
+            {"allele-depth",   optional_argument, nullptr, 'a'},
+            {nullptr,          no_argument, nullptr,        0}};
 
     const char *usage = "Convert VCF to NIEHS compact format\n"
-                        "\nusage: vcf2niehs [options] in.vcf \n"
+                        "\nusage: vcf2niehs [options] <in.vcf> \n"
                         "\nrequired arguments:\n"
-                        "    in.vcf                input sorted VCF file or stdin\n"
-                        "    -o, --output          output file name\n"
+                        "    in.vcf                Input sorted VCF file or stdin\n"
+                        "    -o, --output          Output file name\n"
                         "\noptional arguments:\n"
-                        "    -s, --samples         sample order by input file. One id per row.\n"
-                        "    -p, --pl-diff         phred likelihood (PL) difference. Default 20.\n"
-                        "                          GT's PL must at least {pl-diff} unit lower than\n"
-                        "                          any other PL value\n"
-                        "    -q, --qual            QUAL field of VCF file. Only keep variant > {qual}.\n"
-                        "                          Default 50.\n"
+                        "    -s, --samples         New sample order. One name per line.\n"
+                        "    -p, --pl-diff         Phred-scaled genotype likelihood (PL) difference. Default 20.\n"
+                        "                          GT's PL must at least pl-diff unit lower than any other PL value. \n"
+                        "                          The larger, the more confident \n"
+                        "    -q, --qual            QUAL field of VCF file. Only keep variant > qual. Default 50. \n"
+                        "    -a, --allele-depth    Min allele depth (AD) of samples. Default 3.\n"
+                        "    -r, --ratio           Min ratio (%MAX(AD) / %MAX(DP)) of samples. Default 0.1\n"
                         "    -v, --verbose\n"
                         "    -h, --help\n";
     if (argc == 1)
@@ -74,7 +83,7 @@ std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv)
     {
 
        int option_index = 0;
-       c = getopt_long(argc, argv, "hv:o:s:p:q:", long_options_niehs, &option_index);
+       c = getopt_long(argc, argv, "hv:a:o:p:q:r:s:p:", long_options_niehs, &option_index);
 
         /* Detect the end of the options. */
         if (c == -1)
@@ -112,19 +121,28 @@ std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv)
 
             case 'p':
             {
-                if (optarg == nullptr)
-                    opts->phredLikelihoodDifference = 20.0;
-                else
+                if (optarg != nullptr)
                     opts->phredLikelihoodDifference = std::stof(optarg);
                 break;
             }
             case 'q':
-                if (optarg == nullptr)
-                    opts->qual = 50.0;
-                else
+            {
+                if (optarg != nullptr)
                     opts->qual = std::stof(optarg);
                 break;
-
+            }
+            case 'a':
+            {
+                if (optarg != nullptr)
+                    opts->alleleDepth = std::stof(optarg);
+                break;
+            }  
+            case 'r':
+            {
+                if (optarg != nullptr)
+                    opts->ratio = std::stof(optarg);
+                break;
+            }           
             case '?':
             {
                 /* getopt_long already printed an error message. */
@@ -196,6 +214,39 @@ public:
             infos[_info[0]] = _info.size() == 2 ? _info[1]: "true";
         }    
         return infos;
+    }
+    float maxAlleleDepth()
+    {
+        if (this->FORMATS.find("AD") == this->FORMATS.end())
+            return 0; // if AD not found, then we should skip 
+        
+        float AD(0);
+        for (auto & a: this->FORMATS["AD"])
+        {
+            // AD is a vector for gt (ref0, alt1, alt2)
+            std::vector<std::string> ad = split(a, ',');
+            for (auto it = ad.begin() + 1; it != ad.end(); it++) 
+            {
+                if (*it != ".")
+                    AD = std::max(std::stof(*it), AD);
+            }
+        }           
+        return AD;   
+    }
+
+    float maxDepth()
+    {
+        if (this->FORMATS.find("DP") == this->FORMATS.end() )
+            return 0; // if DP not found, then we should skip 
+        
+        float DP(0);
+        /// FIXME: if DP is .
+        for (auto & a: this->FORMATS["DP"])
+        {   
+            if (a != ".")
+                DP = std::max(std::stof(a), DP);
+        }
+        return DP;
     }
         
 private:
@@ -283,7 +334,7 @@ int main_niehs(int argc, char **argv)
     // stdin or ifstream
     if (opts->inputFileName == nullptr)
     {
-        std::cout<<"Read VCF from stdin"<<std::endl;
+        std::cout<<"Read VCF: from stdin"<<std::endl;
         input = &std::cin;
     }
     else
@@ -314,7 +365,7 @@ int main_niehs(int argc, char **argv)
     // read input sample names
     if (opts->sampleFileName != nullptr) 
     {
-        std::cout << "Read: "<< opts->sampleFileName << std::endl;
+        std::cout << "Read Sample Names: "<< opts->sampleFileName << std::endl;
         std::ifstream sinput(opts->sampleFileName);
         while (std::getline(sinput, line))
         {
@@ -329,6 +380,7 @@ int main_niehs(int argc, char **argv)
     
 
     // read vcf header
+    std::cout<<"Parser Header"<<std::endl;
     while (std::getline(*input, line))
     {
         // starts with "##"
@@ -374,6 +426,7 @@ int main_niehs(int argc, char **argv)
     }
     int lineNum = 0;
     // Now read all records
+    std::cout<<"Parsing Variants"<<std::endl;
     while (std::getline(*input, line))
     {
         lineNum ++;
@@ -382,8 +435,9 @@ int main_niehs(int argc, char **argv)
 
         if (variant.QUAL < opts->qual)
             continue;
-        // FIXME: IF GATK, there's no explicity INDEL keyword. you should pre-filter INDEL first
-        // skip indels, check if key is present
+        float AD = variant.maxAlleleDepth();
+        if (AD < opts->alleleDepth || (AD / variant.maxDepth()) < opts->ratio)
+            continue; 
         // string find not found, skip
         if (variant.isINDEL || variant.INFO.find("INDEL") != std::string::npos) 
             continue;
