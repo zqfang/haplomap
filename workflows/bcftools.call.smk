@@ -17,16 +17,16 @@ VEP = config['VEP']
 CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["X", "Y"]
 
 # OUTPUT
-VCF_HFILTER_PASS = expand("VCFs/combined.chr{i}.hardfilter.pass.vcf.gz", i=CHROMSOME)
+VCF_PASS = expand("VCFs/combined.chr{i}.hardfilter.pass.vcf.gz", i=CHROMSOME)
 VEP_ANNO = expand("VEP/combined.chr{i}.hardfilter.pass.vep.txt.gz", i=CHROMSOME)
-VCF_RAW = expand("VCFs/combined.chr{i}.raw.vcf", i=CHROMSOME)
+VCF_RAW = expand("VCFs/combined.chr{i}.raw.vcf.gz", i=CHROMSOME)
 VCF_STATS = expand("VCFs/combined.chr{i}.raw.vcf.gz.stats", i=CHROMSOME)
 
 SNPDB = expand("SNPs/chr{i}.txt", i=CHROMSOME)
 
 ###########################################################################################
 rule target:
-    input: VCF_RAW, VCF_STATS, SNPDB, VEP_ANNO
+    input: VCF_RAW, VCF_PASS, SNPDB, VEP_ANNO, #VCF_STATS
 
 # samtools-bcftools-calling
 rule faidx: 
@@ -71,13 +71,16 @@ rule bcftools_call:
     run:
         with open(input.chroms_region) as reg:
             region = reg.read().strip()
+        ## these cmds from Mouse genome project, 
+        ## see here: https://genome.ucsc.edu/cgi-bin/hgTrackUi?db=mm10&g=strainSNPs
+        ## Samtools mpileup -t DP,DV,DP4,SP,DPR,INFO/DPR -E -Q 0 -pm3 -F0.25 -d500
+        ## Bcftools call -mv -f GQ,GP -p 0.99
         cmd = "bcftools mpileup "+\
-              "-a DP,AD,ADF,ADR,SP,INFO/AD "+\ 
+              "-a DP,AD,ADF,ADR,SP,INFO/AD "+\  
               "-E -F0.25 -Q0 -p -m3 -d500 -r %s "%region +\
               "-Ou -f {input.genome} {params.bam} | " +\  
               "bcftools call -mv -f GQ,GP -Oz  > {output}"
         shell(cmd)
-
 
 
 rule bcftools_norm:
@@ -85,40 +88,40 @@ rule bcftools_norm:
     Left-align and normalize indels
     """
     input:  "VCFs/combined.chr{i}.raw.vcf.gz"
-    output: "VCFs/combined.chr{i}.norm.vcf.gz"
+    output: temp("VCFs/combined.chr{i}.normed.vcf.gz")
     shell:
-        "bcftools norm -D -s -m+indels -Oz -o {ouput} {input} "
+        "bcftools norm -d none -s -m+indels -Oz -o {output} {input} "
 
 
 rule tabix:
-    input: "VCFs/combined.{chr}.raw.vcf.gz"
+    input: "VCFs/combined.{chr}.normed.vcf.gz"
     output: 
-        "VCFs/combined.{chr}.raw.vcf.gz.tbi"
+        temp("VCFs/combined.{chr}.normed.vcf.gz.tbi")
     shell:
         "tabix -p vcf {input} "
         
 rule bcftools_stats:
     input: 
         genome=GENOME,
-        vcf="VCFs/combined.{chr}.raw.vcf.gz",
-        vcfi="VCFs/combined.{chr}.raw.vcf.gz.tbi"
+        vcf="VCFs/combined.{chr}.normed.vcf.gz",
+        vcfi="VCFs/combined.{chr}.normed.vcf.gz.tbi"
     output: 
-        "VCFs/combined.{chr}.raw.vcf.gz.stats"
+        "VCFs/combined.{chr}.normed.vcf.gz.stats"
     shell:
         "bcftools stats -F {input.genome} -s - {input.vcf} > {output}"
 
 rule bcftools_plot:
-    input: "VCFs/combined.{chr}.raw.vcf.gz.stats"
-    output: "figures/combined.{chr}.raw.vcf.gz.stats.pdf"
+    input: "VCFs/combined.{chr}.normed.vcf.gz.stats"
+    output: "figures/combined.{chr}.normed.vcf.gz.stats.pdf"
     shell:
         "plot-vcfstats -p figures -T {wildcards.chr} {input}"
 
 rule bcfcall_filtering:
     input: 
-        vcf="VCFs/combined.{chr}.norm.vcf.gz",
-        vcfi="VCFs/combined.{chr}.norm.vcf.gz.tbi"
+        vcf="VCFs/combined.{chr}.normed.vcf.gz",
+        vcfi="VCFs/combined.{chr}.normed.vcf.gz.tbi"
     output: 
-        "VCFs/combined.{chr}.hardfilter.pass.vcf.gz"
+        protected("VCFs/combined.{chr}.hardfilter.pass.vcf.gz")
     params:
         filters='TYPE=\"snp\" && %QUAL>20'  # if only snp need
     shell: 
