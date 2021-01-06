@@ -136,8 +136,8 @@ rule strainOrder:
 rule snp2NIEHS:
     input:  
         strain = "strain.order.snpdb.txt",
-        #"VCFs/combined.chr{i}.hardfilter.pass.vcf.gz",
-        vcf = "VCFs/combined.chr{i}.snp.vcf.gz"
+        vcf = "VCFs/combined.chr{i}.hardfilter.pass.vcf.gz",
+        #vcf = "VCFs/combined.chr{i}.snp.vcf.gz"
     output: 
         protected("SNPs/chr{i}.txt")
     params:
