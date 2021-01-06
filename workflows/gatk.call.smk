@@ -342,9 +342,9 @@ rule annotateVCF:
         ## emsemble-vep
         # https://github.com/Ensembl/ensembl-vep
         "bcftools view -f .,PASS {input.vcf} | {params.VEPBIN}/vep --fasta {input.reference} {params.genome_build} "
-        "--format vcf --merged --fork {threads} --hgvs --force_overwrite "
+        "--format vcf --fork {threads} --hgvs --force_overwrite "
         "--uniprot --domains --symbol --regulatory --distance 1000 --biotype "
         "--gene_phenotype MGI --check_existing  --pubmed --numbers "
-        "--offline --variant_class "
+        "--offline --cache --variant_class "
         "--gencode_basic --no_intergenic --individual all "
         "-o {output} --tab "

@@ -71,16 +71,28 @@ rule bcftools_call:
     run:
         with open(input.chroms_region) as reg:
             region = reg.read().strip()
-        ## these cmds from Mouse genome project, 
+        ## cmds same to mouse genome project, 
         ## see here: https://genome.ucsc.edu/cgi-bin/hgTrackUi?db=mm10&g=strainSNPs
-        ## Samtools mpileup -t DP,DV,DP4,SP,DPR,INFO/DPR -E -Q 0 -pm3 -F0.25 -d500
-        ## Bcftools call -mv -f GQ,GP -p 0.99
+        ## we used the updated annotations to replace the deprecated ones
         cmd = "bcftools mpileup "+\
               "-a DP,AD,ADF,ADR,SP,INFO/AD "+\  
               "-E -F0.25 -Q0 -p -m3 -d500 -r %s "%region +\
               "-Ou -f {input.genome} {params.bam} | " +\  
               "bcftools call -mv -f GQ,GP -Oz  > {output}"
         shell(cmd)
+
+# rule bcftools_reheader:
+#     """
+#     handy tool to rename sample names, see docs 
+#     here: http://samtools.github.io/bcftools/bcftools-man.html#reheader
+#     """
+#     input: 
+#         vcf="VCFs/combined.chr{i}.raw.vcf.gz",
+#         samples="sample.new.name.txt"
+#     output:
+#         "VCFs/combined.chr{i}.raw.vcf.gz"
+#     shell:
+#         "bcftools reheader -s -o {output} {input}"
 
 
 rule bcftools_norm:
@@ -123,11 +135,14 @@ rule bcfcall_filtering:
     output: 
         protected("VCFs/combined.{chr}.hardfilter.pass.vcf.gz")
     params:
-        filters='TYPE=\"snp\" && %QUAL>20'  # if only snp need
+        filters="-i 'TYPE=\"snp\" && %QUAL>20' "  # if only snp need
+        ## MIN(DP)>5 ? both FORMAT and INFO have DP
+        ## DP:  sum of the DP value over all samples 
     shell: 
         # select snp and indels
-        "bcftools filter -Oz -o {output} -s LOWQUAL " 
-        "-i '%QUAL>20' {input.vcf}"
+        "bcftools filter -Oz -o {output} -s LowQual -g3 -G10 " 
+        "-e '%QUAL<20 || %MAX(FORMAT/AD)<=3 || %MAX(FORMAT/AD)/%MAX(FORMAT/DP)<=0.3' " 
+        "{input.vcf}"
 
 
 rule strainOrder:
@@ -157,7 +172,7 @@ rule snp2NIEHS:
         "-q {params.qual} -p {params.het} -s {input.strain} > {log}"
 
 
-rule annotateVCF:
+rule variantEeffectPrediction:
     input: 
         vcf="VCFs/combined.{chrom}.hardfilter.pass.vcf.gz",
         reference=GENOME,
@@ -171,9 +186,9 @@ rule annotateVCF:
         ## emsemble-vep
         # https://github.com/Ensembl/ensembl-vep
         "bcftools view -f .,PASS {input.vcf} | {params.VEPBIN}/vep --fasta {input.reference} {params.genome_build} "
-        "--format vcf --merged --fork {threads} --hgvs --force_overwrite "
+        "--format vcf --fork {threads} --hgvs --force_overwrite "
         "--uniprot --domains --symbol --regulatory --distance 1000 --biotype "
         "--gene_phenotype MGI --check_existing  --pubmed --numbers "
-        "--offline --variant_class "
+        "--offline --cache --variant_class "
         "--gencode_basic --no_intergenic --individual all "
         "-o {output} --tab "
