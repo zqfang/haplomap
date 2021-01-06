@@ -6,3 +6,4 @@
 *.snakemake
 data
 *.idea
+.ipynb_checkpoints

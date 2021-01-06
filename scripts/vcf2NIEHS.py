@@ -2,22 +2,22 @@ import time, sys, os, glob, gzip
 from collections.abc import Iterable
 
 class VCF:
-    def __init__(self, vcf, output, qual=50, heterozyote_thresh=20):
-        self.vcf = vcf
+    def __init__(self, invcf: str, output: str, qual=50, heterozyote_thresh=20, samples=None):
+        self.vcf = invcf
         self.output = output
         self.qual = qual
         self.het = heterozyote_thresh
-        self.sname = os.path.basename(vcf)
+        self.sname = os.path.basename(invcf)
         self.nucleotide = {"A": 1, "C":1, "G":1, "T":1} 
         # os.makedirs(self.outdir, exist_ok=True)
-
+        self.samples = samples
         self.outputdict = open(output.replace(".txt", ".full.txt" ), 'w') 
         self.output_compact = open(output, 'w')         
-        if vcf.endswith("gz"):
-            self._vcf = gzip.open(vcf, 'rt') 
+        if invcf.endswith("gz"):
+            self._vcf = gzip.open(invcf, 'rt') 
         else:
-            self._vcf = open(vcf, 'r')
-
+            self._vcf = open(invcf, 'r')
+        
     def __del__(self):
         # close file
         self.outputdict.close()
@@ -39,6 +39,8 @@ class VCF:
                 #strain_name = strain_name.replace("A_J", "A/J")
                 self.strains = strain_name.strip().split("\t")
                 self.outputdict.write("LOCAL_IDENTIFIER\tSS_ID\tCHROMOSOME\tACCESSION_NUM\tPOSITION\tSTRAND\tALLELES\t")
+                if self.samples is not None:
+                    strain_name = "\t" + "\t".join(self.samples) + "\n"
                 self.outputdict.write("C57BL/6J"+strain_name)
                 self.output_compact.write("C57BL/6J"+strain_name)
                 continue
@@ -80,15 +82,6 @@ class VCF:
                 continue
 
             ###find the entries for GT & PL
-            # GATK
-            # if newline[8] == 'GT:AD:DP:GQ:PL':
-            #     GTind, PLind = 0, 4
-            # elif newline[8] == 'GT:AD:DP:GQ:PGT:PID:PL':
-            #     GTind, PLind = 0, 6
-            # # samtools
-            # elif newline[8] == "GT:PL:DP:DV:SP:DP4:DPR:GP:GQ":
-            #     GTind, PLind = 0, 1
-            # else:
             IDS = newline[8].split(":") 
             GTind, PLind = -1, -1
             try:
@@ -106,9 +99,9 @@ class VCF:
 
             hasAlt= [0] * len(alts)
             alleles = [-1] * len(self.strains)
-            # CHROM	POS	ID	REF	ALT	QUAL FILTER	INFO FORMAT	AKR
+            # CHROM	POS	ID	REF	ALT	QUAL FILTER	INFO FORMAT
             for s, strain in enumerate(self.strains):
-                ## identify the allele for each strai
+                ## identify the allele for each strain
                 strainFormats = newline[9+s].split(":")
                 # if "" -> NN
                 if strainFormats[GTind] == "./." or strainFormats[GTind] == ".|." or (not strainFormats[GTind]) or (not strainFormats[PLind]):         
@@ -164,7 +157,11 @@ class VCF:
                 if alts[theGoodAlt] not in self.nucleotide.keys():
                     numINDEL +=1
 
+                    
                 ## this is a good SNP across the strains. save it for output 
+                if self.samples is not None:
+                    alleles = [alleles[self.strains.index(s)] for s in self.samples]
+
                 allAlleles = "\t".join(alleles)
                 alt = alts[theGoodAlt]
                 # write output here
@@ -198,10 +195,12 @@ vcf.toNIEHS()
 
 
 #if __name__ == '__main__':
-    # inputs and outputs
-    # chromosome = list(range(1, 20)) + [ "X", "Y"]
-    # for i in chromosome:
-    #     invcf = f"VCFs/combined.chr{i}.raw.vcf.gz"
-    #     output = f"SNPs/chr{i}.txt"
-    #     vcf = VCF(invcf, output, 50,  20)
-    #     vcf.toNIEHS()
+#    with open("../20200429_BCFTOOLS/strain.order.vcf.txt") as s:
+#        strains = s.read().strip().split()
+#    # inputs and outputs
+#    chromosome = list(range(1, 20)) + [ "X"]
+#    for i in chromosome:
+#        invcf = f"VCFs/combined.chr{i}.raw.vcf"
+#        output = f"SNPs2/chr{i}.txt"
+#        vcf = VCF(invcf, output, 50,  20, strains)
+#        vcf.toNIEHS()

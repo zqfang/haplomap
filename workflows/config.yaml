@@ -5,6 +5,8 @@ dbSNP: "/home/fangzq/genome/mouse/mgp.v5.merged.snps_all.dbSNP142.sorted.vcf"
 dbINDEL: "/home/fangzq/genome/mouse/mgp.v5.merged.indels.dbSNP142.normed.vcf"
 BAM_DIR: "/data/bases/fangzq/strains"
 TMPDIR: "/home/fangzq/TMPDATA"
+VEP: "/home/fangzq/github/ensembl-vep"
+
 # raw fastq files
 FASTQS:
     PATH: ""
@@ -14,12 +16,12 @@ FASTQS:
     R2: "([A-Z0-9-]+)_(L[0-9]{3})_R2_[0-9]{3}.fastq.gz"
 
 STRAINS: ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10', 
-        'BPL', 'BPN', 'BTBR', 'BUB', 'B_C', 'C3H', 'C57BL10J',
+        'BPL', 'BPN', 'BTBR', 'BUB', 'BALB', 'C3H', 'C57BL10J',
         'C57BL6NJ', 'C57BRcd', 'C57LJ', 'C58', 'CBA', 'CEJ', 
         'DBA', 'DBA1J', 'FVB', 'ILNJ', 'KK', 'LGJ', 'LPJ', 
         'MAMy', 'MRL','NOD', 'NON', 'NOR', 'NUJ', 'NZB', 'NZO', 'NZW', 
         'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF',
-        'CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB'] 
+        'CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB'] # the last 6 are wild-derived inbred strain
 
 HBCGM:
     # working directory
@@ -54,10 +56,15 @@ HBCGM:
     KNOWNGENE: "/data/bases/shared/haplomap/PELTZ_20200429/SNP_Annotation/mm10_knownGene.txt" 
 
 
+BCFTOOLS:
+    WORKSPACE: "/data/bases/fangzq/20200429_BCFTOOLS"
+    qual: 50 
+    phred_likelihood_diff: 20
+
 GATK:
     WORKSPACE: "/data/bases/fangzq/20200430_GATK"
     qual: 50 
-    heterzygote_cutoff: 20
+    phred_likelihood_diff: 20
     # for hardfilering, no implemented yet
     snp:
         - "-filter 'QD < 2.0' --filter-name 'QD2' " 
@@ -73,9 +80,22 @@ GATK:
         - "-filter 'FS > 200.0' --filter-name 'FS200' " 
         - "-filter 'ReadPosRankSum < -20.0' --filter-name 'ReadPosRankSum-20' " 
 
-BCFTOOLS:
-    WORKSPACE: "/data/bases/fangzq/20200429_BCFTOOLS"
-    qual: 50 
-    heterzygote_cutoff: 20
+        ## see this paper: PMID: 25917818
+        ## GATK UnifiedGenotyper at parameters, -stand_call_conf 50.0, -stand_emit_conf 30.0, -dt NONE. 
+        ##  GATK VariantFiltration based on the following parameters: 
+        # LowCoverage (DP < 5), 
+        # LowQual (30 < Q < 50), VeryLowQual (Q < 30), 
+        # StrandBias (FS P-value > 60), 
+        # SNV cluster (three or more SNVs within 10 bp), Poor Mapping quality (>10% of reads have nonunique alignments)
+
+
+# Next we used the Variant Quality Score Recalibrator (VQSR) from the GATK for variant filtration, where
+# we used the set of variants present on the Affymetrix Mouse Diversity Genotyping Array (PMID: 19668205) as a set
+# of true positive variation5. We used the annotations “HRun”, “HaplotypeScore”, “DP”, “QD”,
+# “FS”, “MQ”, “MQRankSum”, and “ReadPosRankSum” to train the VQSR, and we used a
+# sensitivity threshold of 90% for the true positive set to define the set of newly genotyped sites
+# that passed VQSR filtration.
+
+    
     
 
