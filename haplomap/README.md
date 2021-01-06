@@ -9,10 +9,9 @@ Haplotype-based computational genetic mapping
 
 ### 1. convert vcf to niehs format for eblocks
 ```shell
-build/bin/haplomap niehs -i ${HOME}/data/VCFs/chr18.vcf \
-                   -o ${HOME}/data/SNPS/chr18.txt
+build/bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.txt ${HOME}/data/VCFs/chr18.vcf
 
-# support stdin, but slower
+# support stdin, but much slower
 zcat ${HOME}/data/VCFs/chr18.vcf.gz | bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.txt
 ```
 ### 2. find haploblocks
