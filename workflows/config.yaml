@@ -1,12 +1,4 @@
-
-# files
-GENOME: "/home/fangzq/genome/mouse/GRCm38_68.fa"
-dbSNP: "/home/fangzq/genome/mouse/mgp.v5.merged.snps_all.dbSNP142.sorted.vcf"
-dbINDEL: "/home/fangzq/genome/mouse/mgp.v5.merged.indels.dbSNP142.normed.vcf"
-BAM_DIR: "/data/bases/fangzq/strains"
-TMPDIR: "/home/fangzq/TMPDATA"
-VEP: "/home/fangzq/github/ensembl-vep"
-
+### INPUT  
 # raw fastq files
 FASTQS:
     PATH: ""
@@ -23,28 +15,35 @@ STRAINS: ['129P2', '129S1', '129S5', 'AKR', 'A_J', 'B10',
         'PJ', 'PLJ', 'RFJ', 'RHJ', 'RIIIS', 'SEA', 'SJL', 'SMJ', 'ST', 'SWR', 'TALLYHO', 'RBF',
         'CAST', 'MOLF', 'PWD','PWK', 'SPRET', 'WSB'] # the last 6 are wild-derived inbred strain
 
+BAM_DIR: "/data/bases/fangzq/strains"
+
+## genome fasta
+GENOME: "/home/fangzq/genome/mouse/GRCm38_68.fa" # mm10
+## wget ftp://ftp.ncbi.nih.gov/snp/organisms/archive/mouse_10090/VCF/00-All.vcf.gz -O mouse.dbsnp.vcf.gz
+dbSNP: "/home/fangzq/genome/mouse/mouse.dbsnp.vcf.gz" # mm10 
+
+
 HBCGM:
     # working directory
     WORKSPACE: "/mnt/synology_share/HAPLOMAP_TEST"
     # path to haplomap
     BIN: "/home/fangzq/github/HBCGM/build/bin"
     
-    # ghmap input
+    ######### ghmap input ######### 
     # MPD trait ids 
     TRAIT_IDS: "/data/bases/shared/haplomap/new_test_ids.txt"
     # set to true if input individual animal data. Default: use strain means.   
     USE_RAWDATA: false 
     # use custom database instead of using MPD API to get data.
     TRAIT_DATA:  "" # default: MPD database
+
     # genetic relation file from PLink output
     GENETIC_REL: "/data/bases/shared/haplomap/PELTZ_20200429/mouse54_grm.rel"
     GENETIC_REL_ID: "/data/bases/shared/haplomap/PELTZ_20200429/mouse54_grm.rel.id"
     # gene expression file
     GENE_EXPRS: "/data/bases/shared/haplomap/PELTZ_20200429/mus.compact.exprs.txt"
-    # open chromatin regions to annotate haploblocks.
-    ATAC_PEAKS: "/scratch/users/fangzq/MouseEpigenomeAtlas/beds/*.blacklist_removed.broadPeak"
-
-    # eblock input
+    
+    ######### eblock input ######### 
     # strains metadata. 
     STRAIN_ANNO: "/data/bases/shared/haplomap/PELTZ_20200429/strains.metadata.csv"
     # path to SNP database
@@ -55,26 +54,44 @@ HBCGM:
     KNOWNGENE_META: "/data/bases/shared/haplomap/PELTZ_20200429/SNP_Annotation/mm10_kgXref.txt" 
     KNOWNGENE: "/data/bases/shared/haplomap/PELTZ_20200429/SNP_Annotation/mm10_knownGene.txt" 
 
+    ######### others #########
+    # open chromatin regions to annotate haploblocks.
+    # ATAC_PEAKS: "/scratch/users/fangzq/MouseEpigenomeAtlas/beds/*.blacklist_removed.broadPeak"
+
+
+## ensemble-vep
+VEP: 
+    BIN: "/home/fangzq/github/ensembl-vep"
+    CACHE_DIR: "/home/fangzq/.vep" # offline mode
+    GENOME_BUILD: " -a GRCm38 --species mus_musculus " # specify organism 
+
 
 BCFTOOLS:
     WORKSPACE: "/data/bases/fangzq/20200429_BCFTOOLS"
+    ## variant filtering
     qual: 50 
     phred_likelihood_diff: 20
-    # min AD of all samples
-    allele_depth: 3
-    # min(AD) / min(DP) ratio of all samples
-    allele_mindepth_ratio: 0.1
+    allele_depth: 3 # min AD of all samples
+    allele_mindepth_ratio: 0.1  # min(AD) / min(DP) ratio of all samples
 
 GATK:
     WORKSPACE: "/data/bases/fangzq/20200430_GATK"
+    # gatk --tempdir
+    TMPDIR: "/home/fangzq/TMPDATA"
+    ## variant filtering
     qual: 50 
     phred_likelihood_diff: 20
-    # min AD of all samples
-    allele_depth: 3
-    # min(AD) / min(DP) ratio of all samples
-    allele_mindepth_ratio: 0.1
-    
-    # for hardfilering, no implemented yet
+    allele_depth: 3 # min AD of all samples
+    allele_mindepth_ratio: 0.1  # min(AD) / min(DP) ratio of all samples
+
+
+    ### for VQSR
+    ## sanger mouse genome progjects, mm10
+    dbSNP: "/home/fangzq/genome/mouse/mgp.v5.merged.snps_all.dbSNP142.sorted.vcf"
+    dbINDEL: "/home/fangzq/genome/mouse/mgp.v5.merged.indels.dbSNP142.normed.vcf"
+
+    ### for hardfilering
+    ## the values blew for human genetics. need to fit to inbred mice.
     snp:
         - "-filter 'QD < 2.0' --filter-name 'QD2' " 
         - "-filter 'QUAL < 30.0' --filter-name 'QUAL30' " 
@@ -89,21 +106,22 @@ GATK:
         - "-filter 'FS > 200.0' --filter-name 'FS200' " 
         - "-filter 'ReadPosRankSum < -20.0' --filter-name 'ReadPosRankSum-20' " 
 
-        ## see this paper: PMID: 25917818
-        ## GATK UnifiedGenotyper at parameters, -stand_call_conf 50.0, -stand_emit_conf 30.0, -dt NONE. 
-        ##  GATK VariantFiltration based on the following parameters: 
-        # LowCoverage (DP < 5), 
-        # LowQual (30 < Q < 50), VeryLowQual (Q < 30), 
-        # StrandBias (FS P-value > 60), 
-        # SNV cluster (three or more SNVs within 10 bp), Poor Mapping quality (>10% of reads have nonunique alignments)
+    ## hardfiltering example for mouse: (PMID: 25917818)
+    ## GATK UnifiedGenotyper at parameters, -stand_call_conf 50.0, -stand_emit_conf 30.0, -dt NONE. 
+    ##  GATK VariantFiltration based on the following parameters: 
+    # LowCoverage (DP < 5), 
+    # LowQual (30 < Q < 50), VeryLowQual (Q < 30), 
+    # StrandBias (FS P-value > 60), 
+    # SNV cluster (three or more SNVs within 10 bp),
+    # Poor Mapping quality (>10% of reads have nonunique alignments)
 
-
-# Next we used the Variant Quality Score Recalibrator (VQSR) from the GATK for variant filtration, where
-# we used the set of variants present on the Affymetrix Mouse Diversity Genotyping Array (PMID: 19668205) as a set
-# of true positive variation5. We used the annotations “HRun”, “HaplotypeScore”, “DP”, “QD”,
-# “FS”, “MQ”, “MQRankSum”, and “ReadPosRankSum” to train the VQSR, and we used a
-# sensitivity threshold of 90% for the true positive set to define the set of newly genotyped sites
-# that passed VQSR filtration.
+    ## VQSR example for mouse
+    # Next we used the Variant Quality Score Recalibrator (VQSR) from the GATK for variant filtration, where
+    # we used the set of variants present on the Affymetrix Mouse Diversity Genotyping Array (PMID: 19668205) as a set
+    # of true positive variation5. We used the annotations “HRun”, “HaplotypeScore”, “DP”, “QD”,
+    # “FS”, “MQ”, “MQRankSum”, and “ReadPosRankSum” to train the VQSR, and we used a
+    # sensitivity threshold of 90% for the true positive set to define the set of newly genotyped sites
+    # that passed VQSR filtration.
 
     
     

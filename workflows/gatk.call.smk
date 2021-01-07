@@ -6,12 +6,9 @@ workdir: config['GATK']['WORKSPACE']
 
 GENOME = config['GENOME']
 dbSNP = config['dbSNP']
-dbINDEL = config['dbINDEL']
 BAM_DIR = config['BAM_DIR']
-TMPDIR = config['TMPDIR']
 STRAINS = sorted(config['STRAINS'])
-HAPLOMAP = config['HBCGM']['BIN']# path to haplomap binary
-VEP = config['VEP']
+
 
 #CHROMOSOME = [ str(c) for c in range(1,20)] + ["X", "Y", "MT"]
 CHROMOSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["X", "Y"]
@@ -41,7 +38,7 @@ rule chroms:
 rule singleCalling:
     input:
         chrom="GVCF/chr{i}.combine.tmp",
-        dbSNP = dbSNP,
+        dbsnp = dbSNP,
         genome = GENOME,
         genomedict = GENOME.replace(".fa", ".dict"),
         #bam = "BAM/{sample}.marked.fixed.BQSR.bam", # if read from align.recal.pipeline
@@ -53,13 +50,13 @@ rule singleCalling:
     threads: 2 # haplotypecaller
     log: "logs/{sample}.chr{i}.haplotypecaller.log"
     params:
-        java_ops="-Xmx16G -Djava.io.tmpdir=%s"%TMPDIR, # increase memory if stack overflow
+        java_ops="-Xmx16G -Djava.io.tmpdir=%s"%config['GATK']['TMPDIR'], # increase memory if stack overflow
     shell:
         # --dbsnp <- annotation ID column to tell whether is known or not
         "gatk --java-options '{params.java_ops}' HaplotypeCaller "
         "-ERC GVCF "
         "--native-pair-hmm-threads {threads} "
-        "--dbsnp {input.dbSNP} "
+        "--dbsnp {input.dbsnp} "
         "-L {wildcards.i} "
         "-R {input.genome} "
         "-I {input.bam} "
@@ -78,7 +75,7 @@ rule concatGVCFs:
         gvcfi=temp("GVCF/combined.chr{i}.g.vcf.gz.tbi")
     params:
         gvcf=" --variant ".join(["GVCF/%s.chr{i}.raw.g.vcf.gz"%s for s in STRAINS]),
-        java_ops="-Xmx8G -Djava.io.tmpdir=%s"%TMPDIR
+        java_ops="-Xmx8G -Djava.io.tmpdir=%s"%config['GATK']['TMPDIR']
     log: "logs/chr{i}.combineGVCFs.log"
     shell:
         "gatk --java-options '{params.java_ops}' "
@@ -95,8 +92,7 @@ rule jointCalling:
         vcf=protected("VCFs/combined.chr{i}.raw.vcf.gz"),
         vcfi=protected("VCFs/combined.chr{i}.raw.vcf.gz.tbi"),
     params:
-        tmpdir=TMPDIR,
-        java_ops= "-Xmx16G -Djava.io.tmpdir=%s"%TMPDIR
+        java_ops= "-Xmx16G -Djava.io.tmpdir=%s"config['GATK']['TMPDIR']
     log: "logs/chr{i}.GenotypeGVCFs.log"
     shell:
         "gatk --java-options '{params.java_ops}' "
@@ -116,7 +112,7 @@ rule variantRecalSNPs:
         tranches= "VCFs/combined.chr{i}.snp.tranches",
         rscript= "VCFs/combined.chr{i}.snp.R", 
     params:
-        dbsnp=f"dbsnp,known=true,training=true,truth=true,prior=2.0:{dbSNP}",  
+        dbsnp="snps,known=true,training=true,truth=true,prior=2.0:"+config['GATK']['dbSNP'],  
     log: "logs/combined.chr{i}.snp.Recal.log"   
     shell:
         "gatk VariantRecalibrator -mode SNP "
@@ -156,8 +152,8 @@ rule variantRecalINDELs:
         rscript = "VCFs/combined.chr{i}.indel.plots.R",
     params:
         #format: "{},known={},training={},truth={},prior={}:{}"
-        dbindel=f"indels,known=true,training=true,truth=true,prior=12.0:{dbINDEL}",
-        dbsnp=f"dbsnp,known=true,training=true,truth=true,prior=2.0:{dbSNP}", 
+        dbindel="indels,known=true,training=true,truth=true,prior=12.0:"+config['GATK']['dbINDEL'],
+        dbsnp="snps,known=true,training=true,truth=true,prior=2.0:"+config['GATK']['dbSNP'], 
     log: "logs/combined.chr{i}.indel.Recal.log"
     shell:
         "gatk VariantRecalibrator -mode INDEL "
@@ -291,7 +287,7 @@ rule snp2NIEHS:
         het = config['GATK']['phred_likelihood_diff'],
         ad = config['GATK']['allele_depth'],
         ratio = config['GATK']['allele_mindepth_ratio'],
-        BIN = HAPLOMAP
+        BIN = config['HBCGM']['BIN']# path to haplomap binary
     log: "logs/combined.chr{i}.snp2niehs.log"
     shell:
         # MARK: bcftools view -v snps won't work for GATK VCFs, 
@@ -315,19 +311,22 @@ rule snp2NIEHS:
 #         " -select 'vc.isNotFiltered()' 2>/dev/null"
 
 rule variantEeffectPrediction:
+    """emsemble-vep"""
     input: 
         vcf="VCFs/combined.{chrom}.hardfilter.vcf.gz",
         reference=GENOME,
     output: "VEP/combined.{chrom}.hardfilter.vep.txt.gz"
     params:
-        genome_build = " -a GRCm38 --species mus_musculus ",
-        VEPBIN=VEP,
-        tempdir=" --dir_cache temp"
+        #genome_build = " -a GRCm38 --species mus_musculus ",
+        genome_build = config['VEP']['GENOME_BUILD'],
+        VEPBIN = config['VEP']['BIN'],
+        extra=" --dir_cache "  + config['VEP']['CACHE_DIR']
     threads: 1
     shell:
         ## emsemble-vep
         # https://github.com/Ensembl/ensembl-vep
-        "bcftools view -f .,PASS {input.vcf} | {params.VEPBIN}/vep --fasta {input.reference} {params.genome_build} "
+        "bcftools view -f .,PASS {input.vcf} | "
+        "{params.VEPBIN}/vep --fasta {input.reference} {params.genome_build} "
         "--format vcf --fork {threads} --hgvs --force_overwrite "
         "--uniprot --domains --symbol --regulatory --distance 1000 --biotype "
         "--gene_phenotype MGI --check_existing  --pubmed --numbers "

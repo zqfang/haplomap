@@ -6,13 +6,9 @@ workdir: config['BCFTOOLS']['WORKSPACE']
 
 GENOME = config['GENOME']
 dbSNP = config['dbSNP']
-dbINDEL = config['dbINDEL']
 BAM_DIR = config['BAM_DIR']
-TMPDIR = config['TMPDIR']
 STRAINS = sorted(config['STRAINS'])
 
-HAPLOMAP = config['HBCGM']['BIN']# path to haplomap binary
-VEP = config['VEP']
 #CHROMSOME = [ str(c) for c in range(1,20)] + ["X", "Y", "MT"]
 CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["X", "Y"]
 
@@ -162,7 +158,7 @@ rule snp2NIEHS:
         het = config['BCFTOOLS']['phred_likelihood_diff'],
         ad = config['BCFTOOLS']['allele_depth'],
         ratio = config['BCFTOOLS']['allele_mindepth_ratio'],
-        BIN = HAPLOMAP
+        BIN = config['HBCGM']['BIN']# path to haplomap binary
     log: "logs/combined.chr{i}.snp2niehs.log"
     shell:
         "bcftools view -v snps {input.vcf} | "
@@ -171,19 +167,22 @@ rule snp2NIEHS:
 
 
 rule variantEeffectPrediction:
+    """emsemble-vep"""
     input: 
         vcf="VCFs/combined.{chrom}.hardfilter.vcf.gz",
         reference=GENOME,
     output: "VEP/combined.{chrom}.hardfilter.vep.txt.gz"
     params:
-        genome_build = " -a GRCm38 --species mus_musculus ",
-        VEPBIN=VEP,
-        tempdir=" --dir_cache "
+        #genome_build = " -a GRCm38 --species mus_musculus ",
+        genome_build = config['VEP']['GENOME_BUILD'],
+        VEPBIN = config['VEP']['BIN'],
+        extra=" --dir_cache "  + config['VEP']['CACHE_DIR']
     threads: 1
     shell:
         ## emsemble-vep
         # https://github.com/Ensembl/ensembl-vep
-        "bcftools view -f .,PASS {input.vcf} | {params.VEPBIN}/vep --fasta {input.reference} {params.genome_build} "
+        "bcftools view -f .,PASS {input.vcf} | "
+        "{params.VEPBIN}/vep --fasta {input.reference} {params.genome_build} "
         "--format vcf --fork {threads} --hgvs --force_overwrite "
         "--uniprot --domains --symbol --regulatory --distance 1000 --biotype "
         "--gene_phenotype MGI --check_existing  --pubmed --numbers "
