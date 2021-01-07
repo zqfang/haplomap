@@ -333,4 +333,4 @@ rule variantEeffectPrediction:
         "--gene_phenotype MGI --check_existing  --pubmed --numbers "
         "--offline --cache --variant_class "
         "--gencode_basic --no_intergenic --individual all "
-        "-o {output} --tab "
+        "-o {output} --tab --compress_output gzip"
