@@ -17,8 +17,8 @@ VEP = config['VEP']
 CHROMOSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["X", "Y"]
 # OUTPUT
 VCF_VQSR = expand("VCFs/combined.chr{i}.VQSR.vcf.gz", i=CHROMOSOME)
-VCF_HFILTER_PASS = expand("VCFs/combined.chr{i}.hardfilter.pass.vcf.gz", i=CHROMOSOME)
-VEP_ANNO = expand("VEP/combined.chr{i}.hardfilter.pass.vep.txt.gz", i=CHROMOSOME)
+VCF_HFILTER_PASS = expand("VCFs/combined.chr{i}.hardfilter.vcf.gz", i=CHROMOSOME)
+VEP_ANNO = expand("VEP/combined.chr{i}.hardfilter.vep.txt.gz", i=CHROMOSOME)
 VCF_RAW = expand("VCFs/combined.chr{i}.raw.vcf.gz", i=CHROMOSOME)
 
 SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOME)
@@ -27,7 +27,7 @@ SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOME)
 rule all:
     input: VCF_HFILTER_PASS, SNPDB, #VEP_ANNO#VCF_VQSR
 
-# include: "rules/gatk.getbam.smk"
+# include: "rules/align.recal.smk"
 
 ## temp output for combineGVCFs.
 rule chroms: 
@@ -156,8 +156,8 @@ rule variantRecalINDELs:
         rscript = "VCFs/combined.chr{i}.indel.plots.R",
     params:
         #format: "{},known={},training={},truth={},prior={}:{}"
-        dbindel=f"snps_all,known=true,training=true,truth=true,prior=12.0:{dbINDEL}",
-        dbsnp=f"indels,known=true,training=true,truth=true,prior=2.0:{dbSNP}", 
+        dbindel=f"indels,known=true,training=true,truth=true,prior=12.0:{dbINDEL}",
+        dbsnp=f"dbsnp,known=true,training=true,truth=true,prior=2.0:{dbSNP}", 
     log: "logs/combined.chr{i}.indel.Recal.log"
     shell:
         "gatk VariantRecalibrator -mode INDEL "
@@ -200,14 +200,6 @@ rule mergeVQSRVCFs:
     shell:
         "gatk MergeVcfs -I {input.snp} -I {input.indel} "
         "-O {output.vcf} 2>/dev/null"
-
-rule compressVQSRVCFs:
-    input: "VCFs/combined.{chrom}.VQSR.vcf"
-    output: protected("VCFs/combined.{chrom}.VQSR.vcf.gz")
-    shell:
-        """bgzip -f {input} 
-           tabix -p vcf {output}
-        """
 
 
 ################# Hard filering ######################

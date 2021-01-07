@@ -17,8 +17,8 @@ VEP = config['VEP']
 CHROMSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["X", "Y"]
 
 # OUTPUT
-VCF_PASS = expand("VCFs/combined.chr{i}.hardfilter.pass.vcf.gz", i=CHROMSOME)
-VEP_ANNO = expand("VEP/combined.chr{i}.hardfilter.pass.vep.txt.gz", i=CHROMSOME)
+VCF_PASS = expand("VCFs/combined.chr{i}.hardfilter.vcf.gz", i=CHROMSOME)
+VEP_ANNO = expand("VEP/combined.chr{i}.hardfilter.vep.txt.gz", i=CHROMSOME)
 VCF_RAW = expand("VCFs/combined.chr{i}.raw.vcf.gz", i=CHROMSOME)
 VCF_STATS = expand("VCFs/combined.chr{i}.raw.vcf.gz.stats", i=CHROMSOME)
 
