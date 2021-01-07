@@ -60,11 +60,20 @@ BCFTOOLS:
     WORKSPACE: "/data/bases/fangzq/20200429_BCFTOOLS"
     qual: 50 
     phred_likelihood_diff: 20
+    # min AD of all samples
+    allele_depth: 3
+    # min(AD) / min(DP) ratio of all samples
+    allele_mindepth_ratio: 0.1
 
 GATK:
     WORKSPACE: "/data/bases/fangzq/20200430_GATK"
     qual: 50 
     phred_likelihood_diff: 20
+    # min AD of all samples
+    allele_depth: 3
+    # min(AD) / min(DP) ratio of all samples
+    allele_mindepth_ratio: 0.1
+    
     # for hardfilering, no implemented yet
     snp:
         - "-filter 'QD < 2.0' --filter-name 'QD2' " 

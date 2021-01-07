@@ -68,7 +68,7 @@ std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv)
                         "                          The larger, the more confident \n"
                         "    -q, --qual            QUAL field of VCF file. Only keep variant > qual. Default 50. \n"
                         "    -a, --allele-depth    Min allele depth (AD) of samples. Default 3.\n"
-                        "    -r, --ratio           Min ratio (%MAX(AD) / %MAX(DP)) of samples. Default 0.1\n"
+                        "    -r, --ratio           Min ratio (%MAX(AD) / %MAX(DP)) of samples. Default 0.1.\n"
                         "    -v, --verbose\n"
                         "    -h, --help\n";
     if (argc == 1)
@@ -320,7 +320,6 @@ private:
 int main_niehs(int argc, char **argv)
 {
     std::shared_ptr<NIEHSOptions> opts = parseNIEHSOptions(argc, argv);
-    std::string rawHeader;
     // first allele is the reference
     std::string outHeader = "C57BL/6J";
     std::string line;
@@ -399,7 +398,8 @@ int main_niehs(int argc, char **argv)
             {
                 if (strains.size() < samples.size())
                 {
-                    std::cerr<<"Input (--samples) size larger than vcf sample size !!!"<<std::endl;
+                    std::cerr<<"Input (--samples) size larger than vcf sample size !!!"
+                             <<std::endl;
                     exit(-1);
                 }
                 break;
@@ -525,9 +525,10 @@ int main_niehs(int argc, char **argv)
         {
             output <<"SNP_"<<variant.CHROM<<"_"<<variant.POS;
             output <<"\t"<<variant.CHROM<<"\t"<<variant.POS<<"\t";
-            output <<variant.REF;
+            output <<variant.REF; // write REF
             
-            if (opts->sampleFileName != nullptr)
+            // write allele pattern
+            if (!samples.empty())
             {
                 for(auto &s: samples)
                 {

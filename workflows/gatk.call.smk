@@ -216,8 +216,8 @@ rule selectSNPs:
         vcf="VCFs/combined.{chrom}.raw.vcf.gz",
         vcfi="VCFs/combined.{chrom}.raw.vcf.gz.tbi",
     output: 
-        vcf="VCFs/combined.{chrom}.snp.vcf.gz", # snp only, before filter
-        vcfi="VCFs/combined.{chrom}.snp.vcf.gz.tbi", # 
+        vcf=temp("VCFs/combined.{chrom}.snp.vcf.gz"), # snp only, before filter
+        vcfi=temp("VCFs/combined.{chrom}.snp.vcf.gz.tbi"), # 
     shell:
         "gatk SelectVariants -select-type SNP " 
         "-V {input.vcf} -O {output.vcf} 2>/dev/null"
@@ -275,31 +275,12 @@ rule mergeHardVCFs:
         indel= "VCFs/combined.{chrom}.indel.filter.vcf.gz",
         indeli= "VCFs/combined.{chrom}.indel.filter.vcf.gz.tbi",
     output: 
-        vcf=temp("VCFs/combined.{chrom}.hardfilter.vcf.gz"),
-        vcfi=temp("VCFs/combined.{chrom}.hardfilter.vcf.gz.tbi")
+        vcf=protected("VCFs/combined.{chrom}.hardfilter.vcf.gz"),
+        vcfi=protected("VCFs/combined.{chrom}.hardfilter.vcf.gz.tbi")
     shell:
         "gatk MergeVcfs -I {input.snp} -I {input.indel} "
         "-O {output.vcf} 2>/dev/null "
 
-# rule compressHardVCF:
-#     input: "VCFs/combined.{chrom}.hardfilter.vcf"
-#     output: protected("VCFs/combined.{chrom}.hardfilter.vcf.gz")
-#     shell:
-#         """bgzip -f {input} 
-#            tabix -p vcf {output}
-#         """
-
-rule selectPASS:
-    input: 
-        vcf="VCFs/combined.{chrom}.hardfilter.vcf.gz",
-        vcfi="VCFs/combined.{chrom}.hardfilter.vcf.gz.tbi",
-        genome=GENOME
-    output: 
-        protected("VCFs/combined.{chrom}.hardfilter.pass.vcf.gz"),
-        protected("VCFs/combined.{chrom}.hardfilter.pass.vcf.gz.tbi")
-    shell:
-        "gatk SelectVariants -R {input.genome} -V {input.vcf} -O {output[0]} "
-        " -select 'vc.isNotFiltered()' 2>/dev/null"
 
 rule strainOrder:
     output: "strain.order.snpdb.txt"
@@ -310,29 +291,42 @@ rule strainOrder:
 rule snp2NIEHS:
     input:  
         strain = "strain.order.snpdb.txt",
-        #"VCFs/combined.chr{i}.hardfilter.pass.vcf.gz",
-        vcf = "VCFs/combined.chr{i}.snp.vcf.gz"
+        vcf = "VCFs/combined.chr{i}.hardfilter.vcf.gz",
     output: 
         protected("SNPs/chr{i}.txt")
     params:
-        #outdir= "SNPs",
-        #chrom="{i}",
         qual=config['GATK']['qual'], 
         het = config['GATK']['phred_likelihood_diff'],
+        ad = config['GATK']['allele_depth'],
+        ratio = config['GATK']['allele_mindepth_ratio'],
         BIN = HAPLOMAP
-    #script:
-    #    "../scripts/vcf2NIEHS.py"
     log: "logs/combined.chr{i}.snp2niehs.log"
     shell:
-        "bgzip -c -d {input.vcf} | {params.BIN}/haplomap niehs -o {output} "
+        # MARK: bcftools view -v snps won't work for GATK VCFs, 
+        # haplomap niehs will handle indels
+        "bcftools view -v snps {input.vcf} | "
+        "{params.BIN}/haplomap niehs -o {output} -a {params.ad} -r {params.ratio}"
         "-q {params.qual} -p {params.het} -s {input.strain} > {log}"
 
 
-rule annotateVCF:
+## only do this for VEP input
+# rule selectPASS:
+#     input: 
+#         vcf="VCFs/combined.{chrom}.hardfilter.vcf.gz",
+#         vcfi="VCFs/combined.{chrom}.hardfilter.vcf.gz.tbi",
+#         genome=GENOME
+#     output: 
+#         temp("VCFs/combined.{chrom}.hardfilter.pass.vcf.gz"),
+#         temp("VCFs/combined.{chrom}.hardfilter.pass.vcf.gz.tbi")
+#     shell:
+#         "gatk SelectVariants -R {input.genome} -V {input.vcf} -O {output[0]} "
+#         " -select 'vc.isNotFiltered()' 2>/dev/null"
+
+rule variantEeffectPrediction:
     input: 
-        vcf="VCFs/combined.{chrom}.hardfilter.pass.vcf.gz",
+        vcf="VCFs/combined.{chrom}.hardfilter.vcf.gz",
         reference=GENOME,
-    output: "VEP/combined.{chrom}.hardfilter.pass.vep.txt.gz"
+    output: "VEP/combined.{chrom}.hardfilter.vep.txt.gz"
     params:
         genome_build = " -a GRCm38 --species mus_musculus ",
         VEPBIN=VEP,

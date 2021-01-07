@@ -128,12 +128,12 @@ rule bcftools_plot:
     shell:
         "plot-vcfstats -p figures -T {wildcards.chr} {input}"
 
-rule bcfcall_filtering:
+rule bcftools_filter:
     input: 
         vcf="VCFs/combined.{chr}.normed.vcf.gz",
         vcfi="VCFs/combined.{chr}.normed.vcf.gz.tbi"
     output: 
-        protected("VCFs/combined.{chr}.hardfilter.pass.vcf.gz")
+        protected("VCFs/combined.{chr}.hardfilter.vcf.gz")
     params:
         filters="-i 'TYPE=\"snp\" && %QUAL>20' "  # if only snp need
         ## MIN(DP)>5 ? both FORMAT and INFO have DP
@@ -154,29 +154,27 @@ rule strainOrder:
 rule snp2NIEHS:
     input:  
         strain = "strain.order.snpdb.txt",
-        vcf = "VCFs/combined.chr{i}.hardfilter.pass.vcf.gz",
-        #vcf = "VCFs/combined.chr{i}.snp.vcf.gz"
+        vcf = "VCFs/combined.chr{i}.hardfilter.vcf.gz",
     output: 
         protected("SNPs/chr{i}.txt")
     params:
-        outdir= "SNPs",
-        chrom="{i}",
         qual = config['BCFTOOLS']['qual'], 
         het = config['BCFTOOLS']['phred_likelihood_diff'],
+        ad = config['BCFTOOLS']['allele_depth'],
+        ratio = config['BCFTOOLS']['allele_mindepth_ratio'],
         BIN = HAPLOMAP
-    #script:
-    #    "../scripts/vcf2NIEHS.py"
     log: "logs/combined.chr{i}.snp2niehs.log"
     shell:
-        "bgzip -c -d {input.vcf} | {params.BIN}/haplomap niehs -o {output} "
+        "bcftools view -v snps {input.vcf} | "
+        "{params.BIN}/haplomap niehs -o {output} -a {params.ad} -r {params.ratio}"
         "-q {params.qual} -p {params.het} -s {input.strain} > {log}"
 
 
 rule variantEeffectPrediction:
     input: 
-        vcf="VCFs/combined.{chrom}.hardfilter.pass.vcf.gz",
+        vcf="VCFs/combined.{chrom}.hardfilter.vcf.gz",
         reference=GENOME,
-    output: "VEP/combined.{chrom}.hardfilter.pass.vep.txt.gz"
+    output: "VEP/combined.{chrom}.hardfilter.vep.txt.gz"
     params:
         genome_build = " -a GRCm38 --species mus_musculus ",
         VEPBIN=VEP,
