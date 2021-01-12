@@ -78,7 +78,7 @@ std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv)
                         "    -s,  --samples         New sample order. One name per line.\n"
                         "    -p,  --pl-diff         Phred-scaled genotype likelihood (PL) difference. Default 20.\n"
                         "                           GT's PL must at least pl-diff unit lower than any other PL value. \n"
-                        "                           The greater, the better. \n"
+                        "                           The greater, the more '?' in the output. \n"
                         "    -q,  --qual            QUAL field of VCF file. Only keep variant > qual. Default 50. \n"
                         "    -a,  --allelic-depth   Min allelic depth (AD) of samples. Default 3.\n"
                         "    -m,  --mapping-quality Min average mapping quality. Default 20. \n"
@@ -98,7 +98,7 @@ std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv)
     {
 
        int option_index = 0;
-       c = getopt_long(argc, argv, "hv:a:m:o:p:q:r:s:b:", long_options_niehs, &option_index);
+       c = getopt_long(argc, argv, "hva:m:o:p:q:r:s:b:", long_options_niehs, &option_index);
 
         /* Detect the end of the options. */
         if (c == -1)
@@ -368,12 +368,14 @@ int main_niehs(int argc, char **argv)
     // stdin or ifstream
     if (opts->inputFileName == nullptr)
     {
-        std::cout<<"Read VCF: from stdin"<<std::endl;
+        if (opts->verbose)
+            std::cout<<"Read VCF: from stdin"<<std::endl;
         input = &std::cin;
     }
     else
     {
-        std::cout<<"Read VCF: "<< opts->inputFileName << std::endl;
+        if (opts->verbose)
+            std::cout<<"Read VCF: "<< opts->inputFileName << std::endl;
         input = new std::ifstream(opts->inputFileName, ios::in); 
     }
     // check status
@@ -399,7 +401,8 @@ int main_niehs(int argc, char **argv)
     // read input sample names
     if (opts->sampleFileName != nullptr) 
     {
-        std::cout << "Read Sample Names: "<< opts->sampleFileName << std::endl;
+        if (opts->verbose)
+            std::cout << "Read Sample Names: "<< opts->sampleFileName << std::endl;
         std::ifstream sinput(opts->sampleFileName);
         while (std::getline(sinput, line))
         {
@@ -412,9 +415,9 @@ int main_niehs(int argc, char **argv)
         sinput.close();
     } 
     
-
+    if (opts->verbose)
+        std::cout<<"Parsing Header"<<std::endl;
     // read vcf header
-    std::cout<<"Parsing Header"<<std::endl;
     while (std::getline(*input, line))
     {
         // starts with "##"
@@ -461,7 +464,8 @@ int main_niehs(int argc, char **argv)
     }
     int lineNum = 0;
     // Now read all records
-    std::cout<<"Parsing Variants"<<std::endl;
+    if (opts->verbose)
+        std::cout<<"Parsing Variants"<<std::endl;
     while (std::getline(*input, line))
     {
         lineNum ++;
@@ -614,6 +618,7 @@ int main_niehs(int argc, char **argv)
     output.close();
     if (opts->inputFileName != nullptr)
         delete input;
-    std::cout<<"Job done."<<std::endl;
+    if (opts->verbose)
+        std::cout<<"Job done."<<std::endl;
     return 0;
 }
