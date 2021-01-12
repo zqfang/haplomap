@@ -25,19 +25,29 @@ struct NIEHSOptions
     char *sampleFileName;
     float phredLikelihoodDifference; // PL_other - PL_homo > 20
     float qual;  // QUAL field
-    
+    float mappingQuality; // MQ
+    float strandBiasPhredPval; // SP (BCFtools) or FS (GATK)
+    float readPositionBias; //RPB, or endDistanceBias (ReadPosRankSum)
+    float baseQualityBias; //BQB
+    float variantDistanceBias; //VDB
     /// allele depth of coverage (AD)
     /// variants < AD set to be LowQual
     float alleleDepth;
     /// see here https://samtools.github.io/bcftools/howtos/variant-calling.html
     /// ratio = %MAX(AD) / %MAX(DP). variants < ratio set to be LowQual
     float ratio; 
+    int gapWindow;
+    int snpGap;
+    bool homozygous; 
     bool verbose;
 
     // constructor
     NIEHSOptions() : inputFileName(nullptr), outputFileName(nullptr), 
                      sampleFileName(nullptr), phredLikelihoodDifference(20.0), 
-                     qual(50.0), alleleDepth(3.0), ratio(0.1), verbose(false) {};
+                     qual(50.0), mappingQuality(20.0), strandBiasPhredPval(50.0), 
+                     readPositionBias(0.0001), baseQualityBias(0),variantDistanceBias(0), 
+                     alleleDepth(3.0), ratio(0.1), gapWindow(20), snpGap(3), 
+                     homozygous(true), verbose(false) {};
 };
 
 
@@ -53,7 +63,10 @@ std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv)
             {"samples",        optional_argument, nullptr, 's'},
             {"pl-diff",        optional_argument, nullptr, 'p'},
             {"qual",           optional_argument, nullptr, 'q'},
-            {"allele-depth",   optional_argument, nullptr, 'a'},
+            {"allelic-depth",  optional_argument, nullptr, 'a'},
+            {"mapping-quality",optional_argument, nullptr, 'M'},
+            {"strand-bias",    optional_argument, nullptr, 'S'},
+            {"ratio",          optional_argument, nullptr, 'r'},
             {nullptr,          no_argument, nullptr,        0}};
 
     const char *usage = "Convert VCF to NIEHS compact format\n"
@@ -62,15 +75,17 @@ std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv)
                         "    in.vcf                Input sorted VCF file or stdin\n"
                         "    -o, --output          Output file name\n"
                         "\noptional arguments:\n"
-                        "    -s, --samples         New sample order. One name per line.\n"
-                        "    -p, --pl-diff         Phred-scaled genotype likelihood (PL) difference. Default 20.\n"
-                        "                          GT's PL must at least pl-diff unit lower than any other PL value. \n"
-                        "                          The larger, the more confident \n"
-                        "    -q, --qual            QUAL field of VCF file. Only keep variant > qual. Default 50. \n"
-                        "    -a, --allele-depth    Min allele depth (AD) of samples. Default 3.\n"
-                        "    -r, --ratio           Min ratio (%MAX(AD) / %MAX(DP)) of samples. Default 0.1.\n"
-                        "    -v, --verbose\n"
-                        "    -h, --help\n";
+                        "    -s,  --samples         New sample order. One name per line.\n"
+                        "    -p,  --pl-diff         Phred-scaled genotype likelihood (PL) difference. Default 20.\n"
+                        "                           GT's PL must at least pl-diff unit lower than any other PL value. \n"
+                        "                           The greater, the better. \n"
+                        "    -q,  --qual            QUAL field of VCF file. Only keep variant > qual. Default 50. \n"
+                        "    -a,  --allelic-depth   Min allelic depth (AD) of samples. Default 3.\n"
+                        "    -m,  --mapping-quality Min average mapping quality. Default 20. \n"
+                        "    -b,  --strand-bias     Max Phred-scaled pvalue for strand bias (the lower, the better). Default 50. \n"
+                        "    -r,  --ratio           Min ratio of (%MAX(AD) / %MAX(DP)). Default 0.1.\n"
+                        "    -v,  --verbose\n"
+                        "    -h,  --help\n";
     if (argc == 1)
     {
         std::cout<<usage<<std::endl;
@@ -83,7 +98,7 @@ std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv)
     {
 
        int option_index = 0;
-       c = getopt_long(argc, argv, "hv:a:o:p:q:r:s:p:", long_options_niehs, &option_index);
+       c = getopt_long(argc, argv, "hv:a:m:o:p:q:r:s:b:", long_options_niehs, &option_index);
 
         /* Detect the end of the options. */
         if (c == -1)
@@ -137,6 +152,18 @@ std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv)
                     opts->alleleDepth = std::stof(optarg);
                 break;
             }  
+            case 'm':
+            {
+                if (optarg != nullptr)
+                    opts->mappingQuality = std::stof(optarg);
+                break;
+            }
+            case 'b':
+            {
+                if (optarg != nullptr)
+                    opts->strandBiasPhredPval = std::stof(optarg);
+                break;
+            }
             case 'r':
             {
                 if (optarg != nullptr)
@@ -206,16 +233,17 @@ public:
     std::unordered_map<std::string, std::string> getINFO() 
     {
         std::unordered_map<std::string, std::string> infos;
-        std::vector<std::string> info = split(INFO,';');
+        std::vector<std::string> info = split(this->INFO,';');
         std::vector<std::string> _info;
-        for (auto &item: info) {
+        for (auto &item: info) 
+        {
             _info = split(item,'=');
             // add values to hashmap
             infos[_info[0]] = _info.size() == 2 ? _info[1]: "true";
         }    
         return infos;
     }
-    float maxAlleleDepth()
+    float maxAllelicDepth()
     {
         if (this->FORMATS.find("AD") == this->FORMATS.end())
             return 0; // if AD not found, then we should skip 
@@ -225,7 +253,7 @@ public:
         {
             // AD is a vector for gt (ref0, alt1, alt2)
             std::vector<std::string> ad = split(a, ',');
-            for (auto it = ad.begin() + 1; it != ad.end(); it++) 
+            for (auto it = ad.begin(); it != ad.end(); it++) 
             {
                 if (*it != ".")
                     AD = std::max(std::stof(*it), AD);
@@ -236,17 +264,11 @@ public:
 
     float maxDepth()
     {
-        if (this->FORMATS.find("DP") == this->FORMATS.end() )
-            return 0; // if DP not found, then we should skip 
-        
-        float DP(0);
-        /// FIXME: if DP is .
-        for (auto & a: this->FORMATS["DP"])
-        {   
-            if (a != ".")
-                DP = std::max(std::stof(a), DP);
-        }
-        return DP;
+       return max("DP");
+    }
+    float maxStrandBiasPhredScalePval() 
+    {
+        return max("SP");
     }
         
 private:
@@ -286,7 +308,20 @@ private:
         }
         return false;
     }
-    
+    float max(const std::string & fmt) 
+    {
+        if (this->FORMATS.find(fmt) == this->FORMATS.end() )
+            return 0; // if DP not found, then we should skip 
+        
+        float res(0);
+        /// FIXME: if fmt is .
+        for (auto & a: this->FORMATS[fmt])
+        {   
+            if (a != ".")
+                res = std::max(std::stof(a), res);
+        }
+        return res;
+    }    
     
 };
 
@@ -379,7 +414,7 @@ int main_niehs(int argc, char **argv)
     
 
     // read vcf header
-    std::cout<<"Parser Header"<<std::endl;
+    std::cout<<"Parsing Header"<<std::endl;
     while (std::getline(*input, line))
     {
         // starts with "##"
@@ -435,12 +470,32 @@ int main_niehs(int argc, char **argv)
 
         if (variant.QUAL < opts->qual)
             continue;
-        float AD = variant.maxAlleleDepth();
-        if (AD < opts->alleleDepth || (AD / variant.maxDepth()) < opts->ratio)
-            continue; 
-        // string find not found, skip
-        if (variant.isINDEL || variant.INFO.find("INDEL") != std::string::npos) 
+
+        if (variant.REF == "N")
             continue;
+
+        std::unordered_map<std::string, std::string> INFO = variant.getINFO();
+        if (INFO["MQ"].size() < 1 || std::stof(INFO["MQ"]) < opts->mappingQuality)
+            continue;
+        
+        float strandBiasPhredPval;
+        if (INFO.find("FS") != INFO.end()) 
+        {
+            strandBiasPhredPval = std::stof(INFO["FS"]);
+        } 
+        else if (variant.FORMATS.find("SP") != variant.FORMATS.end()) 
+        {
+            strandBiasPhredPval = variant.maxStrandBiasPhredScalePval();
+        } 
+        else 
+        {
+           std::cerr<<"Variant position "<<variant.CHROM<<":"<<variant.POS
+                    <<"INFO Tag (SB or FS) is not Found ! Skip strand bias filtering"
+                    <<std::endl;
+           strandBiasPhredPval = 0;
+        } 
+        if (strandBiasPhredPval >  opts->strandBiasPhredPval)
+            continue; // filter strand bias variant 
 
         //std::string alleles("?", strains.size()); // not easy to do inplace replacement
         
@@ -448,8 +503,15 @@ int main_niehs(int argc, char **argv)
         std::vector<int> hasAlt(alts.size(), 0); // number of alternates
         std::vector<int> sampleAlts(strains.size(), 0); // sample is alt or not
 
-        // if (alts.size() > 1)
+        // if (alts.size() > 1) // only allow 1 alternate
         //     continue;
+
+        float AD = variant.maxAllelicDepth();
+        if (AD < opts->alleleDepth || (AD / variant.maxDepth()) < opts->ratio)
+            continue; 
+        // string find not found, skip
+        if (variant.isINDEL || variant.INFO.find("INDEL") != std::string::npos) 
+            continue;
 
         std::vector<std::string> alleles(strains.size(),"?");        
         for (size_t s=0; s < strains.size(); s++)
@@ -519,9 +581,10 @@ int main_niehs(int argc, char **argv)
         }
         // find good alt
         int numGoodAlt = std::accumulate(hasAlt.begin(), hasAlt.end(), 0);
-        int sampleGoodAlt = std::accumulate(sampleAlts.begin(), sampleAlts.end(), 0);
-        /// FIXME: if there are 2 alts, and all input samples are not ref, do we still keep it? yes
-        if (numGoodAlt == 1 || (sampleGoodAlt == sampleAlts.size() && numGoodAlt == 2)) /// FIXED: 
+        //int sampleGoodAlt = std::accumulate(sampleAlts.begin(), sampleAlts.end(), 0);
+        /// FIXME: if there are 2 alts, and all input samples are not ref, do we still keep it? NO.
+        // if (numGoodAlt == 1 || (sampleGoodAlt == sampleAlts.size() && numGoodAlt == 2)) /// FIXED: 
+        if (numGoodAlt == 1) /// FIXED:
         {
             output <<"SNP_"<<variant.CHROM<<"_"<<variant.POS;
             output <<"\t"<<variant.CHROM<<"\t"<<variant.POS<<"\t";

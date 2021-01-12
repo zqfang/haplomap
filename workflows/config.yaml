@@ -73,6 +73,24 @@ BCFTOOLS:
     phred_likelihood_diff: 20
     allele_depth: 3 # min AD of all samples
     allele_mindepth_ratio: 0.1  # min(AD) / min(DP) ratio of all samples
+    strand_bias_pvalue: 0.0001 # pvalue
+    mapping_quality: 20
+
+    # MinDP (Minimum read depth):   5 (Indels) and 3 (SNPs)
+    # MaxDP (Maximum read depth):  You have a low coverage data, so I would set it to 100. Normally it is 3 times the average coverage.
+    # BaseQualBias (Minimum p-value for baseQ bias):  0
+    # MinMQ (Minimum RMS mapping quality for SNPs):  20 or 30 (to be more stringent)
+    # Qual (Minimum value of QUAL field):  15 or 20
+
+    # StrandBias (Minimum p-value for strand bias):  0.0001
+    # EndDistBias (Minimum p-value for end distance bias):  0.0001
+    # MapQualBias (Minimum p-value for mapQ bias):  0
+    # VBD (Minimum Variant Distance Bias):  0 (More relevant to RNA-seq reads)
+
+    # GapWin (Window size for filtering adjacent gaps):  30 bp
+    # SnpGap (SNP within INT bp around a gap to be filtered):   20 bp
+    # SNPcluster (number of snps within a region): I usually drop all the snps if there are more than 3 snps within 10 bp. 
+
 
 GATK:
     WORKSPACE: "/data/bases/fangzq/20200430_GATK"
@@ -83,7 +101,8 @@ GATK:
     phred_likelihood_diff: 20
     allele_depth: 3 # min AD of all samples
     allele_mindepth_ratio: 0.1  # min(AD) / min(DP) ratio of all samples
-
+    strand_bias_pvalue: 0.0001 # pvalue
+    mapping_quality: 20
 
     ### for VQSR
     ## sanger mouse genome progjects, mm10
@@ -91,29 +110,26 @@ GATK:
     dbINDEL: "/home/fangzq/genome/mouse/mgp.v5.merged.indels.dbSNP142.normed.vcf"
 
     ### for hardfilering
-    ## the values blew for human genetics. need to fit to inbred mice.
+    # GATK recommended filters for human genetics: for non-reference variant db
     snp:
-        - "-filter 'QD < 2.0' --filter-name 'QD2' " 
+        - "-filter 'QD < 2.0' --filter-name 'QD2' " # (Variant Quality / depth of non-ref samples)
         - "-filter 'QUAL < 30.0' --filter-name 'QUAL30' " 
         - "-filter 'SOR > 3.0' --filter-name 'SOR3' " 
-        - "-filter 'FS > 60.0' --filter-name 'FS60' " 
-        - "-filter 'MQ < 40.0' --filter-name 'MQ40' " 
-        - "-filter 'MQRankSum < -12.5' --filter-name 'MQRankSum-12.5' " 
-        - "-filter 'ReadPosRankSum < -8.0' --filter-name 'ReadPosRankSum-8' " 
+        - "-filter 'FS > 60.0' --filter-name 'FS60' " # FS (Phred score Fisher’s test p-value for strand bias)
+        - "-filter 'MQ < 40.0' --filter-name 'MQ40' " # (Mapping Quality)
+        - "-filter 'MQRankSum < -12.5' --filter-name 'MQRankSum-12.5' " # (Mapping quality of Reference reads vs ALT reads )
+        - "-filter 'ReadPosRankSum < -8.0' --filter-name 'ReadPosRankSum-8' " #  (Distance of ALT reads from the end of the reads)
+        - "-filter 'HaplotypeScore > 13.0' --filter-name 'HaplotypeScore' " # (Consistency of the 'active' site with at most two segregating haplotype)
     indel:
         - "-filter 'QD < 2.0' --filter-name 'QD2' " 
         - "-filter 'QUAL < 30.0' --filter-name 'QUAL30' " 
         - "-filter 'FS > 200.0' --filter-name 'FS200' " 
         - "-filter 'ReadPosRankSum < -20.0' --filter-name 'ReadPosRankSum-20' " 
-
-    ## hardfiltering example for mouse: (PMID: 25917818)
-    ## GATK UnifiedGenotyper at parameters, -stand_call_conf 50.0, -stand_emit_conf 30.0, -dt NONE. 
-    ##  GATK VariantFiltration based on the following parameters: 
-    # LowCoverage (DP < 5), 
-    # LowQual (30 < Q < 50), VeryLowQual (Q < 30), 
-    # StrandBias (FS P-value > 60), 
-    # SNV cluster (three or more SNVs within 10 bp),
-    # Poor Mapping quality (>10% of reads have nonunique alignments)
+        - "-filter 'InbreedingCoeff < 0.8' --filter-name 'InbreedingCoeff-.8' " # warning !!!
+    ### Note that the InbreedingCoeff statistic is a population-level calculation 
+    ### that is only available with 10 or more samples. 
+    ### If you have fewer samples you will need to omit that particular filter statement.
+    ### The maximum DP (depth) filter only applies to whole genome data
 
     ## VQSR example for mouse
     # Next we used the Variant Quality Score Recalibrator (VQSR) from the GATK for variant filtration, where
@@ -122,6 +138,12 @@ GATK:
     # “FS”, “MQ”, “MQRankSum”, and “ReadPosRankSum” to train the VQSR, and we used a
     # sensitivity threshold of 90% for the true positive set to define the set of newly genotyped sites
     # that passed VQSR filtration.
+
+    ## other useful variant filtering metric
+    # Total read depth of variant site ≤2 × average genomic read depth
+    # It has no more than two alleles
+    # Variants are not in phase with other variants (GTAK  HaplotypeCaller)
+    # Variants do not have more than one read whose read pair was aligned to another chromosome
 
     
     

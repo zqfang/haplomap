@@ -22,7 +22,7 @@ SNPDB = expand("SNPs/chr{i}.txt", i=CHROMSOME)
 
 ###########################################################################################
 rule target:
-    input: VCF_RAW, VCF_PASS, SNPDB, VEP_ANNO, #VCF_STATS
+    input: SNPDB,#VCF_RAW, VCF_PASS, SNPDB, #VEP_ANNO, #VCF_STATS
 
 # samtools-bcftools-calling
 rule faidx: 
@@ -67,8 +67,8 @@ rule bcftools_call:
     run:
         with open(input.chroms_region) as reg:
             region = reg.read().strip()
-        ## cmds same to mouse genome project, 
-        ## see here: https://genome.ucsc.edu/cgi-bin/hgTrackUi?db=mm10&g=strainSNPs
+        ## cmds same to mouse genome project, but different here: "bcftools call -mv -f GQ,GP -p 0.99"
+        ## see here: https://doi.org/10.1186/s13059-016-1024-y
         ## we used the updated annotations to replace the deprecated ones
         cmd = "bcftools mpileup "+\
               "-a DP,AD,ADF,ADR,SP,INFO/AD "+\  
@@ -131,7 +131,11 @@ rule bcftools_filter:
     output: 
         protected("VCFs/combined.{chr}.hardfilter.vcf.gz")
     params:
-        filters="-i 'TYPE=\"snp\" && %QUAL>20' "  # if only snp need
+        snp="-i 'TYPE=\"snp\" && %QUAL>20' ",  # if only snp need
+        expression = "%QUAL<20 || INFO/MQ < 20 || "+\
+                     "INFO/SB < 0.0001 || INFO/RPB < 0.0001 || "+\
+                     "INFO/BQB < 0 || INFO/VDB < 0 || " +\
+                     "%MAX(FORMAT/AD)<=3 || %MAX(FORMAT/AD)/%MAX(FORMAT/DP)<=0.3 " 
         ## MIN(DP)>5 ? both FORMAT and INFO have DP
         ## DP:  sum of the DP value over all samples 
     shell: 
@@ -158,12 +162,15 @@ rule snp2NIEHS:
         het = config['BCFTOOLS']['phred_likelihood_diff'],
         ad = config['BCFTOOLS']['allele_depth'],
         ratio = config['BCFTOOLS']['allele_mindepth_ratio'],
+        mq = config['BCFTOOLS']['mapping_quality'],
+        sb = config['BCFTOOLS']['strand_bias_pvalue'], 
         BIN = config['HBCGM']['BIN']# path to haplomap binary
     log: "logs/combined.chr{i}.snp2niehs.log"
     shell:
-        "bcftools view -v snps {input.vcf} | "
-        "{params.BIN}/haplomap niehs -o {output} -a {params.ad} -r {params.ratio}"
-        "-q {params.qual} -p {params.het} -s {input.strain} > {log}"
+        "bcftools view -f .,PASS -v snps {input.vcf} | "
+        "{params.BIN}/haplomap niehs -o {output} -a {params.ad} -r {params.ratio} "
+        "-q {params.qual} -p {params.het} -m {params.mq} -b {params.sb} "
+        "-s {input.strain} > {log}"
 
 
 rule variantEeffectPrediction:
@@ -171,7 +178,7 @@ rule variantEeffectPrediction:
     input: 
         vcf="VCFs/combined.{chrom}.hardfilter.vcf.gz",
         reference=GENOME,
-    output: "VEP/combined.{chrom}.hardfilter.vep.txt.gz"
+    output: "VEP/combined.{chrom}.hardfilter.pass.vep.txt.gz"
     params:
         #genome_build = " -a GRCm38 --species mus_musculus ",
         genome_build = config['VEP']['GENOME_BUILD'],

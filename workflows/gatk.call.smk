@@ -13,9 +13,9 @@ STRAINS = sorted(config['STRAINS'])
 #CHROMOSOME = [ str(c) for c in range(1,20)] + ["X", "Y", "MT"]
 CHROMOSOME = ['1'] + [ str(c) for c in range(10,20)] + [ str(c) for c in range(2,10)]+ ["X", "Y"]
 # OUTPUT
-VCF_VQSR = expand("VCFs/combined.chr{i}.VQSR.vcf.gz", i=CHROMOSOME)
+VCF_VQSR = expand("VCFs/combined.chr{i}.vqsr.vcf.gz", i=CHROMOSOME)
 VCF_HFILTER_PASS = expand("VCFs/combined.chr{i}.hardfilter.vcf.gz", i=CHROMOSOME)
-VEP_ANNO = expand("VEP/combined.chr{i}.hardfilter.vep.txt.gz", i=CHROMOSOME)
+VEP_ANNO = expand("VEP/combined.chr{i}.hardfilter.pass.vep.txt.gz", i=CHROMOSOME)
 VCF_RAW = expand("VCFs/combined.chr{i}.raw.vcf.gz", i=CHROMOSOME)
 
 SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOME)
@@ -92,7 +92,7 @@ rule jointCalling:
         vcf=protected("VCFs/combined.chr{i}.raw.vcf.gz"),
         vcfi=protected("VCFs/combined.chr{i}.raw.vcf.gz.tbi"),
     params:
-        java_ops= "-Xmx16G -Djava.io.tmpdir=%s"config['GATK']['TMPDIR']
+        java_ops= "-Xmx16G -Djava.io.tmpdir=%s"%config['GATK']['TMPDIR']
     log: "logs/chr{i}.GenotypeGVCFs.log"
     shell:
         "gatk --java-options '{params.java_ops}' "
@@ -188,11 +188,11 @@ rule mergeVQSRVCFs:
     input:
         snp = "VCFs/combined.{chrom}.snp.VQSR.vcf.gz",
         snpi = "VCFs/combined.{chrom}.snp.VQSR.vcf.gz.tbi",
-        indel = "VCFs/combined.{chrom}.indel.VQSR.gz.vcf",
+        indel = "VCFs/combined.{chrom}.indel.VQSR.vcf.gz",
         indeli = "VCFs/combined.{chrom}.indel.VQSR.vcf.gz.tbi",
     output:
-        vcf=protected("VCFs/combined.{chrom}.VQSR.vcf.gz"),
-        vcfi=protected("VCFs/combined.{chrom}.VQSR.vcf.gz.tbi")
+        vcf=protected("VCFs/combined.{chrom}.vqsr.vcf.gz"),
+        vcfi=protected("VCFs/combined.{chrom}.vqsr.vcf.gz.tbi")
     shell:
         "gatk MergeVcfs -I {input.snp} -I {input.indel} "
         "-O {output.vcf} 2>/dev/null"
@@ -287,14 +287,17 @@ rule snp2NIEHS:
         het = config['GATK']['phred_likelihood_diff'],
         ad = config['GATK']['allele_depth'],
         ratio = config['GATK']['allele_mindepth_ratio'],
+        mq = config['GATK']['mapping_quality'],
+        sb = config['GATK']['strand_bias_pvalue'], 
         BIN = config['HBCGM']['BIN']# path to haplomap binary
     log: "logs/combined.chr{i}.snp2niehs.log"
     shell:
         # MARK: bcftools view -v snps won't work for GATK VCFs, 
         # haplomap niehs will handle indels
         "bcftools view -v snps {input.vcf} | "
-        "{params.BIN}/haplomap niehs -o {output} -a {params.ad} -r {params.ratio}"
-        "-q {params.qual} -p {params.het} -s {input.strain} > {log}"
+        "{params.BIN}/haplomap niehs -o {output} -a {params.ad} -r {params.ratio} "
+        "-q {params.qual} -p {params.het} -m {params.mq} -b {params.sb} "
+        "-s {input.strain} > {log}"
 
 
 ## only do this for VEP input
@@ -315,7 +318,7 @@ rule variantEeffectPrediction:
     input: 
         vcf="VCFs/combined.{chrom}.hardfilter.vcf.gz",
         reference=GENOME,
-    output: "VEP/combined.{chrom}.hardfilter.vep.txt.gz"
+    output: "VEP/combined.{chrom}.hardfilter.pass.vep.txt.gz"
     params:
         #genome_build = " -a GRCm38 --species mus_musculus ",
         genome_build = config['VEP']['GENOME_BUILD'],
