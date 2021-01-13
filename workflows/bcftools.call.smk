@@ -170,7 +170,7 @@ rule snp2NIEHS:
         "bcftools view -f .,PASS -v snps {input.vcf} | "
         "{params.BIN}/haplomap niehs -o {output} -a {params.ad} -r {params.ratio} "
         "-q {params.qual} -p {params.het} -m {params.mq} -b {params.sb} "
-        "-s {input.strain} > {log}"
+        "-s {input.strain} -v > {log}"
 
 
 rule variantEeffectPrediction:
