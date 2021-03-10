@@ -6,61 +6,29 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cstring>
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
 #include <numeric>
 #include <getopt.h>
-// #include <zlib.h>
 #include "utils.h"
 #include "haplomap.h"
 #include "dynum.h"
+#include "vcf.h"
 
-#define GZ_BUF_SIZE 1048576
 
-struct NIEHSOptions
+
+std::shared_ptr<VCFOptions> parseNIEHSOptions(int argc, char **argv) 
 {
-    char *inputFileName;
-    char *outputFileName;
-    char *sampleFileName;
-    float phredLikelihoodDifference; // PL_other - PL_homo > 20
-    float qual;  // QUAL field
-    float mappingQuality; // MQ
-    float strandBiasPhredPval; // SP (BCFtools) or FS (GATK)
-    float readPositionBias; //RPB, or endDistanceBias (ReadPosRankSum)
-    float baseQualityBias; //BQB
-    float variantDistanceBias; //VDB
-    /// allele depth of coverage (AD)
-    /// variants < AD set to be LowQual
-    float alleleDepth;
-    /// see here https://samtools.github.io/bcftools/howtos/variant-calling.html
-    /// ratio = %MAX(AD) / %MAX(DP). variants < ratio set to be LowQual
-    float ratio; 
-    int gapWindow;
-    int snpGap;
-    bool homozygous; 
-    bool verbose;
-
-    // constructor
-    NIEHSOptions() : inputFileName(nullptr), outputFileName(nullptr), 
-                     sampleFileName(nullptr), phredLikelihoodDifference(20.0), 
-                     qual(50.0), mappingQuality(20.0), strandBiasPhredPval(50.0), 
-                     readPositionBias(0.0001), baseQualityBias(0),variantDistanceBias(0), 
-                     alleleDepth(3.0), ratio(0.1), gapWindow(20), snpGap(3), 
-                     homozygous(true), verbose(false) {};
-};
-
-
-
-std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv) 
-{
-    std::shared_ptr<NIEHSOptions> opts = std::make_shared<NIEHSOptions>();
+    std::shared_ptr<VCFOptions> opts = std::make_shared<VCFOptions>();
     static struct option long_options_niehs[] = {
             {"help",           no_argument, nullptr,       'h'},
             {"verbose",        no_argument, nullptr,       'v'},
             {"input",          required_argument, nullptr, 'i'},
             {"output",         required_argument, nullptr, 'o'},
             {"samples",        optional_argument, nullptr, 's'},
+            {"type",           optional_argument, nullptr, 't'},
             {"pl-diff",        optional_argument, nullptr, 'p'},
             {"qual",           optional_argument, nullptr, 'q'},
             {"allelic-depth",  optional_argument, nullptr, 'a'},
@@ -76,14 +44,16 @@ std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv)
                         "    -o, --output          Output file name\n"
                         "\noptional arguments:\n"
                         "    -s,  --samples         New sample order. One name per line.\n"
+                        "    -t,  --type            Select variant type: snps,indels,bnd,sv.\n"
+                        "    -q,  --qual            QUAL field of VCF file. Only keep variant > qual. Default 50. \n"
+                        "\nSNP only arguments:\n"
                         "    -p,  --pl-diff         Phred-scaled genotype likelihood (PL) difference. Default 20.\n"
                         "                           GT's PL must at least pl-diff unit lower than any other PL value. \n"
-                        "                           The greater, the more '?' in the output. \n"
-                        "    -q,  --qual            QUAL field of VCF file. Only keep variant > qual. Default 50. \n"
+                        "                           The greater, the more '?' in the output. \n" 
                         "    -a,  --allelic-depth   Min allelic depth (AD) of samples. Default 3.\n"
                         "    -m,  --mapping-quality Min average mapping quality. Default 20. \n"
                         "    -b,  --strand-bias     Max Phred-scaled pvalue for strand bias (the lower, the better). Default 50. \n"
-                        "    -r,  --ratio           Min ratio of (%MAX(AD) / %MAX(DP)). Default 0.1.\n"
+                        "    -r,  --ratio           Min ratio of (%MAX(AD) / %MAX(DP)). Default 0.1.\n\n"
                         "    -v,  --verbose\n"
                         "    -h,  --help\n";
     if (argc == 1)
@@ -98,7 +68,7 @@ std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv)
     {
 
        int option_index = 0;
-       c = getopt_long(argc, argv, "hva:m:o:p:q:r:s:b:", long_options_niehs, &option_index);
+       c = getopt_long(argc, argv, "hva:m:o:p:q:r:s:t:b:", long_options_niehs, &option_index);
 
         /* Detect the end of the options. */
         if (c == -1)
@@ -133,7 +103,12 @@ std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv)
                 opts->sampleFileName = optarg;
                 break;
             }
-
+            case 't':
+            {
+                if (optarg != nullptr)
+                    opts->variantType = optarg;
+                break;
+            }
             case 'p':
             {
                 if (optarg != nullptr)
@@ -199,162 +174,50 @@ std::shared_ptr<NIEHSOptions> parseNIEHSOptions(int argc, char **argv)
 }
 
 
-class Variant {
 
-public:
-    bool isINDEL;
-    std::string CHROM;
-    int POS;
-    std::string ID;
-    std::string REF;
-    std::string ALT;
-    float QUAL;
-    std::string FILTER;
-    std::string INFO;
-    std::unordered_map<std::string, std::vector<std::string>> FORMATS;
-     
-    Variant() = default;
-    Variant(std::string record)
+void parseStructralVariant(Variant& variant, std::vector<std::string> & alleles, 
+                           std::vector<std::string>& alts, std::vector<int>& hasAlt,
+                           Dynum<std::string> strains) 
+{
+    for (size_t s=0; s < strains.size(); s++)
     {
-        std::vector<std::string> rec = split(trim(record), '\t');
-        CHROM = rec[0];
-        POS = std::stoi(rec[1]);
-        ID = rec[2];
-        REF = rec[3];
-        ALT = rec[4];
-        QUAL = std::stof(rec[5]);
-        FILTER = rec[6];
-        INFO = rec[7];
-        isINDEL = isIndel();
-        // format dict
-        parseFORMAT(rec);
-       
-    }
-    std::unordered_map<std::string, std::string> getINFO() 
-    {
-        std::unordered_map<std::string, std::string> infos;
-        std::vector<std::string> info = split(this->INFO,';');
-        std::vector<std::string> _info;
-        for (auto &item: info) 
-        {
-            _info = split(item,'=');
-            // add values to hashmap
-            infos[_info[0]] = _info.size() == 2 ? _info[1]: "true";
-        }    
-        return infos;
-    }
-    float maxAllelicDepth()
-    {
-        if (this->FORMATS.find("AD") == this->FORMATS.end())
-            return 0; // if AD not found, then we should skip 
+        std::string gt = variant.FORMATS["GT"][s];
+        if (gt == "./." || gt == ".|.")
+            continue;  // allele == '?'
+        // replace
+        std::replace(gt.begin(), gt.end(), '|', '/');
+        std::vector<std::string> gts = split(gt, '/');
         
-        float AD(0);
-        for (auto & a: this->FORMATS["AD"])
-        {
-            // AD is a vector for gt (ref0, alt1, alt2)
-            std::vector<std::string> ad = split(a, ',');
-            for (auto it = ad.begin(); it != ad.end(); it++) 
-            {
-                if (*it != ".")
-                    AD = std::max(std::stof(*it), AD);
-            }
-        }           
-        return AD;   
-    }
+        if (gts.size() != 2)
+            continue;
+        if (gts[0] != gts[1])
+            continue; // allele == '?'
 
-    float maxDepth()
-    {
-       return max("DP");
-    }
-    float maxStrandBiasPhredScalePval() 
-    {
-        return max("SP");
-    }
-        
-private:
-    void parseFORMAT(const std::vector<std::string> & rec) {
-        std::vector<std::string> _fmt = split(rec[8], ':');
-        std::vector<std::vector<std::string>> temp(_fmt.size(), std::vector<std::string>(rec.size()-9, "?"));
-        
-        for (size_t i = 9; i < rec.size(); i ++) 
+        // genotype 0/0, 0/1, 1/1, 1/2,2/2 
+        std::vector<int> GTs;
+        // string to int, vectorize
+        std::transform(gts.begin(), gts.end(), std::back_inserter(GTs),
+                        [](std::string &s) { return std::stoi(s); });
+        //unsigned int ind = (GTs[0] + 1) * (GTs[0] + 2) / 2 - 1;          
+
+        if (GTs[0] > 0) 
         {
-            std::vector<std::string> sampleValues = split(rec[i],':');
-            for (size_t j=0; j < _fmt.size(); j++)
-                // add values to hashmap
-                /// FIXME: Not all sampleValues have equal length, push_back("-999") for temp
-                if (j < sampleValues.size()) 
-                {
-                    FORMATS[_fmt[j]].push_back(sampleValues[j]);
-                }
-                else
-                {
-                    FORMATS[_fmt[j]].push_back("-999");
-                }  
+            if ((alts[GTs[0] - 1]) != "*") 
+                alleles[s] = '1';
+            hasAlt[GTs[0] - 1] = 1;
+        } else {
+            alleles[s] = '0';
         }
-        // std::cout<<"debug"<<std::endl;
-        // for (size_t j=0; j < _fmt.size(); j++)
-        //      FORMATS.insert(std::make_pair(_fmt[j], temp[j]));
-        return;
-    }
-    bool isIndel()
-    {
-        if (this->REF.size() > 1)
-            return true;
-        std::vector<std::string> alts = split(this->ALT, ',');
-        for (auto &alt: alts)
-        {
-            if (alt.size() > 1)
-                return true;
-        }
-        return false;
-    }
-    float max(const std::string & fmt) 
-    {
-        if (this->FORMATS.find(fmt) == this->FORMATS.end() )
-            return 0; // if DP not found, then we should skip 
         
-        float res(0);
-        /// FIXME: if fmt is .
-        for (auto & a: this->FORMATS[fmt])
-        {   
-            if (a != ".")
-                res = std::max(std::stof(a), res);
-        }
-        return res;
-    }    
-    
-};
-
-
-// gzip file read
-
-// bool gzLoad(char* gzfn, std::string &out)
-// {
-// 	//open .gz file
-// 	gzFile gzfp = gzopen(gzfn,"rb");
-// 	if(!gzfp)
-// 	{
-// 		return false;
-// 	}
-
-// 	//read and add it to out
-// 	unsigned char buf[GZ_BUF_SIZE];
-// 	int have;
-// 	while( (have = gzread(gzfp,buf,GZ_BUF_SIZE)) > 0)
-// 	{
-// 		out.append((const char*)buf,have);
-// 	}
-
-// 	//close .gz file
-// 	gzclose(gzfp);
-// 	return true;
-// }
+    }
+    return ;
+} 
 
 
 // Parsing VCF
-int main_niehs(int argc, char **argv)
+int main_niehs2(int argc, char **argv)
 {
-    std::shared_ptr<NIEHSOptions> opts = parseNIEHSOptions(argc, argv);
+    std::shared_ptr<VCFOptions> opts = parseNIEHSOptions(argc, argv);
     // first allele is the reference
     std::string outHeader = "C57BL/6J";
     std::string line;
@@ -475,32 +338,6 @@ int main_niehs(int argc, char **argv)
         if (variant.QUAL < opts->qual)
             continue;
 
-        if (variant.REF == "N")
-            continue;
-
-        std::unordered_map<std::string, std::string> INFO = variant.getINFO();
-        if (INFO["MQ"].size() < 1 || std::stof(INFO["MQ"]) < opts->mappingQuality)
-            continue;
-        
-        float strandBiasPhredPval;
-        if (INFO.find("FS") != INFO.end()) 
-        {
-            strandBiasPhredPval = std::stof(INFO["FS"]);
-        } 
-        else if (variant.FORMATS.find("SP") != variant.FORMATS.end()) 
-        {
-            strandBiasPhredPval = variant.maxStrandBiasPhredScalePval();
-        } 
-        else 
-        {
-           std::cerr<<"Variant position "<<variant.CHROM<<":"<<variant.POS
-                    <<"INFO Tag (SB or FS) is not Found ! Skip strand bias filtering"
-                    <<std::endl;
-           strandBiasPhredPval = 0;
-        } 
-        if (strandBiasPhredPval >  opts->strandBiasPhredPval)
-            continue; // filter strand bias variant 
-
         //std::string alleles("?", strains.size()); // not easy to do inplace replacement
         
         std::vector<std::string> alts = split(variant.ALT, ',');
@@ -509,79 +346,109 @@ int main_niehs(int argc, char **argv)
 
         // if (alts.size() > 1) // only allow 1 alternate
         //     continue;
-
-        float AD = variant.maxAllelicDepth();
-        if (AD < opts->alleleDepth || (AD / variant.maxDepth()) < opts->ratio)
-            continue; 
+ 
         // string find not found, skip
-        if (variant.isINDEL || variant.INFO.find("INDEL") != std::string::npos) 
-            continue;
 
-        std::vector<std::string> alleles(strains.size(),"?");        
-        for (size_t s=0; s < strains.size(); s++)
-        {
-            std::string gt = variant.FORMATS["GT"][s];
-            if (gt == "./." || gt == ".|.")
-                continue;  // allele == '?'
-            // replace
-            std::replace(gt.begin(), gt.end(), '|', '/');
-            std::vector<std::string> gts = split(gt, '/');
+        std::unordered_map<std::string, std::string> INFO = variant.getINFO();
+        std::vector<std::string> alleles(strains.size(),"?");  
+        if (variant.isSNP && std::strcmp(opts->variantType, "snps") == 0)
+        {      
+            if (variant.REF == "N")
+                continue;
             
-            if (gts.size() != 2)
+            if (INFO["MQ"].size() < 1 || std::stof(INFO["MQ"]) < opts->mappingQuality)
                 continue;
-            if (gts[0] != gts[1])
-                continue; // allele == '?'
-
-            // genotype 0/0, 0/1, 1/1, 1/2,2/2 
-            std::vector<int> GTs;
-            // string to int, vectorize
-            std::transform(gts.begin(), gts.end(), std::back_inserter(GTs),
-                            [](std::string &s) { return std::stoi(s); });
-            unsigned int ind = (GTs[0] + 1) * (GTs[0] + 2) / 2 - 1;
-
-            if (variant.FORMATS.find("PL") == variant.FORMATS.end())
+        
+            float strandBiasPhredPval;
+            if (INFO.find("FS") != INFO.end()) 
             {
-                std::cerr<<"PL Not Found !!! Please use correct VCF file!"<<std::endl;
-                continue;
-            }
-            std::vector<std::string> pls = split(variant.FORMATS["PL"][s], ',');
-            // if (pls.size() != (alts.size() + 1) * (alts.size() + 2) / 2)
-            // {
-            //     std::cerr<<"PL not Found"<<std::endl;
-            //     exit(0);
-            // }
-           
-            /// GATK: Even if GT is OK, PL still could be ".", so allele -> '?'
-            if (pls.size() <3)
-                continue;
-            std::vector<float> PLs;
-            // vectorized string to float
-            std::transform(pls.begin(), pls.end(), std::back_inserter(PLs),
-                            [](std::string &s) { return std::stof(s); });
-
-            float minScore(1000000.0);
-            for ( unsigned int p = 0; p < pls.size(); p++)
+                strandBiasPhredPval = std::stof(INFO["FS"]);
+            } 
+            else if (variant.FORMATS.find("SP") != variant.FORMATS.end()) 
             {
-                // GT's PL is PLs[ind]
-                if (p == ind)
+                strandBiasPhredPval = variant.maxStrandBiasPhredScalePval();
+            } 
+            else 
+            {
+            std::cerr<<"Variant position "<<variant.CHROM<<":"<<variant.POS
+                        <<"INFO Tag (SB or FS) is not Found ! Skip strand bias filtering"
+                        <<std::endl;
+            strandBiasPhredPval = 0;
+            } 
+            if (strandBiasPhredPval >  opts->strandBiasPhredPval)
+                continue; // filter strand bias variant 
+
+            float AD = variant.maxAllelicDepth();
+            if (AD < opts->alleleDepth || (AD / variant.maxDepth()) < opts->ratio)
+                continue;
+            // start parsing samples
+            for (size_t s=0; s < strains.size(); s++)
+            {
+                std::string gt = variant.FORMATS["GT"][s];
+                if (gt == "./." || gt == ".|.")
+                    continue;  // allele == '?'
+                // replace
+                std::replace(gt.begin(), gt.end(), '|', '/');
+                std::vector<std::string> gts = split(gt, '/');
+                
+                if (gts.size() != 2)
                     continue;
-                // float _het = PLs[p] - PLs[ind];
-                minScore = std::min(minScore, PLs[p] - PLs[ind]);
-            }
-            // PL_other - PL_gt >= heteroThereshold
-            // PL: the lower, the more reliable            
-            if (minScore >= opts->phredLikelihoodDifference)
-            {
-                if (GTs[0] > 0) 
+                if (gts[0] != gts[1])
+                    continue; // allele == '?'
+
+                // genotype 0/0, 0/1, 1/1, 1/2,2/2 
+                std::vector<int> GTs;
+                // string to int, vectorize
+                std::transform(gts.begin(), gts.end(), std::back_inserter(GTs),
+                                [](std::string &s) { return std::stoi(s); });
+                unsigned int ind = (GTs[0] + 1) * (GTs[0] + 2) / 2 - 1;
+
+                if (variant.FORMATS.find("PL") == variant.FORMATS.end())
                 {
-                    if ((alts[GTs[0] - 1]) != "*") // GATK has *, covert to '?'
-                        alleles[s] = alts[GTs[0] - 1];
-                    hasAlt[GTs[0] - 1] = 1;
-                    sampleAlts[s] = 1;
-                } else {
-                    alleles[s] = variant.REF;
+                    std::cerr<<"PL Not Found !!! Please use correct VCF file!"<<std::endl;
+                    continue;
+                }
+                std::vector<std::string> pls = split(variant.FORMATS["PL"][s], ',');
+                // if (pls.size() != (alts.size() + 1) * (alts.size() + 2) / 2)
+                // {
+                //     std::cerr<<"PL not Found"<<std::endl;
+                //     exit(0);
+                // }
+            
+                /// GATK: Even if GT is OK, PL still could be ".", so allele -> '?'
+                if (pls.size() <3)
+                    continue;
+                std::vector<float> PLs;
+                // vectorized string to float
+                std::transform(pls.begin(), pls.end(), std::back_inserter(PLs),
+                                [](std::string &s) { return std::stof(s); });
+
+                float minScore(1000000.0);
+                for ( unsigned int p = 0; p < pls.size(); p++)
+                {
+                    // GT's PL is PLs[ind]
+                    if (p == ind)
+                        continue;
+                    // float _het = PLs[p] - PLs[ind];
+                    minScore = std::min(minScore, PLs[p] - PLs[ind]);
+                }
+                // PL_other - PL_gt >= heteroThereshold
+                // PL: the lower, the more reliable            
+                if (minScore >= opts->phredLikelihoodDifference)
+                {
+                    if (GTs[0] > 0) 
+                    {
+                        if ((alts[GTs[0] - 1]) != "*") // GATK has *, covert to '?'
+                            alleles[s] = alts[GTs[0] - 1];
+                        hasAlt[GTs[0] - 1] = 1;
+                        sampleAlts[s] = 1;
+                    } else {
+                        alleles[s] = variant.REF;
+                    }
                 }
             }
+        } else {// strutral variant
+            parseStructralVariant(variant,  alleles, alts,  hasAlt, strains);
         }
         // find good alt
         int numGoodAlt = std::accumulate(hasAlt.begin(), hasAlt.end(), 0);
@@ -590,32 +457,130 @@ int main_niehs(int argc, char **argv)
         // if (numGoodAlt == 1 || (sampleGoodAlt == sampleAlts.size() && numGoodAlt == 2)) /// FIXED: 
         if (numGoodAlt == 1) /// FIXED:
         {
-            output <<"SNP_"<<variant.CHROM<<"_"<<variant.POS;
-            output <<"\t"<<variant.CHROM<<"\t"<<variant.POS<<"\t";
-            output <<variant.REF; // write REF
             
-            // write allele pattern
-            if (!samples.empty())
+            if (variant.isSNP && std::strcmp(opts->variantType, "snps") == 0)
             {
-                for(auto &s: samples)
+                output <<"SNP_"<<variant.CHROM<<"_"<<variant.POS;
+                output <<"\t"<<variant.CHROM<<"\t"<<variant.POS<<"\t";
+                output <<variant.REF; // write REF
+
+                // write allele pattern
+                if (!samples.empty())
                 {
-                    int strIdx = strains.indexOf(s);
-                    output<<alleles[strIdx];
+                    for(auto &s: samples)
+                    {
+                        int strIdx = strains.indexOf(s);
+                        output<<alleles[strIdx];
+                    }
+                } else 
+                {
+                    for (auto &a: alleles) 
+                        output<<a;
                 }
-            } else 
-            {
-                for (auto &a: alleles) 
-                    output<<a;
+                output<<std::endl;
+
+            } 
+            else if (!variant.isSNP && std::strcmp(opts->variantType, "sv") == 0) 
+            {   
+                output <<"SNP_"<<variant.CHROM<<"_"<<variant.POS; 
+                output <<"_"<<INFO["END"]<<"_"<<INFO["SVTYPE"];                
+                output <<"\t"<<variant.CHROM<<"\t"<<variant.POS<<"\t";
+                output << "0"; // write REF
+                // write allele pattern
+                if (!samples.empty())
+                {
+                    for(auto &s: samples)
+                    {
+                        int strIdx = strains.indexOf(s);
+                        output<<alleles[strIdx];
+                    }
+                } else 
+                {
+                    for (auto &a: alleles) 
+                        output<<a;
+                }
+                output<<std::endl;
             }
-            output<<std::endl;
         }
         // if (lineNum % 100000 == 0)
         //     std::cout<<"Parsed line #: "<<lineNum<<std::endl;
 
     }
     
-    // input.close();
     output.close();
+    if (opts->inputFileName != nullptr)
+        delete input;
+    if (opts->verbose)
+        std::cout<<"Job done."<<std::endl;
+    return 0;
+}
+
+
+// Parsing VCF
+int main_niehs(int argc, char **argv)
+{
+    std::shared_ptr<VCFOptions> opts = parseNIEHSOptions(argc, argv);
+
+    std::string line;
+    //Dynum<std::string> strains;
+    std::vector<std::string> samples;
+     
+    // read input file
+    std::istream* input;
+    // std::ifstream input(opts->inputFileName);
+    // stdin or ifstream
+    if (opts->inputFileName == nullptr)
+    {
+        if (opts->verbose)
+            std::cout<<"Read VCF: from stdin"<<std::endl;
+        input = &std::cin;
+    }
+    else
+    {
+        if (opts->verbose)
+            std::cout<<"Read VCF: "<< opts->inputFileName << std::endl;
+        input = new std::ifstream(opts->inputFileName, ios::in); 
+    }
+    // check status
+    if ( input->fail() ) 
+    {
+        std::cerr << "Error: The requested file (" 
+                << opts->inputFileName
+                << ") " 
+                << "could not be opened. "
+                << "Error message: ("
+                << std::strerror(errno)
+                << "). Exiting!" << std::endl;
+        exit(1);
+    }
+    input->ignore(); // for clearing newline in cin
+
+    // read input sample names
+    if (opts->sampleFileName != nullptr) 
+    {
+        if (opts->verbose)
+            std::cout << "Read Sample Names: "<< opts->sampleFileName << std::endl;
+        std::ifstream sinput(opts->sampleFileName);
+        while (std::getline(sinput, line))
+        {
+            // starts with "#"
+            if (line.find('#') == 0) continue;
+            samples.push_back(line);    
+        } 
+        sinput.close();
+    } 
+    
+    if (opts->verbose)
+        std::cout<<"Parsing Header"<<std::endl;
+        
+    // read vcf header
+    VCF vcf(input, opts, samples);
+    // Now read all records
+    if (opts->verbose)
+        std::cout<<"Parsing Variants"<<std::endl;
+    vcf.parseRecords();
+
+
     if (opts->inputFileName != nullptr)
         delete input;
     if (opts->verbose)

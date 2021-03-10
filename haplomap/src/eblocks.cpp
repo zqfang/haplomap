@@ -305,8 +305,6 @@ void readSNPGeneNames(char *fname)
     string geneName = rdr.getToken(1);
 
     // cout << " geneName = " << geneName << endl;
-
-    // hash_map<string, SNPInfo *>::iterator fit = snpMap.find(snpName);
     std::unordered_map<string, SNPInfo *>::iterator fit = snpMap.find(snpName);
     if (fit == snpMap.end())
     {
@@ -627,6 +625,10 @@ int allelesToPattern(char *astr, char *pattern)
   map[(int)'G'] = '?';
   map[(int)'T'] = '?';
   map[(int)'?'] = '?';
+  // map[(int)'D'] = '?'; // deletion
+  // map[(int)'U'] = '?'; // duplication
+  // map[(int)'I'] = '?'; // insertion
+  // map[(int)'V'] = '?'; // inversion
 
   for (int strIdx = 0; strIdx < numStrains; strIdx++)
   {
@@ -2147,18 +2149,18 @@ void writeHTML(char *dirName)
 // write out list of gene names for a single block.
 void writeBlockGeneNames(ofstream &os, HaploBlock *pHB)
 {
-  map<string, string> geneIsCodingMap;
+  std::map<string, string> geneIsCodingMap;
   // Look through all SNPs in block to find overlapping genes, record whether they
   // include non-synonymous changes.
   size_t snpEnd = pHB->start + pHB->size;
   for (size_t snpIdx = pHB->start; snpIdx < snpEnd; snpIdx++)
   {
     SNPInfo *pSNPInfo = snpVec[snpIdx];
-    map<string, string> &geneCodonMap = pSNPInfo->geneCodonMap;
+    std::map<string, string> &geneCodonMap = pSNPInfo->geneCodonMap;
     //ofstream debug_log;
     //debug_log.open("debug.log",ios::app);
 
-    for (map<string, string>::iterator gcit = geneCodonMap.begin(); gcit != geneCodonMap.end(); gcit++)
+    for (std::map<string, string>::iterator gcit = geneCodonMap.begin(); gcit != geneCodonMap.end(); gcit++)
     {
       //cout << (*gcit).first << "\t" << gcit->first << "\t" << (*gcit).second << "\t" << pSNPInfo->position << endl;
       if (geneIsCodingMap[(*gcit).first] == "")
@@ -2170,11 +2172,16 @@ void writeBlockGeneNames(ofstream &os, HaploBlock *pHB)
         }
         else if ((*gcit).second.find("<") != string::npos || (*gcit).second.find("SPLICE_SITE") != string::npos)
         {
-          geneIsCodingMap[(*gcit).first] = (*gcit).second;
+          geneIsCodingMap[(*gcit).first] = (*gcit).second; // 2
+        }
+        else if ((*gcit).second.find("SYNONYMOUS_CODING") != string::npos)
+        {
+          geneIsCodingMap[(*gcit).first] = "0";
         }
         else
         {
-          geneIsCodingMap[(*gcit).first] = "0";
+          // patch for SV input: 2,1,0,-1
+          geneIsCodingMap[(*gcit).first] = (*gcit).second; 
         }
       }
       else
@@ -2200,11 +2207,19 @@ void writeBlockGeneNames(ofstream &os, HaploBlock *pHB)
             //debug_log << "gene name: " << gcit->first << "descriptions: " << geneIsCodingMap[gcit->first] << endl;
           }
         }
+        else if ((*gcit).second.find("SYNONYMOUS_CODING") != string::npos)
+        {
+          geneIsCodingMap[(*gcit).first] = "0";
+        } else 
+        {
+          // patch for SV input
+           geneIsCodingMap[(*gcit).first] = (*gcit).second; 
+        }
       }
     }
     //debug_log.close();
   }
-  for (map<string, string>::iterator gicit = geneIsCodingMap.begin(); gicit != geneIsCodingMap.end(); gicit++)
+  for (std::map<string, string>::iterator gicit = geneIsCodingMap.begin(); gicit != geneIsCodingMap.end(); gicit++)
   {
     os << "\t" << (*gicit).first << "\t" << (*gicit).second;
   }

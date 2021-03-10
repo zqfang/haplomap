@@ -107,7 +107,8 @@ void showBlockSum(std::ostream &os, bool isCategorical, BlockSummary *pb, std::v
     std::map<std::string, std::string> &geneIsCodingMap = pb->geneIsCodingMap;
     for (std::map<std::string, std::string>::iterator giit = geneIsCodingMap.begin(); giit != geneIsCodingMap.end(); giit++)
     { ///EDITED BY
-      os << "\t" << (*giit).first << "\t" << (*giit).second << "\t" << pb->geneIsInteresting[(*giit).first];
+      //os << "\t" << (*giit).first << "\t" << (*giit).second << "\t" << pb->geneIsInteresting[(*giit).first];
+      os << "\t" << (*giit).first << "\t" << (*giit).second;
     }
     os << std::endl;
   }
@@ -132,7 +133,8 @@ void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb
     {
       for (std::map<std::string, std::string>::iterator giit = geneIsCodingMap.begin(); giit != geneIsCodingMap.end(); giit++)
       {
-        os << (*giit).first << "\t" << pb->geneIsInteresting[(*giit).first] << "\t";
+        //os << (*giit).first << "\t" << pb->geneIsInteresting[(*giit).first] << "\t";
+        os << (*giit).first << "\t" << (*giit).second << "\t";
         writeSortedPattern(os, pb->pattern, strOrderVec);
         os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) <<"\t"<< pb->effect
            << "\t" <<pb->FDR << "\t" << pb->relPvalue<<"\t"<<pb->relFDR<<"\t"<<pb->relReject
@@ -469,7 +471,7 @@ void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetN
     std::vector<GeneSummary *> genes;
     genes.reserve(geneTable.size());
     //transform(geneTable.begin(), geneTable.end(), back_inserter(genes), select2nd<std::unordered_map<string, GeneSummary *> >());
-    transform(geneTable.begin(), geneTable.end(), back_inserter(genes),
+    std::transform(geneTable.begin(), geneTable.end(), std::back_inserter(genes),
               std::bind(&std::unordered_map<std::string, GeneSummary *>::value_type::second, std::placeholders::_1 ));
 
     sort(genes.begin(), genes.end(), gcomp);
@@ -662,7 +664,7 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
     // Copy genesTable values into a vector and sort using GenesComparator
     std::vector<GeneSummary *> genes;
     genes.reserve(geneTable.size());
-    std::transform(geneTable.begin(), geneTable.end(), back_inserter(genes),
+    std::transform(geneTable.begin(), geneTable.end(), std::back_inserter(genes),
               std::bind(&std::unordered_map<std::string, GeneSummary *>::value_type::second, std::placeholders::_1 ));
     std::sort(genes.begin(), genes.end(), gcomp);
     // write header

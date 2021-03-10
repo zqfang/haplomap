@@ -14,6 +14,13 @@ build/bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.txt ${HOME}/data/VCFs/chr18.
 # support stdin, but much slower
 zcat ${HOME}/data/VCFs/chr18.vcf.gz | bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.txt
 ```
+
+convert structural variants
+```shell
+build/bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.sv.txt --type sv input.sv.vcf
+```
+
+
 ### 2. find haploblocks
 prepared SNP annotation file 
 
@@ -29,19 +36,37 @@ python scripts/annotateSNPs.py test_strains.txt chr18.txt \
                     AA_by_strains_chr18.pkl mm10_kgXref.txt mm10_knownGene.txt
                     genes_coding.txt genes_coding_transcript.txt
 ```
-3. find haploblocks
+
+3. Prepared SV annotation file
+    - run `structral variant calling pipeline` and annotate with VEP
+    - run `annotateSV.py`, the output file (*_eblocks.txt) is used for eblocks input.
+
+### 3. statistical testing with trait data
+
+1. find haploblocks
 ```shell
 build/bin/haplomap eblocks -a ${HOME}/data/SNPS/chr18.txt \
                      -g ${HOME}/data/gene_coding.txt \
                      -s ${HOME}/TMPDATA/test_strains.txt \
                      -o ${HOME}/TMPDATA/test.SNPs.hb.txt
 ```
-### 3. statistical testing with trait data
-```shell
-build/bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
-                   -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
-                   -o ${HOME}/TMPDATA/test.final.output.txt
-```
+
+
+2. statistical testing  
+  - SNP
+    ```shell
+    build/bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
+                      -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
+                      -o ${HOME}/TMPDATA/test.final.output.txt
+    ```
+  - SV  
+    ```shell
+    build/bin/haplomap ghmap -k -p ${HOME}/data/test_traits.txt \
+                      -b ${HOME}/TMPDATA/test.sv.hb.txt \
+                      -o ${HOME}/TMPDATA/test.sv.output.txt
+    ```
+
+
 **Note:** strain order in (-p) should keep the same to the (-b). That's, eblocks (-s)
 
 ## Input
@@ -139,12 +164,14 @@ v0.1
   - cmdline usage improvement
   - fixed memory leak
   - make cmdline option (-p) become optional. 
+  - minor patches for structural variant input.
 * pca: 
   - add a new sub-command 
   - could be used for getting genetic relationship 
 * niehs:
   - For historical reasons, eblocks use NIEHS compact format as input. 
-  - To use haplomap more friendly, we now do this for you.  
+  - To use haplomap more friendly, we now do this for you. 
+  - support structral variant input. 
  
 
 v0.0
