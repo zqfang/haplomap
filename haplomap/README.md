@@ -8,20 +8,22 @@ Haplotype-based computational genetic mapping
 ## Usage
 
 ### 1. convert vcf to niehs format for eblocks
+
+SNPs
 ```shell
 build/bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.txt ${HOME}/data/VCFs/chr18.vcf
 
 # support stdin, but much slower
 zcat ${HOME}/data/VCFs/chr18.vcf.gz | bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.txt
 ```
-
-convert structural variants
+Structural variants
 ```shell
 build/bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.sv.txt --type sv input.sv.vcf
 ```
 
 
 ### 2. find haploblocks
+
 prepared SNP annotation file 
 
 1. generate strain level gene annotation database (only run once), see here: 
@@ -30,6 +32,7 @@ prepared SNP annotation file
       - AA_by_strains_chr*.pkl 
       - mm10_kgXref.txt 
       - mm10_knownGene.txt
+
 2. run `annotateSNPs.py` for each case (test_strains.txt) to get strain specific SNP annotation.
 ```shell
 python scripts/annotateSNPs.py test_strains.txt chr18.txt \
@@ -37,13 +40,7 @@ python scripts/annotateSNPs.py test_strains.txt chr18.txt \
                     genes_coding.txt genes_coding_transcript.txt
 ```
 
-3. Prepared SV annotation file
-    - run `structral variant calling pipeline` and annotate with VEP
-    - run `annotateSV.py`, the output file (*_eblocks.txt) is used for eblocks input.
-
-### 3. statistical testing with trait data
-
-1. find haploblocks
+3. find haploblocks
 ```shell
 build/bin/haplomap eblocks -a ${HOME}/data/SNPS/chr18.txt \
                      -g ${HOME}/data/gene_coding.txt \
@@ -51,16 +48,22 @@ build/bin/haplomap eblocks -a ${HOME}/data/SNPS/chr18.txt \
                      -o ${HOME}/TMPDATA/test.SNPs.hb.txt
 ```
 
+prepared SV ananotation file
+  - run `structral variant calling pipeline` and annotate with VEP
+  - run `annotateSV.py`, the output file (*_eblocks.txt) is used for eblocks input.
 
-2. statistical testing  
+### 3. statistical testing with trait data
+
+Statistical testing  
   - SNP
     ```shell
     build/bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
                       -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
                       -o ${HOME}/TMPDATA/test.final.output.txt
     ```
-  - SV  
+  - Structural variant  
     ```shell
+    # not -k is needed for sv
     build/bin/haplomap ghmap -k -p ${HOME}/data/test_traits.txt \
                       -b ${HOME}/TMPDATA/test.sv.hb.txt \
                       -o ${HOME}/TMPDATA/test.sv.output.txt
@@ -136,6 +139,15 @@ build/bin/haplomap eblocks -a ${HOME}/data/SNPS/chr18.txt \
   * block-oriented result file
 
 BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | CodingMap ...
+
+
+
+**CodonFlag**
+* -1: Non-codon change
+* 0: Synonymous (not important)
+* 1: missense/nonsense...
+* 2: Splicing site change
+
 
 
 ## Changelog

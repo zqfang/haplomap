@@ -45,6 +45,7 @@ set(GSL_LIBS /path/to/gsl/lib)
 ```
 
 3. build
+
 ```bash
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
@@ -79,17 +80,19 @@ HBCGM:
     # ghmap input
     # MPD trait ids 
     TRAIT_IDS: "/data/bases/fangzq/MPD/drug-diet.ids.txt"
+
     # set to true if input individual animal data. Default: use strain means.   
     USE_RAWDATA: false 
+
     # given file path, use input data instead of using MPD API to get data.
     TRAIT_DATA:  "" #"/data/bases/shared/haplomap/AHresponse_strainmeans2.txt"
+
     # genetic relation file from PLink output
     GENETIC_REL: "/data/bases/shared/haplomap/PELTZ_20200429/mouse54_grm.rel"
     GENETIC_REL_ID: "/data/bases/shared/haplomap/PELTZ_20200429/mouse54_grm.rel.id"
-    # gene expression file
+
+    # gene expression file 
     GENE_EXPRS: "/data/bases/shared/haplomap/PELTZ_20200429/mus.compact.exprs.txt"
-    # open chromatin regions to annotate haploblocks.
-    ATAC_PEAKS: "/data/bases/fangzq/MouseEpigenomeAtlas/beds/*.blacklist_removed.broadPeak"
 
     # eblock input
     # strains metadata. 
@@ -153,48 +156,9 @@ sbatch slurm.submit.sh
     ```
 
 ## Output
-
-1. ebloks:
-
-| NO |Field | Explanation |
-|--- | ---- | ------------ |
-|0 |chrom | chromosome idx      |
-|1 |Block | Block id            |
-|2 |Start | Block start idx     |
-|3 |Size  | Block size          |
-|4 |ChrBeg| Chromosome begin idx |
-|5 |ChrEnd| Chromosome end idx  |
-|6 |Pattern | Haplotype pattern |
-|7 |GeneName| Associated Gene   |
-|8 |Codon Map | Whether Change Codon |
-
-2. ghmap:
-  * gene-oriented results file
-
-| NO |Field | Explanation |
-|---| ---- | ------------ |
-|0 |GeneName     | Associated Gene     |
-|1 |CodonFlag    | -1,0,1,2            |
-|2 |Pattern      | Haplotype pattern   |
-|3 |FStat/Pvalue | isCategorical ? Fstat : Pvalue |
-|4 |Effect       | Genetic Effect ( Omega^2 )   |
-|5 |FDR          | Benjamini Hochberg. If categorical, skip |
-|6 |popPvalue    | Pillai’s Trace Pvalue |
-|7 |popFDR       |   Pillai’s Trace FDR |
-|8 |popYes       | Pillai’s Trace FDR Rejection | 
-|9 |Chrom        | Chromosome idx      |
-|10 |ChrBeg      | HaploBlock begin idx|
-|11 |ChrEnd      | HaploBlock end idx  |
-|12 |GeneExprMap | Gene expression Map |
-
-  * block-oriented result file
-
-BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | CodingMap ...
+output explaination, see here: [Run haplomap standalone](haplomap/README.md)
 
 
-**CodonFlag**
 
-* -1: Non-codon change
-* 0: Synonymous (not important)
-* 1: missense/nonsense...
-* 2: Splicing site change]
+## Contact
+
