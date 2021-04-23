@@ -33,6 +33,8 @@ e.g.
 ```bash
 ./configure --prefix=${HOME}/program/gsl
 make && make install
+# you may need to add this line to your .bashrc 
+export LD_LIBRARY_PATH="${HOME}/program/gsl/lib:$LD_LIBRARY_PATH"
 ```
 
 2. edit `CMakeLists.txt`, set GSL header and lib path, 
@@ -54,13 +56,14 @@ make
 See more detail in ``haplomap`` subfolder: [Run haplomap standalone](haplomap/README.md)
 
 Use `snakemake` workflow to run
-### 1. Prepare MPD `measnum` id file. Each id per row. Suffix for sex(f,m) permitted. e.g.
+### 1. Prepare MPD `measnum` id file. One id per row, suffixed with "-m" or "-f"(f: female, m: male)
 ```
-1501
-03504
 26720-m
 26720-f
+9940-f
 ...
+
+
 ```
 
 ### 2. Edit the `config.yaml` file path in `workflows` folder:
