@@ -156,7 +156,7 @@ sbatch slurm.submit.sh
     ```
 
 ## Output
-output explaination, see here: [Run haplomap standalone](haplomap/README.md)
+output explanation, see here: [Run haplomap standalone](haplomap/README.md)
 
 
 

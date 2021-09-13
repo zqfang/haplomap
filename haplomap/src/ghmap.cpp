@@ -100,7 +100,7 @@ void showBlockSum(std::ostream &os, bool isCategorical, BlockSummary *pb, std::v
     writeSortedPattern(os, pb->pattern, strOrderVec);
 
     os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) <<"\t" << pb->effect << "\t" <<pb->FDR;
-    os << "\t" <<pb->relPvalue<<"\t"<<pb->relFDR<<pb->relReject;
+    os << "\t" <<pb->relPvalue<<"\t"<<pb->relFDR; // <<pb->relReject;
     updateGeneIsInteresting(pb);
 
     // gene names and coding bits
@@ -125,8 +125,8 @@ void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb
       os << "None\tNone\t";
       writeSortedPattern(os, pb->pattern, strOrderVec);
       os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) <<"\t"<< pb->effect
-         << "\t" << pb->FDR << "\t" << pb->relPvalue<<"\t"<<pb->relFDR<<"\t"<<pb->relReject
-         << "\t" << pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd << "\t"
+         << "\t" << pb->FDR << "\t" << pb->relPvalue<<"\t"<<pb->relFDR; // <<"\t"<<pb->relReject
+      os << "\t" << pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd << "\t"
          << pb->blockIdx << pb->blockStart << "\t" << pb->blockSize << std::endl;
     }
     else
@@ -137,8 +137,8 @@ void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb
         os << (*giit).first << "\t" << (*giit).second << "\t";
         writeSortedPattern(os, pb->pattern, strOrderVec);
         os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) <<"\t"<< pb->effect
-           << "\t" <<pb->FDR << "\t" << pb->relPvalue<<"\t"<<pb->relFDR<<"\t"<<pb->relReject
-           << "\t" <<pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd
+           << "\t" <<pb->FDR << "\t" << pb->relPvalue<<"\t"<<pb->relFDR; //<<"\t"<<pb->relReject
+        os << "\t" <<pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd
            << "\t" <<pb->blockIdx << pb->blockStart << "\t" << pb->blockSize;
         std::string gname = (*giit).first;
         upcase(gname);
@@ -398,7 +398,7 @@ void showGeneBlockSums(std::ostream &os, bool isCategorical, std::vector<BlockSu
                                 writeSortedPattern(os, pb_t->pattern, strOrderVec);
                                 os << "\t" << (isCategorical ? pb_t->FStat : pb_t->pvalue) <<"\t"<< pb_t->effect;
                                 os << "\t" << pb_t->FDR;
-                                os << "\t" << pb_t->relPvalue<<"\t"<<pb_t->relFDR <<"\t"<<pb_t->relReject<<"\t";
+                                os << "\t" << pb_t->relPvalue<<"\t"<<pb_t->relFDR <<"\t"; //<< pb_t->relReject<<"\t";
                                 os << pb_t->chrName << "\t" << pb_t->chrBegin << "\t" << pb_t->chrEnd << "\t";
                                 os << pb_t->blockIdx << pb_t->blockStart << "\t" << pb_t->blockSize;
                                 std::string upname = gname;
@@ -744,7 +744,7 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
             writeSortedPattern(genesout, pBestBlock->pattern, strOrderVec);
             genesout << "\t" << (isCategorical ? pBestBlock->FStat : pBestBlock->pvalue);
             genesout << "\t" << pBestBlock->effect <<"\t"<< pBestBlock->FDR;
-            genesout << "\t" << pBestBlock->relPvalue<<"\t"<< pBestBlock->relFDR << "\t"<<pBestBlock->relReject;
+            genesout << "\t" << pBestBlock->relPvalue<<"\t"<< pBestBlock->relFDR; //<< "\t"<<pBestBlock->relReject;
             genesout << "\t" << pBestBlock->chrName << "\t" << pBestBlock->chrBegin << "\t" << pBestBlock->chrEnd;
 
             // write gene expression values

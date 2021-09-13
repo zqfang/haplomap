@@ -93,7 +93,7 @@ public:
     bool parseSNP(std::vector<std::string> & alleles, 
                            std::vector<std::string>& alts, std::vector<int>& hasAlt);
     void writeSNP(std::vector<std::string> &alleles);
-    void writeStructralVariant(std::vector<std::string> &alleles);
+    void writeStructralVariant(std::vector<std::string> &alleles, const char* varType);
 
 private:
     std::string line;

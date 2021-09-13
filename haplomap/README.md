@@ -63,8 +63,8 @@ Statistical testing
     ```
   - Structural variant  
     ```shell
-    # not -k is needed for sv
-    build/bin/haplomap ghmap -k -p ${HOME}/data/test_traits.txt \
+    # NOTE: -a is needed for sv, indel
+    build/bin/haplomap ghmap -a -p ${HOME}/data/test_traits.txt \
                       -b ${HOME}/TMPDATA/test.sv.hb.txt \
                       -o ${HOME}/TMPDATA/test.sv.output.txt
     ```
@@ -123,28 +123,35 @@ Statistical testing
 | NO |Field | Explanation |
 |---| ---- | ------------ |
 |0 |GeneName     | Associated Gene     |
-|1 |CodonFlag    | condonChange ? 1:0  |
+|1 |CodonFlag    | See blow            |
 |2 |Pattern      | Haplotype pattern   |
 |3 |FStat/Pvalue | isCategorical ? Fstat : Pvalue |
 |4 |Effect       | Genetic Effect ( Omega^2 )   |
 |5 |FDR          | Benjamini Hochberg. If categorical, skip |
 |6 |popPvalue    | Pillai’s Trace Pvalue |
 |7 |popFDR       | Pillai’s Trace FDR |
-|8 |popYes       | Pillai’s Trace FDR Rejection | 
-|9 |Chrom        | Chromosome idx      |
-|10 |ChrBeg      | HaploBlock begin idx|
-|11 |ChrEnd      | HaploBlock end idx  |
-|12 |GeneExprMap | Gene expression Map |
+|8 |Chrom        | Chromosome idx      |
+|9 |ChrBeg       | HaploBlock begin idx|
+|10 |ChrEnd      | HaploBlock end idx  |
+|11 |GeneExprMap | Gene expression Map |
 
   * block-oriented result file
 
-BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | CodingMap ...
+BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | Effect | FDR | CodingMap ...
 
 
 
 **CodonFlag**
-* -1: Non-codon change
-* 0: Synonymous (not important)
-* 1: missense/nonsense...
-* 2: Splicing site change
+
+i. SNPs
+  * -1: Non-codon change
+  * 0: Synonymous (not important)
+  * 1: missense/nonsense...
+  * 2: Splicing site change
+
+ii. indels and structral variants (ghmap -a ): 
+  * HIGH
+  * MODERATE
+  * LOW
+  * MODIFIER
 

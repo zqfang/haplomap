@@ -294,6 +294,7 @@ bool VCF::parseSNP(std::vector<std::string> & alleles,
             // float _het = PLs[p] - PLs[ind];
             minScore = std::min(minScore, PLs[p] - PLs[ind]);
         }
+        // PL = -10 * \log{P(Genotype | Data)}, so that the PL value of the most likely genotype is 0,
         // PL_other - PL_gt >= heteroThereshold
         // PL: the lower, the more reliable            
         if (minScore >= opts->phredLikelihoodDifference)
@@ -370,10 +371,10 @@ void VCF::writeSNP(std::vector<std::string> &alleles)
     output<<std::endl;
 }
 
-void VCF::writeStructralVariant(std::vector<std::string> &alleles)
+void VCF::writeStructralVariant(std::vector<std::string> &alleles, const char* vartype)
 {                
     std::unordered_map<std::string, std::string> INFO = variant.getINFO();
-    output <<"SV_"<<variant.CHROM<<"_"<<variant.POS;
+    output << vartype <<"_"<<variant.CHROM<<"_"<<variant.POS;
     output <<"_"<<INFO["END"]<<"_"<<INFO["SVTYPE"];                
     output <<"\t"<<variant.CHROM<<"\t"<<variant.POS<<"\t";
     output << "A"; // write REF
@@ -412,8 +413,8 @@ void VCF::parseRecords()
         std::vector<int> hasAlt(alts.size(), 0); // number of alternates
         std::vector<int> sampleAlts(strains.size(), 0); // sample is alt or not
 
-        // if (alts.size() > 1) // only allow 1 alternate
-        //     continue;
+        if (alts.size() > 1) // only allow 1 alternate
+            continue;
         // string find not found, skip
         // std::unordered_map<std::string, std::string> INFO = variant.getINFO();
         std::vector<std::string> alleles(strains.size(),"?");  
@@ -433,7 +434,7 @@ void VCF::parseRecords()
                 continue;
             int numGoodAlt = std::accumulate(hasAlt.begin(), hasAlt.end(), 0);
             if (numGoodAlt == 1)
-                writeStructralVariant(alleles);
+                writeStructralVariant(alleles, opts->variantType);
         } 
     }
 }
