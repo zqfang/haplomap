@@ -223,6 +223,8 @@ extern const int AACLASSES[];
 extern std::vector<std::string> catNames; // maps strIdx -> category name.
 // Maps gene names to a string of A's, M's, and P's
 extern std::unordered_map<std::string, std::string> geneExprMap;
+// Gene expression header lines
+extern std::vector<std::string> geneExprHeader;
 // Globals
 extern std::unordered_map<std::string, GeneSummary *> geneTable; // for gene-oriented interface
 extern std::vector<BlockSummary *> blocks; // global vector of all blocks.

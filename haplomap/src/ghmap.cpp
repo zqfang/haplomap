@@ -13,6 +13,7 @@ std::unordered_map<std::string, std::string> geneExprMap(40000);
 // Globals
 std::unordered_map<std::string, GeneSummary *> geneTable; // for gene-oriented interface
 std::vector<BlockSummary *> blocks; // global vector of all blocks.
+std::vector<std::string> geneExprHeader;
 int traceFStat = false;
 
 
@@ -906,6 +907,7 @@ void readCompactGeneExpr(char *fname)
         // substitutes a file with mixed-case names.
         geneExprMap[geneName] = present;
     }
+    geneExprHeader = rdr.getHeader();
 }
 
 // Read a file of quantitative phenotypes.

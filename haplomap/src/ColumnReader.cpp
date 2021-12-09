@@ -60,16 +60,25 @@ int ColumnReader::split(std::string s, char *delimiters, std::vector<std::string
 
   return token_vector.size();
 }
+std::vector<std::string> ColumnReader::getHeader()
+{
+  return _header;
+
+}
 
 int ColumnReader::getLine()
 {
-  _lineno++;
   if (getline(_in, _line).eof())
   {
     // no lines remain.
     return -1;
   }
-
+  if (_line.find("#") == 0) 
+  {
+      _header.push_back(_line);
+      return 0;
+  }
+  _lineno++;
   // tokenize it
   return split(_line, _delimiters, _line_vector);
 }
