@@ -123,17 +123,17 @@ Statistical testing
 | NO |Field | Explanation |
 |---| ---- | ------------ |
 |0 |GeneName     | Associated Gene     |
-|1 |CodonFlag    | See blow            |
-|2 |Pattern      | Haplotype pattern   |
+|1 |CodonFlag    | -1: non-coding; 0: synonymouse; 1: missense; 2: splicing  |             |
+|2 |Haplotype    | Haplotype pattern, see header line for strains   |
 |3 |FStat/Pvalue | isCategorical ? Fstat : Pvalue |
-|4 |Effect       | Genetic Effect ( Omega^2 )   |
+|4 |EffectSize   | Genetic Effect ( Omega^2 )   |
 |5 |FDR          | Benjamini Hochberg. If categorical, skip |
 |6 |popPvalue    | Pillai’s Trace Pvalue |
 |7 |popFDR       | Pillai’s Trace FDR |
-|8 |Chrom        | Chromosome idx      |
-|9 |ChrBeg       | HaploBlock begin idx|
-|10 |ChrEnd      | HaploBlock end idx  |
-|11 |GeneExprMap | Gene expression Map |
+|8 |Chrom        | Chromosome      |
+|9 |BlockEnd     | HaploBlock begin |
+|10 |BlockEnd    | HaploBlock end   |
+|11 |Expression  | Gene expression Map, see header line  |
 
   * block-oriented result file
 

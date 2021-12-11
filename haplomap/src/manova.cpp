@@ -13,31 +13,10 @@
 #include "manova.h"
 
 
-// debugging
-namespace HBCGM {
-    void print_gslvec(gsl_vector *M) {
-        std::cout << "trace vector: " << std::endl;
-        for (size_t i = 0; i < M->size; ++i) {
-            std::cout << gsl_vector_get(M, i) << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    void print_gslmat(gsl_matrix *M) {
-        std::cout << "trace matrix: " << std::endl;
-        for (size_t i = 0; i < M->size1; ++i) {
-            for (size_t j = 0; j < M->size2; ++j) {
-                std::cout << gsl_matrix_get(M, i, j) << " ";
-            }
-            std::cout << std::endl;
-        }
-    }
-}
-
-MANOVA::MANOVA(const char* MatFile, const char* RowNameFile, unsigned int L):
+MANOVA::MANOVA(const char* MatFile, unsigned int L):
 _Mat(nullptr), _useEigen(false),_numStrains(0),_numDefined(0),_numHaplo(0),_pattern(nullptr)
 {
-    _CorMat = std::make_shared<EigenMat>(MatFile, RowNameFile);
+    _CorMat = std::make_shared<EigenMat>(MatFile);
     _numStrains = _CorMat->size1;
     assert(L > 0 && L < _CorMat->size2);
     this->L = L;

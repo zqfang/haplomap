@@ -10,56 +10,34 @@
 #include "ColumnReader.h"
 #include "eigen.h"
 
-namespace HBCGM {
-    // debugging
-    void print_vec(std::vector<double> &M)
-    {
-        std::cout<<"trace vector: "<<std::endl;
-        for (auto &v: M) {
-            std::cout<<v<<" ";
-        }
-        std::cout<<std::endl;
-    }
-    void print_gvec(gsl_vector* M)
-    {
-        std::cout<<"trace gsl vector: "<<std::endl;
-        for (unsigned i = 0; i < M->size; ++i)
-        {
-            std::cout<<gsl_vector_get(M, i)<<" ";
-        }
-        std::cout<<std::endl;
-    }
 
-    void print_gmat(gsl_matrix* M){
-        std::cout << "trace gsl matrix: "<<std::endl;
-        for (unsigned i = 0; i < M->size1; ++i){
-            for (unsigned j=0; j < M->size2; ++j) {
-                std::cout<< gsl_matrix_get(M, i, j) << " ";
-            }
-            std::cout<<std::endl;
-        }
-    }
-}
+EigenMat::EigenMat(const char* MatrixFile)
+{
 
-
-EigenMat::EigenMat(const char* MatrixFile, const char* RowNamesFile){
-    // read row names file
-    ColumnReader rdr(RowNamesFile, (char *)"\t");
     int numtoks;
-    while ((numtoks = rdr.getLine()) >= 0)
+    ColumnReader rmat(MatrixFile, (char *)"\t");
+    numtoks = rmat.getLine();  // read header
+    if (numtoks < 0)
     {
-        std::string strain_abbrev = rdr.getToken(1);
+        std::cerr<<"Empty Matrix File input. Hints: header line should start with '#' ";
+        exit(0);
+    }
+
+    std::vector<std::string> header = rmat.getHeader();
+    for (auto & strain_abbrev: header)
+    {
         int strIdx = rownames.addElementIfNew(strain_abbrev);
         if (strIdx < 0)
         {
             std::cout << "Undefined strain abbrev: " << strain_abbrev << std::endl;
         }
     }
-    ColumnReader rmat(MatrixFile, (char *)"\t");
+
     data = gsl_matrix_alloc(rownames.size(), rownames.size());
     int i = 0;
     while ((numtoks = rmat.getLine()) >= 0) {
-        for (int t = 0; t < numtoks; t++){
+        for (int t = 0; t < numtoks; t++)
+        {
             double d = std::stod(rmat.getToken(t));
             gsl_matrix_set(data,i,t,d);
         }

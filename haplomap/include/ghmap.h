@@ -176,7 +176,22 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
                    char *datasetName, std::vector<std::vector<float> > &phenvec,
                    std::vector<BlockSummary *> &blocks, float cutoff, bool filterCoding);
 
+// Write output headers
+class GhmapWriter {
+private:
+    std::string _dataset_name;
+    bool _isCategorical;
 
+public:
+    GhmapWriter(char *outputFileName, char *datasetName, bool isCategorical);
+    ~GhmapWriter();
+    void sortStrainsByPheno(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec);
+    void writeStrainNameAndValue(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec); // strainName and stainValues
+    void writeExpressionNames(std::vector<std::string> &exprOrderVec);
+    void writeHeaders(std::vector<std::string> &header);
+
+    std::ofstream os;
+};
 
 
 /* Returns a score that represents the interestingness of codon changes*/

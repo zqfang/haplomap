@@ -15,7 +15,6 @@ ColumnReader::ColumnReader(const char *fname, char *delimiters)
     if (!_in.is_open())
     {
     std::cerr << "Open of file \"" << fname << "\" failed: ";
-    perror("");
     exit(1);
     }
     _lineno = 0;
@@ -73,10 +72,11 @@ int ColumnReader::getLine()
     // no lines remain.
     return -1;
   }
+  // header line
   if (_line.find("#") == 0) 
   {
-      _header.push_back(_line);
-      return 0;
+      size_t start = _line.find_first_not_of('#');
+      return split(_line.substr(start), _delimiters, _header);
   }
   _lineno++;
   // tokenize it
@@ -84,13 +84,14 @@ int ColumnReader::getLine()
 }
 
 
-std::string ColumnReader::getToken(size_t i) {
-if (i < _line_vector.size())
+std::string ColumnReader::getToken(size_t i) 
 {
-return _line_vector[i];
-}
-else
-{
-return std::string("");
+  if (i < _line_vector.size())
+  {
+  return _line_vector[i];
+  }
+  else
+  {
+  return std::string("");
 }
 }

@@ -294,6 +294,10 @@ bool BlocksComparator::operator()(const BlockSummary *pb1, const BlockSummary *p
       return false;
     }
   };
+
+
+
+
 void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
 {
     ColumnReader rdr(fname, (char *)"\t");
@@ -422,51 +426,114 @@ void showGeneBlockSums(std::ostream &os, bool isCategorical, std::vector<BlockSu
     }
 }
 
-void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetName,
-                        std::vector<std::vector<float>> &phenvec, std::vector<BlockSummary *> &blocks, float pvalueCutoff)
+
+GhmapWriter::GhmapWriter(char *outputFileName, char *datasetName, bool isCategorical):
+_dataset_name(datasetName), _isCategorical(isCategorical)
 {
-    std::ofstream blockout(outputFileName);
-    if (!blockout.is_open())
+    os = std::ofstream(outputFileName);
+    if (!os.is_open())
     {
         std::cout << "Open of file \"" << outputFileName << "\" failed: ";
         perror("");
         exit(1);
     }
-    // Datasetname
-    blockout << datasetName << std::endl;
-    // sort strains by phenvec value
-    std::vector<int> strOrderVec(numStrains); // will contain strain indices.
-    sortStrainsByPheno(phenvec, strOrderVec);
+    os << "##" << datasetName << std::endl;
+}
 
+GhmapWriter::~GhmapWriter() {}
+
+void GhmapWriter::sortStrainsByPheno(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec)
+{
+    std::vector<int>::iterator stoEnd = strOrderVec.end();
+    int i = 0;
+    for (std::vector<int>::iterator stoIt = strOrderVec.begin(); stoIt != stoEnd; stoIt++)
+    {
+        *stoIt = i++;
+    }
+    // This will sort lexicographically, which is the right thing.
+    // For categorical values, we just want equal values together.
+    IndexComparator<std::vector<float>, std::less<std::vector<float>>> idxCompare(&phenvec);
+    std::stable_sort(strOrderVec.begin(), strOrderVec.end(), idxCompare);
+}
+
+void GhmapWriter::writeStrainNameAndValue(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec)
+{
     // output strain names.
     std::vector<int>::iterator stoEnd1 = strOrderVec.end();
+    this->os << "##";
     for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
     {
         int str1 = *stoIt1;
-        blockout << strainAbbrevs.eltOf(str1);
+        this->os << strainAbbrevs.eltOf(str1);
         if (stoIt1 + 1 < stoEnd1)
         {
-            blockout << "\t";
+            this->os << "\t";
         }
     }
-    blockout << std::endl;
+    this->os << std::endl;
+
 
     // output phenotype values.
+    this->os << "##";
     for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
     {
         int str1 = *stoIt1;
         if (phenvec[str1].size() > 1) {
             for (unsigned i = 0; i < phenvec[str1].size() - 1; i++)
-                blockout << phenvec[str1][i] << ",";
+                this->os << phenvec[str1][i] << ",";
         }
-        blockout << phenvec[str1].back();
+        this->os << phenvec[str1].back();
 
         if (stoIt1 + 1 < stoEnd1)
         {
-            blockout << "\t";
+            this->os << "\t";
         }
     }
-    blockout << std::endl;
+    this->os << std::endl;
+}
+
+void GhmapWriter::writeExpressionNames(std::vector<std::string> &exprOrderVec)
+{
+    this->os << "##GeneExprMapOrder: ";
+    std::vector<std::string>::iterator stoEnd1 = exprOrderVec.end();
+    for (auto stoIt1 = exprOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
+    {
+        this->os << *stoIt1;
+        if (stoIt1 + 1 < stoEnd1)
+        {
+            this->os << ";";
+        }
+    }
+    this->os << std::endl;
+}
+
+void GhmapWriter::writeHeaders(std::vector<std::string> &header)
+{
+    this->os << "#";
+    std::vector<std::string>::iterator stoEnd1 = header.end();
+    for (auto stoIt1 = header.begin(); stoIt1 != stoEnd1; stoIt1++)
+    {
+        this->os << *stoIt1;
+        if (stoIt1 + 1 < stoEnd1)
+        {
+            this->os << "\t";
+        }
+    }
+    this->os << std::endl;
+}
+
+void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetName,
+                        std::vector<std::vector<float>> &phenvec, std::vector<BlockSummary *> &blocks, float pvalueCutoff)
+{
+    std::vector<int> strOrderVec(numStrains); // will contain strain indices.
+    GhmapWriter writer(outputFileName, datasetName, isCategorical);
+    writer.sortStrainsByPheno(phenvec, strOrderVec);
+    writer.writeStrainNameAndValue(phenvec, strOrderVec);
+    writer.writeExpressionNames(geneExprHeader);
+    writer.os << "#GeneName\tCodonFlag\tHaplotype\t";
+    writer.os << (isCategorical ? "FStat" : "Pvalue");
+    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tChr\tBlockStart\tBlockEnd\t";
+    writer.os << "BlockIdx\tBlockSize\tGeneExprMap\n";
 
     GenesComparator gcomp(isCategorical);
     std::vector<GeneSummary *> genes;
@@ -475,130 +542,40 @@ void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetN
     std::transform(geneTable.begin(), geneTable.end(), std::back_inserter(genes),
               std::bind(&std::unordered_map<std::string, GeneSummary *>::value_type::second, std::placeholders::_1 ));
 
-    sort(genes.begin(), genes.end(), gcomp);
-    // write header
-//    blockout << "gene_name\tcondon\tpattern\t";
-//    blockout << (isCategorical ? "FStat" : "pvalue");
-//    blockout << "\teffect\tFDR\tpopPvalue\tpopFDR\tpop\tchr\tstart\tend\t";
-//    blockout << "blockIdx\tblockSize\tgene_expression\n";
-    showGeneBlockSums(blockout, isCategorical, blocks, pvalueCutoff, strOrderVec, genes);
+    std::sort(genes.begin(), genes.end(), gcomp);
+    showGeneBlockSums(writer.os, isCategorical, blocks, pvalueCutoff, strOrderVec, genes);
 }
 
 
 void writeGeneBlockByBlocks(bool isCategorical, char *outputFileName, char *datasetName,
                             std::vector<std::vector<float>> &phenvec,std::vector<BlockSummary *> &blocks, float pvalueCutoff)
 {
-    std::ofstream blockout(outputFileName);
-    if (!blockout.is_open())
-    {
-        std::cout << "Open of file \"" << outputFileName << "\" failed: ";
-        perror("");
-        exit(1);
-    }
-    // Datasetname
-    blockout << datasetName << std::endl;
-    // sort strains by phenvec value
     std::vector<int> strOrderVec(numStrains); // will contain strain indices.
-    sortStrainsByPheno(phenvec, strOrderVec);
-
-    // output strain names.
-    std::vector<int>::iterator stoEnd1 = strOrderVec.end();
-    for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
-    {
-        int str1 = *stoIt1;
-        blockout << strainAbbrevs.eltOf(str1);
-        if (stoIt1 + 1 < stoEnd1)
-        {
-            blockout << "\t";
-        }
-    }
-    blockout << std::endl;
-
-    // output phenotype values.
-    for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
-    {
-        int str1 = *stoIt1;
-        if (phenvec[str1].size() > 1) {
-            for (unsigned i = 0; i < phenvec[str1].size() - 1; i++)
-                blockout << phenvec[str1][i] << ",";
-        }
-        blockout << phenvec[str1].back();
-        if (stoIt1 + 1 < stoEnd1)
-        {
-            blockout << "\t";
-        }
-    }
-    blockout << std::endl;
-
-    // blockout << "gene_name\tcondon\tpattern\t";
-    // blockout << (isCategorical ? "FStat" : "pvalue");
-    // blockout << "\teffect\tFDR\tpopPvalue\tpopFDR\tpop\tchr\tstart\tend\t";
-    // blockout << "blockIdx\tblockSize\tgene_expression\n";
-    showGeneBlockByBlocks(blockout, isCategorical, blocks, pvalueCutoff, strOrderVec);
+    GhmapWriter writer(outputFileName, datasetName, isCategorical);
+    writer.sortStrainsByPheno(phenvec, strOrderVec);
+    writer.writeStrainNameAndValue(phenvec, strOrderVec);
+    writer.writeExpressionNames(geneExprHeader);
+    //writer.writeHeaders(header);
+    writer.os << "#GeneName\tCodonFlag\tHaplotype\t";
+    writer.os << (isCategorical ? "FStat" : "Pvalue");
+    writer.os << "\tEffectSize\tFDR\tpopPvalue\tpopFDR\tChr\tBlockStart\tBlockEnd\t";
+    writer.os << "BlockIdx\tBlockSize\tGeneExprMap\n";
+    showGeneBlockByBlocks(writer.os, isCategorical, blocks, pvalueCutoff, strOrderVec);
 }
 
 void writeBlockSums(bool isCategorical, char *outputFileName,
                     char *datasetName, std::vector<std::vector<float> > &phenvec,
                     std::vector<BlockSummary *> &blocks, float pvalueCutoff)
 {
-    std::ofstream blockout(outputFileName);
-    if (!blockout.is_open())
-    {
-        std::cout << "Open of file \"" << outputFileName << "\" failed: ";
-        perror("");
-        exit(1);
-    }
-
-    // Datasetname
-    blockout << datasetName << std::endl;
-
-    // sort strains by phenvec value
-
-    std::vector<int> strOrderVec(numStrains); // will contain strain indices.
-    sortStrainsByPheno(phenvec, strOrderVec);
-
-    // output strain names.
-    // FIXME:  Start using vecfuns written for Ravi microarray analysis
-    std::vector<int>::iterator stoEnd1 = strOrderVec.end();
-    for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
-    {
-        int str1 = *stoIt1;
-        blockout << strainAbbrevs.eltOf(str1);
-        if (stoIt1 + 1 < stoEnd1)
-        {
-            blockout << "\t";
-        }
-    }
-    blockout << std::endl;
-
-    // output phenotype values.
-    for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
-    {
-        int str1 = *stoIt1;
-        if (isCategorical)
-        {
-            blockout << catNames[str1];
-        }
-        else
-        {
-            if (phenvec[str1].size() > 1) {
-                for (unsigned i = 0; i < phenvec[str1].size() - 1; i++)
-                    blockout << phenvec[str1][i] << ",";
-            }
-            blockout << phenvec[str1].back();
-        }
-        if (stoIt1 + 1 < stoEnd1)
-        {
-            blockout << "\t";
-        }
-    }
-    blockout << std::endl;
-//    // write header
-//    blockout <<"blockIdx\tblockStart\tblockSize\tchr\tstart\tend\tpattern\t";
-//    blockout <<(isCategorical ? "FStat":"pvalue");
-//    blockout <<"\teffect\tFDR\tpopPvalue\tpopFDR\tpop\tgene_name\tmutate\tcondon\n";
-
-    showBlockSums(blockout, isCategorical, blocks, pvalueCutoff, strOrderVec);
+    GhmapWriter writer(outputFileName, datasetName, isCategorical);
+    std::vector<int> strOrderVec(numStrains);
+    writer.sortStrainsByPheno(phenvec, strOrderVec);
+    writer.writeStrainNameAndValue(phenvec, strOrderVec);
+    writer.writeExpressionNames(geneExprHeader);
+    writer.os << "#BlockIdx\tBlockStart\tBlockSize\tChr\tBlockStart\tBlockEnd\tHaplotype\t";
+    writer.os << (isCategorical ? "FStat" : "Pvalue");
+    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tGeneName\tMutation\tCodon\n";
+    showBlockSums(writer.os, isCategorical, blocks, pvalueCutoff, strOrderVec);
 }
 
 // Write gene-oriented summary.
@@ -606,73 +583,25 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
                    char *datasetName, std::vector<std::vector<float> > &phenvec,
                    std::vector<BlockSummary *> &blocks, float cutoff, bool filterCoding)
 {
-    std::ofstream genesout(outputFileName);
-    if (!genesout.is_open())
-    {
-        std::cout << "Open of file \"" << outputFileName << "\" failed: ";
-        perror("");
-        exit(1);
-    }
-
-    // Datasetname
-    genesout << datasetName << std::endl;
-
-    // sort strains by phenvec value
-
-    std::vector<int> strOrderVec(numStrains); // will contain strain indices.
-    sortStrainsByPheno(phenvec, strOrderVec);
-
-    // output strain names.
-    // FIXME:  Start using vecfuns written for Ravi microarray analysis
-    //  ... or STL algorithms!
-    std::vector<int>::iterator stoEnd1 = strOrderVec.end();
-    for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
-    {
-        int str1 = *stoIt1;
-        genesout << strainAbbrevs.eltOf(str1);
-        if (stoIt1 + 1 < stoEnd1)
-        {
-            genesout << "\t";
-        }
-    }
-    genesout << std::endl;
-
-    // output phenotype values.
-    for (std::vector<int>::iterator stoIt1 = strOrderVec.begin(); stoIt1 != stoEnd1; stoIt1++)
-    {
-        int str1 = *stoIt1;
-        if (isCategorical)
-        {
-            genesout << catNames[str1];
-        }
-        else
-        {
-            if (phenvec[str1].size() > 1) {
-                for (unsigned i = 0; i < phenvec[str1].size() - 1; i++)
-                    genesout << phenvec[str1][i] << ",";
-            }
-            genesout << phenvec[str1].back();
-        }
-        if (stoIt1 + 1 < stoEnd1)
-        {
-            genesout << "\t";
-        }
-    }
-    genesout << std::endl;
+    GhmapWriter writer(outputFileName, datasetName, isCategorical);
+    std::vector<int> strOrderVec(numStrains);
+    writer.sortStrainsByPheno(phenvec, strOrderVec);
+    writer.writeStrainNameAndValue(phenvec, strOrderVec);
+    writer.writeExpressionNames(geneExprHeader);
+    // header
+    writer.os << "#GeneName\tCodonFlag\tHaplotype\t";
+    writer.os << (isCategorical ? "FStat" : "Pvalue");
+    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tChr\tBlockStart\tBlockEnd\tGeneExprMap\n";
+    std::ofstream & genesout = writer.os;
 
     GenesComparator gcomp(isCategorical);
-
     // Copy genesTable values into a vector and sort using GenesComparator
     std::vector<GeneSummary *> genes;
     genes.reserve(geneTable.size());
     std::transform(geneTable.begin(), geneTable.end(), std::back_inserter(genes),
               std::bind(&std::unordered_map<std::string, GeneSummary *>::value_type::second, std::placeholders::_1 ));
     std::sort(genes.begin(), genes.end(), gcomp);
-    // write header
-//    genesout <<"gene_name\tcondon\tpattern\t";
-//    genesout << (isCategorical ? "FStat" : "pvalue");
-//    genesout << "\teffect\tFDR\tpopPvalue\tpopFDR\tpop\tchr\tstart\tend\tgene_expression\n";
-    // write them out.
+
     for (std::vector<GeneSummary *>::iterator git = genes.begin(); git != genes.end(); git++)
     {
 
