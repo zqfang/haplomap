@@ -11,66 +11,53 @@
 #include "eigen.h"
 
 
-EigenMat::EigenMat(const char* MatrixFile)
-{
+// EigenMat::EigenMat(const char* MatrixFile)
+// {
 
-    int numtoks;
-    ColumnReader rmat(MatrixFile, (char *)"\t");
-    numtoks = rmat.getLine();  // read header
-    if (numtoks < 0)
-    {
-        std::cerr<<"Empty Matrix File input. Hints: header line should start with '#' ";
-        exit(0);
-    }
+//     int numtoks;
+//     ColumnReader rmat(MatrixFile, (char *)"\t");
+//     numtoks = rmat.getLine();  // read header
+//     if (numtoks < 0)
+//     {
+//         std::cerr<<"Empty Matrix File input. Hints: header line should start with '#' ";
+//         exit(0);
+//     }
 
-    std::vector<std::string> header = rmat.getHeader();
-    for (auto & strain_abbrev: header)
-    {
-        int strIdx = rownames.addElementIfNew(strain_abbrev);
-        if (strIdx < 0)
-        {
-            std::cout << "Undefined strain abbrev: " << strain_abbrev << std::endl;
-        }
-    }
+//     std::vector<std::string> header = rmat.getHeaderLines().back();
+//     for (auto & strain_abbrev: header)
+//     {
+//         int strIdx = rownames.addElementIfNew(strain_abbrev);
+//         if (strIdx < 0)
+//         {
+//             std::cout << "Undefined strain abbrev: " << strain_abbrev << std::endl;
+//         }
+//     }
 
-    data = gsl_matrix_alloc(rownames.size(), rownames.size());
-    int i = 0;
-    while ((numtoks = rmat.getLine()) >= 0) {
-        for (int t = 0; t < numtoks; t++)
-        {
-            double d = std::stod(rmat.getToken(t));
-            gsl_matrix_set(data,i,t,d);
-        }
-        i++;
-    }
-    size1 = data->size1;
-    size2 = data->size2;
-}
+//     data = gsl_matrix_alloc(rownames.size(), rownames.size());
+//     int i = 0;
+//     while ((numtoks = rmat.getLine()) >= 0) {
+//         for (int t = 0; t < numtoks; t++)
+//         {
+//             double d = std::stod(rmat.getToken(t));
+//             gsl_matrix_set(data,i,t,d);
+//         }
+//         i++;
+//     }
+//     size1 = data->size1;
+//     size2 = data->size2;
+// }
 
-EigenMat::EigenMat(const char* filename, bool header, const std::string delimimiter )
+EigenMat::EigenMat(const char* filename, char* delimimiter )
 {
     int numtoks;
     std::vector<std::vector<double>> temp_mat;
-    // read matrix file
-    ColumnReader rmat(filename, (char *)delimimiter.c_str());
-    // get first line
-    numtoks = rmat.getLine();
-    if (numtoks < 0)
-        std::invalid_argument("Empty input file");
-
     std::vector<double> temp;
-    // read header
-    if (header) {
-        for (int t = 0; t < numtoks; t++)
-            rownames.addElementIfNew(rmat.getToken(t));
-    } else {
-        for (int t = 0; t < numtoks; t++)
-            temp.push_back(std::stod(rmat.getToken(t)));
-        temp_mat.push_back(temp);
-        temp.clear();
-    }
-    // read the rest of file
-    while ((numtoks = rmat.getLine()) >= 0) {
+    // read matrix file
+    ColumnReader rmat(filename, delimimiter); // '\t'
+    // parse file
+    while ((numtoks = rmat.getLine()) >= 0) 
+    {
+        if (rmat.getCurrentLineNum() < 1) continue;  
         temp.clear();
         for (int t = 0; t < numtoks; t++) {
             temp.push_back(std::stod(rmat.getToken(t)));
@@ -83,9 +70,17 @@ EigenMat::EigenMat(const char* filename, bool header, const std::string delimimi
     for (unsigned i = 0; i < size1; ++i) {
         for (unsigned j = 0; j < size2; ++j) {
             gsl_matrix_set(this->data, i, j, temp_mat[i][j]);
-            //std::cout << temp_mat[i][j] << " ";
         }
-        //std::cout<<std::endl;
+    }
+    // set matrix rownames
+    std::vector<std::string> _header = rmat.getHeaderLines().back();
+    for (auto & strain_abbrev: _header)
+    {
+        int strIdx = rownames.addElementIfNew(strain_abbrev);
+        if (strIdx < 0)
+        {
+            std::cout << "Undefined strain abbrev: " << strain_abbrev << std::endl;
+        }
     }
 }
 

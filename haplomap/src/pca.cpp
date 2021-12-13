@@ -136,7 +136,7 @@ std::shared_ptr<EigenOptions> parseEigenOptions(int argc, char **argv)
 int main_eigen(int argc, char **argv) {
     std::shared_ptr<EigenOptions> opts = parseEigenOptions(argc, argv);
     std::shared_ptr<EigenMat> eigens;
-    eigens = std::make_shared<EigenMat>(opts->inputFileName, false, "\t");
+    eigens = std::make_shared<EigenMat>(opts->inputFileName, (char*)"\t");
     gsl_matrix *results = eigens->pca(opts->L);
 
     // write output file

@@ -66,6 +66,7 @@ int readDynumList(char *fname, Dynum<string> &dn)
   int numtoks;
   while ((numtoks = rdr.getLine()) >= 0)
   {
+    if (rdr.getCurrentLineNum() < 1) continue;
     if (numtoks > 0)
     {
       dn.addElementIfNew(rdr.getToken(0));
@@ -87,7 +88,7 @@ void readPerlegenSNPvsmgene(const char *fname)
   // example:	1!NES16340864!ENSMUSG00000073722!4931408C20Rik!!0!up  !96472!26728479!0!1!
   while ((numtoks = rdr.getLine()) >= 0)
   {
-
+    if (rdr.getCurrentLineNum() < 1) continue;
     string snpName = rdr.getToken(1);
     string geneName = rdr.getToken(3);
     int pos = atoi(rdr.getToken(8).c_str());
@@ -301,6 +302,7 @@ void readSNPGeneNames(char *fname)
   int numtoks;
   while ((numtoks = rdr.getLine()) >= 0)
   {
+    if (rdr.getCurrentLineNum() < 1) continue; // skip header
     string snpName = rdr.getToken(0);
     string geneName = rdr.getToken(1);
 
@@ -404,8 +406,8 @@ void readChromosomeInfo(char *fname)
   int numtoks;
   while ((numtoks = rdr.getLine()) >= 0)
   {
+    if (rdr.getCurrentLineNum() < 1) continue;
     // file has "SNPname\t\tchr\t\tpos\n"
-
     // FIXME: some unnecessary string copies
     string snpName = rdr.getToken(0);
     string chr = rdr.getToken(2);
@@ -440,6 +442,7 @@ void readAlleleInfo(char *fname)
   int numtoks;
   while ((numtoks = rdr.getLine()) >= 0)
   {
+    if (rdr.getCurrentLineNum() < 1) continue;
     if (numtoks != 5)
     {
       cerr << "Warning: numtoks = " << numtoks << endl;
@@ -598,7 +601,7 @@ void filterAndSortSNPs()
   //       << ", total = " << snpCount << endl;
 
   // sort them with funky comparison function.
-  sort(snpVec.begin(), snpVec.end(), compareSNPs);
+  std::sort(snpVec.begin(), snpVec.end(), compareSNPs);
   // just take the first debugSNPMax SNPs for debugging
   if (debugSNPMax > 0 && debugSNPMax < (int)snpVec.size())
   {
@@ -809,9 +812,9 @@ bool strainsAreCompatible(char *merged, int blockstart, int blocksize, int str2)
 
 bool qMarksInBlock(int blockstart, int blocksize)
 {
-  vector<SNPInfo *>::iterator blockBeginIt = snpVec.begin() + blockstart;
-  vector<SNPInfo *>::iterator blockEndIt = blockBeginIt + blocksize;
-  for (vector<SNPInfo *>::iterator snpIt = blockBeginIt; snpIt != blockEndIt; snpIt++)
+  std::vector<SNPInfo *>::iterator blockBeginIt = snpVec.begin() + blockstart;
+  std::vector<SNPInfo *>::iterator blockEndIt = blockBeginIt + blocksize;
+  for (std::vector<SNPInfo *>::iterator snpIt = blockBeginIt; snpIt != blockEndIt; snpIt++)
   {
     if ((*snpIt)->qMarks)
       return true;
@@ -821,8 +824,8 @@ bool qMarksInBlock(int blockstart, int blocksize)
 
 int combinePatternNoQs(char *combined, int blockstart, int blocksize, int haploLimit)
 {
-  vector<SNPInfo *>::iterator blockBeginIt = snpVec.begin() + blockstart;
-  vector<SNPInfo *>::iterator blockEndIt = blockBeginIt + blocksize;
+  std::vector<SNPInfo *>::iterator blockBeginIt = snpVec.begin() + blockstart;
+  std::vector<SNPInfo *>::iterator blockEndIt = blockBeginIt + blocksize;
 
   //int firstInClassIndex = 0;
   int firstInClass = -1;
@@ -886,15 +889,15 @@ int combinePatterns(char *combined, int blockstart, int blocksize, int haploLimi
   }
   if (traceCombinePatterns)
   {
-    cout << "Combining patterns for " << blocksize << " SNPs starting at " << blockstart << endl;
+    std::cout << "Combining patterns for " << blocksize << " SNPs starting at " << blockstart << std::endl;
   }
   if (traceCombinePatterns)
   {
     for (int snpIdx = blockstart; snpIdx < blockstart + blocksize; snpIdx++)
     {
-      cout << "    ";
+      std::cout << "    ";
       showPattern(snpVec[snpIdx]->pattern);
-      cout << endl;
+      std::cout << std::endl;
     }
   }
 
@@ -915,20 +918,20 @@ int combinePatterns(char *combined, int blockstart, int blocksize, int haploLimi
     return combinePatternNoQs(combined, blockstart, blocksize, haploLimit);
   }
   // numDefVec number of non-? entries in each column
-  vector<int> numDefVec(numStrains);
+  std::vector<int> numDefVec(numStrains);
   // Permutation of strain indices to sort columns by number of non-? entries.
-  vector<int> strOrderVec(numStrains);
+  std::vector<int> strOrderVec(numStrains);
 
   // "pointers" to begining and end of block in snpVec, for "speed"
-  vector<SNPInfo *>::iterator blockBeginIt = snpVec.begin() + blockstart;
-  vector<SNPInfo *>::iterator blockEndIt = blockBeginIt + blocksize;
+  std::vector<SNPInfo *>::iterator blockBeginIt = snpVec.begin() + blockstart;
+  std::vector<SNPInfo *>::iterator blockEndIt = blockBeginIt + blocksize;
   //int total = blockEndIt - blockBeginIt;
   for (int str1 = 0; str1 < numStrains; str1++)
   {
     numDefVec[str1] = 0;
     // FIXME: Skip identical patterns here.
     // FIXME: I guess this could go by rows, which would be faster, too.
-    for (vector<SNPInfo *>::iterator snpIt = blockBeginIt; snpIt != blockEndIt; snpIt++)
+    for (std::vector<SNPInfo *>::iterator snpIt = blockBeginIt; snpIt != blockEndIt; snpIt++)
     {
       char *pat = (*snpIt)->pattern;
       char strchr = pat[str1];
@@ -942,17 +945,17 @@ int combinePatterns(char *combined, int blockstart, int blocksize, int haploLimi
 
   // Sort a strOrderVec of indices 0..numStrains-1 so that they are in descending order
   // of numDefVec.  Leftmost strains are assigned first, later.
-  vector<int>::iterator stoEnd = strOrderVec.end();
+  std::vector<int>::iterator stoEnd = strOrderVec.end();
   int i = 0;
-  for (vector<int>::iterator stoIt = strOrderVec.begin(); stoIt != stoEnd; stoIt++)
+  for (std::vector<int>::iterator stoIt = strOrderVec.begin(); stoIt != stoEnd; stoIt++)
   {
     *stoIt = i++;
   }
 
   if (qMarks)
   {
-    IndexComparator<int, greater<int>> idxCompare(&numDefVec);
-    stable_sort(strOrderVec.begin(), strOrderVec.end(), idxCompare);
+    IndexComparator<int, std::greater<int>> idxCompare(&numDefVec);
+    std::stable_sort(strOrderVec.begin(), strOrderVec.end(), idxCompare);
   }
   // Assign haplotypes to the strains.
 
@@ -971,7 +974,7 @@ int combinePatterns(char *combined, int blockstart, int blocksize, int haploLimi
   // FIXME: "done" check.
 
   char *merge = (char *)malloc(blocksize); //KSB what is the max? can we not malloc here? Why *in* for loop?
-  vector<int>::iterator stoEnd1 = strOrderVec.end();
+  std::vector<int>::iterator stoEnd1 = strOrderVec.end();
 
   int numHaplo = 0;
   for (int eqclass = 0; eqclass < haploLimit; eqclass++)
@@ -1059,7 +1062,7 @@ void findBestBlock(HaploBlock &bestBlock, int blockstart, int haploLimit, int mi
 {
   if (traceFBB)
   {
-    cout << "startBlock: " << blockstart << endl;
+    std::cout << "startBlock: " << blockstart << std::endl;
   }
 
   if (maxSize < 0)
@@ -1148,9 +1151,9 @@ void ffbBinSearch(HaploBlock &bestBlock, int blockstart, int haploLimit, int min
 
   if (traceFBB)
   {
-    cout << "  Binary search of power-of-2 block start = " << blockstart << ", size = " << minSize
-         << " with " << haploLimit << " haplotypes." << endl;
-    cout << "   Splitting at " << split << endl;
+    std::cout << "  Binary search of power-of-2 block start = " << blockstart << ", size = " << minSize
+         << " with " << haploLimit << " haplotypes." << std::endl;
+    std::cout << "   Splitting at " << split << std::endl;
   }
 
   bool cached = false;
@@ -1310,7 +1313,7 @@ void findBestBlockFast(HaploBlock &bestBlock, int blockstart, int haploLimit, in
 
   // compute scores of power-of-two size blocks until there are too many haplotypes
   // or other stopping condition.  Also, compute the maximum score value seen.
-  vector<HaploBlock> pow2blocks; // store info about the blocks for power-of-two sizes.
+  std::vector<HaploBlock> pow2blocks; // store info about the blocks for power-of-two sizes.
   double maxScore = 0.0;
 
   int prevNumHaplo = 0; // for monotonicity check
@@ -1855,7 +1858,7 @@ void chooseBlocks()
     }
   }
   // sort chosen blocks by chromosome/position.
-  sort(chosenHaploBlocks.begin(), chosenHaploBlocks.end(), compareBySNP);
+  std::sort(chosenHaploBlocks.begin(), chosenHaploBlocks.end(), compareBySNP);
 }
 
 // print a block and the SNPs in it.
@@ -1937,12 +1940,12 @@ void writeBlock(ostream &hs, int blkIdx, int haploLimit)
   int numHaplo = countHaplotypes(pattern);
 
   // vector mapping haplotype to the number of strains in that haplotype
-  vector<int> numHaplotypeStrains(numHaplo, 0);
+  std::vector<int> numHaplotypeStrains(numHaplo, 0);
   // minimum strain index in each haplotype.
-  vector<int> minHaplotypeStrain(numHaplo, numStrains);
+  std::vector<int> minHaplotypeStrain(numHaplo, numStrains);
 
   // vector of strain displays
-  vector<StrainDisp> strainDispVec(numStrains);
+  std::vector<StrainDisp> strainDispVec(numStrains);
 
   // Set up StrainDisp objects in strainDispVec
   for (int strIdx = 0; strIdx < numStrains; strIdx++)
@@ -1962,9 +1965,9 @@ void writeBlock(ostream &hs, int blkIdx, int haploLimit)
     strainDisp.strIdx = strIdx;
     strainDisp.haplotype = haplotype;
 
-    vector<SNPInfo *>::iterator blockBeginIt = snpVec.begin() + blockstart;
-    vector<SNPInfo *>::iterator blockEndIt = blockBeginIt + blocksize;
-    for (vector<SNPInfo *>::iterator snpIt = blockBeginIt; snpIt != blockEndIt; snpIt++)
+    std::vector<SNPInfo *>::iterator blockBeginIt = snpVec.begin() + blockstart;
+    std::vector<SNPInfo *>::iterator blockEndIt = blockBeginIt + blocksize;
+    for (std::vector<SNPInfo *>::iterator snpIt = blockBeginIt; snpIt != blockEndIt; snpIt++)
     {
       SNPInfo *pSNPInfo = *snpIt;
       if (pSNPInfo->alleles[strIdx] != '?')
@@ -1991,7 +1994,7 @@ void writeBlock(ostream &hs, int blkIdx, int haploLimit)
   // cout << "StrainDisp " << j << " strIdx = " << strainDispVec[j].strIdx << endl;
   // }
 
-  sort(strainDispVec.begin(), strainDispVec.end(), compareStrainDisps);
+  std::sort(strainDispVec.begin(), strainDispVec.end(), compareStrainDisps);
 
   if (traceWriteHTML)
   {
@@ -2104,26 +2107,26 @@ int writeChromosome(const char *dirname, size_t blkIdx)
 {
   int chrIdx = snpVec[chosenHaploBlocks[blkIdx]->start]->chrIdx;
 
-  string chrName = chromosomes.eltOf(chrIdx);
+  std::string chrName = chromosomes.eltOf(chrIdx);
 
-  string fname(dirname + chrName + ".html");
+  std::string fname(dirname + chrName + ".html");
   // string fname("/hd/dill/users/dill/WWW/haplo/" + chrName + ".html");
   // string fname("haplo/" + chrName + ".html");
 
-  ofstream hs(fname.c_str());
+  std::ofstream hs(fname.c_str());
   if (!hs.is_open())
   {
-    cerr << "Open of file \"" << fname << "\" failed: ";
+    std::cerr << "Open of file \"" << fname << "\" failed: ";
     perror("");
     exit(1);
   }
 
-  hs << "<HTML>" << endl
-     << "<HEAD><TITLE>Chromosome " << chrName << " Haplotype</TITLE></HEAD>" << endl
-     << "<BODY BGCOLOR=white VLINK=red TEXT=black LINK=red ALINK=green>" << endl
-     << "<CENTER>" << endl
-     << "<FONT SIZE=8 FACE=Arial>Chromosome " << chrName << " </FONT>" << endl
-     << "<P><HR><P>" << endl;
+  hs << "<HTML>" << std::endl
+     << "<HEAD><TITLE>Chromosome " << chrName << " Haplotype</TITLE></HEAD>" << std::endl
+     << "<BODY BGCOLOR=white VLINK=red TEXT=black LINK=red ALINK=green>" << std::endl
+     << "<CENTER>" << std::endl
+     << "<FONT SIZE=8 FACE=Arial>Chromosome " << chrName << " </FONT>" << std::endl
+     << "<P><HR><P>" << std::endl;
 
   // Using a parameter as a loop variable.  Is that bad?
   for (;
@@ -2156,25 +2159,25 @@ void writeBlockGeneNames(ofstream &os, HaploBlock *pHB)
   for (size_t snpIdx = pHB->start; snpIdx < snpEnd; snpIdx++)
   {
     SNPInfo *pSNPInfo = snpVec[snpIdx];
-    std::map<string, string> &geneCodonMap = pSNPInfo->geneCodonMap;
+    std::map<std::string, std::string> &geneCodonMap = pSNPInfo->geneCodonMap;
     //ofstream debug_log;
     //debug_log.open("debug.log",ios::app);
 
-    for (std::map<string, string>::iterator gcit = geneCodonMap.begin(); gcit != geneCodonMap.end(); gcit++)
+    for (std::map<std::string, std::string>::iterator gcit = geneCodonMap.begin(); gcit != geneCodonMap.end(); gcit++)
     {
       //cout << (*gcit).first << "\t" << gcit->first << "\t" << (*gcit).second << "\t" << pSNPInfo->position << endl;
       if (geneIsCodingMap[(*gcit).first] == "")
       {
         //debug_log << "The first time: " << gcit->first << " " << gcit->second << endl;
-        if ((*gcit).second.find("NON_SYNONYMOUS_CODING") != string::npos)
+        if ((*gcit).second.find("NON_SYNONYMOUS_CODING") != std::string::npos) // npos == len(string), indicate no matches
         {
           geneIsCodingMap[(*gcit).first] = "1";
         }
-        else if ((*gcit).second.find("<") != string::npos || (*gcit).second.find("SPLICE_SITE") != string::npos)
+        else if ((*gcit).second.find("<") != std::string::npos || (*gcit).second.find("SPLICE_SITE") != std::string::npos)
         {
           geneIsCodingMap[(*gcit).first] = (*gcit).second; // 2
         }
-        else if ((*gcit).second.find("SYNONYMOUS_CODING") != string::npos)
+        else if ((*gcit).second.find("SYNONYMOUS_CODING") != std::string::npos)
         {
           geneIsCodingMap[(*gcit).first] = "0";
         }
@@ -2187,12 +2190,13 @@ void writeBlockGeneNames(ofstream &os, HaploBlock *pHB)
       else
       {
         //debug_log << "NOT the first time: " << gcit->first << " " << gcit->second << endl;
-        if ((*gcit).second.find("NON_SYNONYMOUS_CODING") != string::npos)
+        if ((*gcit).second.find("NON_SYNONYMOUS_CODING") != std::string::npos)
         {
           if (geneIsCodingMap[(*gcit).first] == "0")
             geneIsCodingMap[(*gcit).first] = "1";
           //continue;
         }
+
         if ((*gcit).second.find("<") != string::npos || (*gcit).second.find("SPLICE_SITE") != string::npos)
         {
           //debug_log << "splice site in" << gcit->first << endl;
@@ -2210,7 +2214,8 @@ void writeBlockGeneNames(ofstream &os, HaploBlock *pHB)
         else if ((*gcit).second.find("SYNONYMOUS_CODING") != string::npos)
         {
           geneIsCodingMap[(*gcit).first] = "0";
-        } else 
+        } 
+        else 
         {
           // patch for SV input
            geneIsCodingMap[(*gcit).first] = (*gcit).second; 

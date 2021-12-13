@@ -276,50 +276,50 @@ int main_ghmap(int argc, char **argv)
     beginPhase("reading phenotype file");
     if (opts->isCategorical)
     {
-    readCPhenotypes(opts->phenotypeFileName, phenvec);
+        readCPhenotypes(opts->phenotypeFileName, phenvec);
     }
     else
     {
-    readQPhenotypes(opts->phenotypeFileName, phenvec);
+        readQPhenotypes(opts->phenotypeFileName, phenvec);
     }
     endPhase();
 
     beginPhase("reading gene expressions file");
     if (opts->expressionFile)
     {
-    readCompactGeneExpr(opts->expressionFile);
+        readCompactGeneExpr(opts->expressionFile);
     }
     endPhase();
 
     beginPhase("reading go term file");
     if (opts->goTermFile)
     {
-    vector<string> goTerms;
-    readFileToVec(opts->goFilter, goTerms);
-    filterGoTerms(opts->goTermFile, goTerms);
+        std::vector<std::string> goTerms;
+        readFileToVec(opts->goFilter, goTerms);
+        filterGoTerms(opts->goTermFile, goTerms);
     }
     endPhase();
 
     if (opts->filterCoding)
     {
-    beginPhase("filtering blocks by coding");
-    filterCodingBlocks();
-    endPhase();
+        beginPhase("filtering blocks by coding");
+        filterCodingBlocks();
+        endPhase();
     }
 
     if (opts->equalFile)
     {
-    beginPhase("filtering by equality class");
-    vector<int> equalClass;
-    readEqualFile(opts->equalFile, equalClass);
-    filterEqualBlocks(equalClass);
-    endPhase();
+        beginPhase("filtering by equality class");
+        std::vector<int> equalClass;
+        readEqualFile(opts->equalFile, equalClass);
+        filterEqualBlocks(equalClass);
+        endPhase();
     }
 
     std::shared_ptr<MANOVA> aov;
     if (opts->geneticRelationMatrix != NULL) {
         beginPhase("reading genetic relation matrix");
-        aov = std::make_shared<MANOVA>(opts->geneticRelationMatrix, 4);
+        aov = std::make_shared<MANOVA>(opts->geneticRelationMatrix, (char *)"\t",  4);
         aov->setEigen(strainAbbrevs); // calculate eigenvectors for selected strains
         endPhase();
     }
@@ -365,20 +365,20 @@ int main_ghmap(int argc, char **argv)
     if (opts->geneticRelationMatrix != NULL)
         bh_fdr(blocks, 0.05, 0); // pop structure pval correction
     if (!opts->isCategorical)
-        bh_fdr(blocks, 0.05,1); // annova pval correction
+        bh_fdr(blocks, 0.05, 1); // annova pval correction
     endPhase();
 
     beginPhase("sorting blocks");
     BlocksComparator bcomp(opts->isCategorical);
-    sort(blocks.begin(), blocks.end(), bcomp);
+    std::sort(blocks.begin(), blocks.end(), bcomp);
     endPhase();
 
     beginPhase("sorting blocks in gene table");
     // Pass to sort block vectors in the gene table.
     for (std::unordered_map<string, GeneSummary *>::iterator git = geneTable.begin(); git != geneTable.end(); git++)
     {
-    vector<BlockSummary *> &gBlocks = (*git).second->blocks;
-    sort(gBlocks.begin(), gBlocks.end(), bcomp);
+        vector<BlockSummary *> &gBlocks = (*git).second->blocks;
+        std::sort(gBlocks.begin(), gBlocks.end(), bcomp);
     }
     endPhase();
 
@@ -387,47 +387,48 @@ int main_ghmap(int argc, char **argv)
     // results file, in the format of nhaplomap.pl, for display when someone clicks on a gene in the
     // gene-oriented html (or if * was specified for gene name)
     // Otherwise, it generates the gene-oriented html.
-    if (opts->geneName || opts->haploBlocks)
+    if (opts->geneName || opts->haploBlocks) // -k
     {
-    beginPhase("writing block-oriented results file for gene.");
-    if (opts->isCategorical)
+        beginPhase("writing block-oriented results file for gene.");
+        if (opts->isCategorical)
+        {
+        // Find FStat cutoff
+        int cutoffBlockIdx = (int)(opts->pvalueCutoff * blocks.size());
+        float FCutoff = blocks[cutoffBlockIdx]->FStat;
+        //    cout << "pvalueCutoff = " << opts->pvalueCutoff << ", cutoffBlockIdx = " << cutoffBlockIdx
+        //	 << ", num blocks = " << blocks.size()
+        //	 << ", FCutoff = " << FCutoff << endl;
+        writeBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, FCutoff);
+        }
+        else
+        {
+            writeBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
+        }
+
+    }
+    else if (opts->geneBlocks) // -m
     {
-      // Find FStat cutoff
-      int cutoffBlockIdx = (int)(opts->pvalueCutoff * blocks.size());
-      float FCutoff = blocks[cutoffBlockIdx]->FStat;
-      //    cout << "pvalueCutoff = " << opts->pvalueCutoff << ", cutoffBlockIdx = " << cutoffBlockIdx
-      //	 << ", num blocks = " << blocks.size()
-      //	 << ", FCutoff = " << FCutoff << endl;
-      writeBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, FCutoff);
+        writeGeneBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
+    }
+    else if (opts->geneByBlocks)  // -a
+    {
+        writeGeneBlockByBlocks(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
     }
     else
     {
-      writeBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
-    }
-    }
-    else if (opts->geneBlocks)
-    {
-    writeGeneBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
-    }
-    else if (opts->geneByBlocks)
-    {
-    writeGeneBlockByBlocks(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
-    }
-    else
-    {
-    beginPhase("writing gene-oriented results file.");
-    if (opts->isCategorical)
-    {
-      // Find FStat cutoff
-      int cutoffBlockIdx = (int)(opts->pvalueCutoff * blocks.size());
-      float FCutoff = blocks[cutoffBlockIdx]->FStat;
-      writeGeneSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, FCutoff, opts->filterCoding);
-    }
-    else
-    {
-      writeGeneSums(opts->isCategorical, opts->outputFileName, opts->datasetName,
-                    phenvec, blocks, opts->pvalueCutoff, opts->filterCoding);
-    }
+        beginPhase("writing gene-oriented results file.");
+        if (opts->isCategorical)
+        {
+        // Find FStat cutoff
+            int cutoffBlockIdx = (int)(opts->pvalueCutoff * blocks.size());
+            float FCutoff = blocks[cutoffBlockIdx]->FStat;
+            writeGeneSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, FCutoff, opts->filterCoding);
+        }
+        else
+        {
+            writeGeneSums(opts->isCategorical, opts->outputFileName, opts->datasetName,
+                        phenvec, blocks, opts->pvalueCutoff, opts->filterCoding);
+        }
     }
 
     endPhase();

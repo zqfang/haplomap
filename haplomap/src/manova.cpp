@@ -13,10 +13,10 @@
 #include "manova.h"
 
 
-MANOVA::MANOVA(const char* MatFile, unsigned int L):
+MANOVA::MANOVA(const char* MatFile, char* delimiter, unsigned int L):
 _Mat(nullptr), _useEigen(false),_numStrains(0),_numDefined(0),_numHaplo(0),_pattern(nullptr)
 {
-    _CorMat = std::make_shared<EigenMat>(MatFile);
+    _CorMat = std::make_shared<EigenMat>(MatFile, delimiter);
     _numStrains = _CorMat->size1;
     assert(L > 0 && L < _CorMat->size2);
     this->L = L;

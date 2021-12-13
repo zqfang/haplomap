@@ -19,9 +19,9 @@ struct EigenMat
     gsl_vector* eigenvalues = nullptr;
     gsl_vector* variances = nullptr;
 
-    /// read correlation matrix(grm.rel) and rowname (grm.rel.id) files from PLink output,
-    EigenMat(const char* MatrixFile);
-    EigenMat(const char* MatrixFile, bool header, const std::string delimimiter  = "\t");
+    /// read correlation matrix(grm.rel) file from PLink output,
+    // EigenMat(const char* MatrixFile);
+    EigenMat(const char* MatrixFile, char *delimiters);
     /// init with STL vector
     explicit EigenMat(const std::vector<std::vector<double>> &Mat);
     /// init with GSL matrix

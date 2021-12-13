@@ -36,7 +36,7 @@ public:
 
     /// read correlation matrix(grm.rel) and rowname (grm.rel.id) files from PLink output,
     /// set dimension reduction to L
-    MANOVA(const char* MatFile, unsigned int L=4);
+    MANOVA(const char* MatFile, char *delimiters, unsigned int L=4);
     /// init with GSL matrix, set dimension reduction to L
     MANOVA(gsl_matrix* M, unsigned int L=4);
     MANOVA() = default;

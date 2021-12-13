@@ -31,50 +31,50 @@ void writeSortedPattern(std::ostream &os, char *pattern, std::vector<int> &strOr
 // summary of a block, read for the file.
 class BlockSummary
 {
-public:
-  char *chrName;
-  int blockIdx;
-  int blockStart;
-  int blockSize;
-  int chrBegin;
-  int chrEnd;
-  char *pattern;
-  bool isIgnored; // for blocks that have been filtered out.
-  float FStat;
-  float pvalue;
-  float FDR;
-  float effect;
-  float relFStat;
-  float relPvalue;
-  float relFDR;
-  bool relReject;
-  int numHaplo;
-  int numInteresting;
-  std::map<std::string, std::string> geneIsInteresting; // gene name -> codon change, by gene BY
-  std::map<std::string, std::string> geneIsCodingMap;   // gene name -> coding bit
-  // constructor
-  BlockSummary(const char *chrnm, int num, int start, int size,
-               int chrbeg, int chrend, const char *pat);
-  ~BlockSummary();
+  public:
+    char *chrName;
+    int blockIdx;
+    int blockStart;
+    int blockSize;
+    int chrBegin;
+    int chrEnd;
+    char *pattern;
+    bool isIgnored; // for blocks that have been filtered out.
+    float FStat;
+    float pvalue;
+    float FDR;
+    float effect;
+    float relFStat;
+    float relPvalue;
+    float relFDR;
+    bool relReject;
+    int numHaplo;
+    int numInteresting;
+    std::map<std::string, std::string> geneIsInteresting; // gene name -> codon change, by gene BY
+    std::map<std::string, std::string> geneIsCodingMap;   // gene name -> coding strings, eg. TGA/X<->GGA/R
+    // constructor
+    BlockSummary(const char *chrnm, int num, int start, int size,
+                int chrbeg, int chrend, const char *pat);
+    ~BlockSummary();
 
-  std::string updateCodonScore(std::string str);
-  friend void updateGeneIsInteresting(BlockSummary *pb);
-  // print a line of the blocks file.
-  // blockIdx	blockStart	blockSize	chromosome	begin	end	pattern	pval	effect	genename genehascoding ...
-  friend void showBlockSum(std::ostream &os, bool isCategorical, BlockSummary *pb, std::vector<int> &strOrderVec);
-  // BY addition, output as such:
-  // gene	codon_flag	pattern	pval	effect	chromosome	begin	end	blockIdx	blockStart	blockSize	expression
-  friend void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb, std::vector<int> &strOrderVec);
+    std::string updateCodonScore(std::string str);
+    void updateGeneIsInteresting(void);
+    // print a line of the blocks file.
+    // blockIdx	blockStart	blockSize	chromosome	begin	end	pattern	pval	effect	genename genehascoding ...
+    friend void showBlockSum(std::ostream &os, bool isCategorical, BlockSummary *pb, std::vector<int> &strOrderVec);
+    // BY addition, output as such:
+    // gene	codon_flag	pattern	pval	effect	chromosome	begin	end	blockIdx	blockStart	blockSize	expression
+    friend void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb, std::vector<int> &strOrderVec);
 
-  // Return true if pval is above cutoff or FStat is below it.
-  friend bool isCutoff(bool isCategorical, float cutoff, BlockSummary *pBlock)
-  {
-    return (isCategorical) ? (pBlock->FStat < cutoff) : (pBlock->pvalue > cutoff);
-  }
-  friend void showBlockSums(std::ostream &os, bool isCategorical,
-                            std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec);
-  friend void showGeneBlockByBlocks(std::ostream &os, bool isCategorical, std::vector<BlockSummary *> &blocks, 
-                                    float cutoff, std::vector<int> &strOrderVec);
+    // Return true if pval is above cutoff or FStat is below it.
+    friend bool isCutoff(bool isCategorical, float cutoff, BlockSummary *pBlock)
+    {
+      return (isCategorical) ? (pBlock->FStat < cutoff) : (pBlock->pvalue > cutoff);
+    }
+    friend void showBlockSums(std::ostream &os, bool isCategorical,
+                              std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec);
+    friend void showGeneBlockByBlocks(std::ostream &os, bool isCategorical, std::vector<BlockSummary *> &blocks, 
+                                      float cutoff, std::vector<int> &strOrderVec);
 };
 
 inline void showIsCoding(std::map<std::string, std::string> geneIsCodingMap)

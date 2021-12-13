@@ -33,18 +33,6 @@ std::vector<std::string> split(const std::string& s, char c)
     return tokens;
 }
 
-//std::string trim(const std::string& str, const std::string delimiter = " \n\r\t")
-//{
-////    std::string s;
-////    s.erase(s.find_last_not_of(" \n\r\t")+1);
-//    size_t first = str.find_first_not_of(delimiter);
-//    if (std::string::npos == first)
-//    {
-//        return str;
-//    }
-//    size_t last = str.find_last_not_of(delimiter);
-//    return str.substr(first, (last - first + 1));
-//}
 
 /* NULL, because instance will be initialized on demand. */
 Singleton* Singleton::instance = 0;
