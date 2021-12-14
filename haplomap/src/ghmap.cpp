@@ -576,7 +576,7 @@ void writeGeneBlockByBlocks(bool isCategorical, char *outputFileName, char *data
     //writer.writeHeaders(header);
     writer.os << "#GeneName\tCodonFlag\tHaplotype\t";
     writer.os << (isCategorical ? "FStat" : "Pvalue");
-    writer.os << "\tEffectSize\tFDR\tpopPvalue\tpopFDR\tChr\tBlockStart\tBlockEnd\t";
+    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tChr\tBlockStart\tBlockEnd\t";
     writer.os << "BlockIdx\tBlockSize\tGeneExprMap\n";
     showGeneBlockByBlocks(writer.os, isCategorical, blocks, pvalueCutoff, strOrderVec);
 }
