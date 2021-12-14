@@ -41,9 +41,13 @@ BlockSummary::~BlockSummary()
 // summary of a block, read for the file.
 std::string BlockSummary::updateCodonScore(std::string str)
   {
-    int count = 0;
+    // input strings will be: INTRONIC, intergenic, SPLITE_SITE, 5PRIME_UTR, 3PRIME_UTR, 
+    // NON_SYNONYMOUS_CODING(1), SYNONYMOUS_CODING (0), but these two have been reformat to <->
+    int missen_count = 0;
+    int synonymous_count = 0;
     size_t pos = 0;
     size_t endpos = 0;
+    /// iter throught a string like: TCT/S<->CCT/P!TCT/S<->TCT/S!GAC/D<->GAC/D!GAC/D<->GAT/D
     while (true)
     {
       pos = str.find("<", pos + 1);
@@ -52,40 +56,54 @@ std::string BlockSummary::updateCodonScore(std::string str)
       endpos = str.find(">", pos + 1);
       int aa1 = str[pos - 1] - 'A';
       int aa2 = str[endpos + 5] - 'A';
+
       if (AACLASSES[aa1] != AACLASSES[aa2])
       {
-        count++;
+        missen_count++;
         int X = 'X' - 'A'; // 'X' termination condon
         if (aa1 == X || aa2 == X)
         { // stop codon
           return "3"; //"stop_codon";
         }
       }
+      else
+      {
+          synonymous_count++; 
+      }
     }
     if (str.find("SPLICE_SITE") != std::string::npos)
     {
       return "2"; //splicing";
     }
-    if (count > 0)
+
+    if (missen_count > 0)
     {
       return "1"; //codon_change";
     }
-    return "-1"; //no_codon_change";
+
+    if ((missen_count == 0) && (synonymous_count > 0))
+    {
+        return "0"; // synonymous
+    }
+
+    return "-1"; //no_codon_change"; include INTRONIC, intergenic, 5PRIME_UTR, 3PRIME_UTR
   }
 
-void BlockSummary::updateGeneIsInteresting(void)
-{ // BY
+void BlockSummary::updateGeneIsInteresting()
+  { // BY
     for (std::map<std::string, std::string>::iterator giit = this->geneIsCodingMap.begin(); giit != this->geneIsCodingMap.end(); giit++)
     {
-      if (giit->second == "0" || giit->second == "1")
+      if (giit->second == "0" || giit->second == "1") // 1 already converted to AA strings, e.g. ACT/T<->GCT/A
       {
-        this->geneIsInteresting[giit->first] =  giit->second; //"no_codon_change";
+        // Our old SNP annotation only use NCBI database, which use condon flag [0,1,2] to indicate coding change
+        // since we now using ANNOVAR to annotate SNPs, there's no 0,1s any more in the haploblock output files
+        // we only keep this line here for back compatibe issues
+        this->geneIsInteresting[giit->first] =  "-1"; //"no_codon_change"; 
         continue;
       }
       this->geneIsInteresting[giit->first] = this->updateCodonScore(giit->second);
     }
-}
-
+  }
 
 bool BlocksComparator::operator()(const BlockSummary *pb1, const BlockSummary *pb2) const
   {
@@ -212,7 +230,7 @@ _dataset_name(datasetName), _isCategorical(isCategorical)
         exit(1);
     }
     os << "##" << datasetName << std::endl;
-    os << "##CodonFlag\t-1:Non-Coding\t0:Synonymous\t1:Non-Synonymous\t2:Splicing\t3:Stop"<<std::endl;
+    os << "##CodonFlag\t0:Synonymous\t1:Non-Synonymous\t2:Splicing\t3:Stop\t-1:Non-Coding(INTRONIC,intergenic,5PRIME_UTR,3PRIME_UTR)"<<std::endl;
 }
 
 GhmapWriter::~GhmapWriter() {}
@@ -659,23 +677,22 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
         }
         //New thing: -1 means not coding, 0 means coding but not important
         //Anything else is the number of important
-        int codingCode = -1;
-        if (isCoding)
-            codingCode = 0;
-        if (hasInteresting)
-            codingCode = 1;
-        if (hasSpliceChange)
-            codingCode = 2; //if this is true, will overwrite codingCode=1
+        // int codingCode = -1;
+        // if (isCoding)
+        //     codingCode = 0;
+        // if (hasInteresting)
+        //     codingCode = 1;
+        // if (hasSpliceChange)
+        //     codingCode = 2; //if this is true, will overwrite codingCode=1
         pBestBlock->updateGeneIsInteresting();
         if ((isCoding || !filterCoding) || hasSpliceChange)
         {
             genesout << gname << "\t" << pBestBlock->geneIsInteresting[(*git)->name] << "\t";
             //genesout << gname << "\t" << pBestBlock->geneIsCodingMap[gname] << "\t";
-            //genesout << gname << "\t" << codingCode << "\t";
             writeSortedPattern(genesout, pBestBlock->pattern, strOrderVec);
             genesout << "\t" << (isCategorical ? pBestBlock->FStat : pBestBlock->pvalue);
             genesout << "\t" << pBestBlock->effect <<"\t"<< pBestBlock->FDR;
-            genesout << "\t" << pBestBlock->relPvalue<<"\t"<< pBestBlock->relFDR; //<< "\t"<<pBestBlock->relReject;
+            genesout << "\t" << pBestBlock->relPvalue<<"\t"<< pBestBlock->relFDR; 
             genesout << "\t" << pBestBlock->chrName << "\t" << pBestBlock->chrBegin << "\t" << pBestBlock->chrEnd;
 
             // write gene expression values

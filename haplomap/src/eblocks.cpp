@@ -2169,7 +2169,7 @@ void writeBlockGeneNames(ofstream &os, HaploBlock *pHB)
       if (geneIsCodingMap[(*gcit).first] == "")
       {
         //debug_log << "The first time: " << gcit->first << " " << gcit->second << endl;
-        if ((*gcit).second.find("NON_SYNONYMOUS_CODING") != std::string::npos) // npos == len(string), indicate no matches
+        if ((*gcit).second.find("NON_SYNONYMOUS_CODING") != std::string::npos) // indicate matches
         {
           geneIsCodingMap[(*gcit).first] = "1";
         }
@@ -2193,7 +2193,7 @@ void writeBlockGeneNames(ofstream &os, HaploBlock *pHB)
         if ((*gcit).second.find("NON_SYNONYMOUS_CODING") != std::string::npos)
         {
           if (geneIsCodingMap[(*gcit).first] == "0")
-            geneIsCodingMap[(*gcit).first] = "1";
+            geneIsCodingMap[(*gcit).first] = "1"; 
           //continue;
         }
 
@@ -2309,7 +2309,7 @@ void writeBlockSummary(char *fileName, int minBlockSNPs)
   }
 
   // Header made concatenation of individual chromosome results more difficult.
-  // os << "Chr\tBlock\tStart\tSize\tChrBeg\tChrEnd\tPattern" << endl;
+  // os << "Chr\tBlockIdx\tStart\tSize\tChrBeg\tChrEnd\tPattern" << endl;
   // FIXME: Since nhaploblocks is only applied to one chromosome at a time, writing out the
   // chromosomes separately as this does is probably not useful.
   for (size_t blkIdx = 0; blkIdx < chosenHaploBlocks.size(); blkIdx = writeChrBlockSummary(os, blkIdx, minBlockSNPs))

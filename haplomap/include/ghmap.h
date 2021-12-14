@@ -58,7 +58,7 @@ class BlockSummary
     ~BlockSummary();
 
     std::string updateCodonScore(std::string str);
-    void updateGeneIsInteresting(void);
+    void updateGeneIsInteresting();
     // print a line of the blocks file.
     // blockIdx	blockStart	blockSize	chromosome	begin	end	pattern	pval	effect	genename genehascoding ...
     friend void showBlockSum(std::ostream &os, bool isCategorical, BlockSummary *pb, std::vector<int> &strOrderVec);
