@@ -421,7 +421,7 @@ void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb
       os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) <<"\t"<< pb->effect
          << "\t" << pb->FDR << "\t" << pb->relPvalue<<"\t"<<pb->relFDR; // <<"\t"<<pb->relReject
       os << "\t" << pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd << "\t"
-         << pb->blockIdx << pb->blockStart << "\t" << pb->blockSize << std::endl;
+         << pb->blockIdx << pb->blockStart << "\t" << pb->blockSize << "\t-------------" << std::endl;
     }
     else
     {
