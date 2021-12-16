@@ -180,7 +180,8 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
                    std::vector<BlockSummary *> &blocks, float cutoff, bool filterCoding);
 
 // Write output headers
-class GhmapWriter {
+class GhmapWriter 
+{
 private:
     std::string _dataset_name;
     bool _isCategorical;
@@ -189,6 +190,7 @@ public:
     GhmapWriter(char *outputFileName, char *datasetName, bool isCategorical);
     ~GhmapWriter();
     void sortStrainsByPheno(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec);
+    void writeSortedPattern(char *pattern, std::vector<int> &strOrderVec); // NOTE: the input pattern has been makeUnprintable
     void writeStrainNameAndValue(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec); // strainName and stainValues
     void writeExpressionNames(std::vector<std::string> &exprOrderVec);
     void writeHeaders(std::vector<std::string> &header);
@@ -197,9 +199,6 @@ public:
 };
 
 
-/* Returns a score that represents the interestingness of codon changes*/
-int scoreChanges(std::string str);
-int interestingChanges(const std::map<std::string, std::string> &geneCodingMap);
 
 // Mark each block as ignored unless it has a coding gene.
 void filterCodingBlocks();
@@ -209,7 +208,6 @@ void filterEqualBlocks(std::vector<int> equalRegions);
 // Read a file of quantitative phenotypes.
 void readQPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec);
 
-void setBlockStats();
 // Read a file of categorical phenotypes.
 void readCPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec);
 
@@ -226,10 +224,8 @@ void readFileToVec(char *fname, std::vector<std::string> &vec);
 // SSW is sum of squares of Euclidean distances of phenotype vectors to the phenotype mean.
 // SSB is sum of squares of Euclidean distances of haplotype averages to global mean.
 // This does not actually compute the p-value.  It stops with the F statistic.
-void ANOVA(std::vector<std::vector<float>> &phenvec, char *pattern, float &FStat, float &pvalue, float &effect);
+// void ANOVA(std::vector<std::vector<float>> &phenvec, char *pattern, float &FStat, float &pvalue, float &effect);
 
-/// flag: 1 sort pvalue, 0 sort mpvalue
-void bh_fdr(std::vector<BlockSummary *> & pval, float alpha=0.05, bool flag = 1);
 
 // defined globals
 /* use `extern` to declare global variable, to use it

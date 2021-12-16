@@ -2324,7 +2324,7 @@ void writeBlockSummary(char *fileName, int minBlockSNPs)
 void writeBlockSNPs(char *fname, int minBlockSNPs)
 {
   int fid = acquireLock();
-  ofstream snpOut(fname);
+  std::ofstream snpOut(fname);
   if (!snpOut.is_open())
   {
     std::cerr << "Open of file \"" << fname << "\" failed: ";
@@ -2334,12 +2334,12 @@ void writeBlockSNPs(char *fname, int minBlockSNPs)
   for (size_t snpIdx = 0; snpIdx < snpVec.size(); snpIdx++)
   {
     SNPInfo *pSNPInfo = snpVec[snpIdx];
-    string chrName = chromosomes.eltOf(pSNPInfo->chrIdx);
+    std::string chrName = chromosomes.eltOf(pSNPInfo->chrIdx);
     snpOut << chrName << "\t" << pSNPInfo->position << "\t"
            << pSNPInfo->name << "\t";
     showPattern(snpOut, pSNPInfo->pattern);
-    map<string, string> &geneMap = pSNPInfo->geneCodonMap;
-    for (map<string, string>::iterator gcit = geneMap.begin(); gcit != geneMap.end(); gcit++)
+    std::map<std::string, std::string> &geneMap = pSNPInfo->geneCodonMap;
+    for (std::map<std::string, std::string>::iterator gcit = geneMap.begin(); gcit != geneMap.end(); gcit++)
     {
       snpOut << "\t" << (*gcit).first << "\t" << (*gcit).second;
     }

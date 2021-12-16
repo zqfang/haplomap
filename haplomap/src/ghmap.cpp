@@ -55,7 +55,7 @@ int BlockSummary::numHaplotypes()
 // summary of a block, read for the file.
 std::string BlockSummary::updateCodonScore(std::string str)
   {
-    // input strings will be: INTRONIC, intergenic, SPLITE_SITE, 5PRIME_UTR, 3PRIME_UTR, 
+    // if input strings from ANNOVAR (INTRONIC, intergenic, SPLITE_SITE, 5PRIME_UTR, 3PRIME_UTR ...)
     // NON_SYNONYMOUS_CODING(1), SYNONYMOUS_CODING (0), but these two have been reformat to <->
     int count = 0;
     int synonymous_count = 0;
@@ -101,6 +101,25 @@ std::string BlockSummary::updateCodonScore(std::string str)
     if ((count == 0) && (synonymous_count > 0))
     {
         return "0"; // synonymous
+    }
+
+    /// if input string from Ensemble VEP Impact (HIGH, MODERATE, LOW, MODIFIER)
+    /// see details here: https://uswest.ensembl.org/info/genome/variation/prediction/predicted_data.html
+    if (str.find("HIGH") != std::string::npos)
+    {
+        return "2"; // Frameshift, stop gain, stop lost ...
+    }
+    else if (str.find("MODERATE") != std::string::npos)
+    {
+        return "1"; // 	Missense
+    }
+    else if (str.find("LOW") != std::string::npos)
+    {
+        return "0"; // Synonymous
+    }
+    else if (str.find("MODIFIER") != std::string::npos)
+    {
+        return "-1"; // 5 prime UTR, TF binding site varian, Intergenic ...
     }
 
     return "-1"; //no_codon_change"; include INTRONIC, intergenic, 5PRIME_UTR, 3PRIME_UTR
@@ -306,6 +325,38 @@ void GhmapWriter::sortStrainsByPheno(std::vector<std::vector<float>> &phenvec, s
     IndexComparator<std::vector<float>, std::less<std::vector<float>>> idxCompare(&phenvec);
     std::stable_sort(strOrderVec.begin(), strOrderVec.end(), idxCompare);
 }
+
+// renumber eqclasses in pattern so the increase from left to right
+void GhmapWriter::writeSortedPattern(char *pattern, std::vector<int> &strOrderVec)
+{
+    int numHaplo = numHaplotypes(pattern);
+    char *sortedEqMap = (char *)malloc(numHaplo);
+    memset(sortedEqMap, '?', numHaplo);
+    char curEq = 0;
+    int _numStrains = strOrderVec.size();
+    for (int strIdx = 0; strIdx < _numStrains; strIdx++)
+    {
+        int str = strOrderVec[strIdx];
+        int eqclass = (int)pattern[str];
+        if ('?' != eqclass)
+        {
+            if ('?' == sortedEqMap[eqclass])
+            {                                 // class hasn't been mapped yet.
+                sortedEqMap[eqclass] = curEq++; // renumber for left-to-right color consistency
+            }
+            this->os << (char)(sortedEqMap[eqclass] + '0');
+        }
+        else
+        {
+            this->os << '?';
+        }
+    }
+    // memory leak?
+    free(sortedEqMap);
+}
+
+
+
 
 void GhmapWriter::writeStrainNameAndValue(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec)
 {
@@ -649,7 +700,7 @@ void writeBlockSums(bool isCategorical, char *outputFileName,
     writer.sortStrainsByPheno(phenvec, strOrderVec);
     writer.writeExpressionNames(geneExprHeader);
     writer.writeStrainNameAndValue(phenvec, strOrderVec);
-    writer.os << "#BlockID\tBlockIdx\tBlockStart\tBlockSize\tChr\tChrStart\tChrEnd\tHaplotype\t";
+    writer.os << "#BlockIdx\tBlockStart\tBlockSize\tChr\tChrStart\tChrEnd\tHaplotype\t";
     writer.os << (isCategorical ? "FStat" : "Pvalue");
     writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tGeneName\tCodonFlag\n";
     showBlockSums(writer.os, isCategorical, blocks, pvalueCutoff, strOrderVec);
@@ -769,19 +820,19 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
 }
 
 
-void sortStrainsByPheno(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec)
-{
-    std::vector<int>::iterator stoEnd = strOrderVec.end();
-    int i = 0;
-    for (std::vector<int>::iterator stoIt = strOrderVec.begin(); stoIt != stoEnd; stoIt++)
-    {
-        *stoIt = i++;
-    }
-    // This will sort lexicographically, which is the right thing.
-    // For categorical values, we just want equal values together.
-    IndexComparator<std::vector<float>, std::less<std::vector<float>>> idxCompare(&phenvec);
-    std::stable_sort(strOrderVec.begin(), strOrderVec.end(), idxCompare);
-}
+// void sortStrainsByPheno(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec)
+// {
+//     std::vector<int>::iterator stoEnd = strOrderVec.end();
+//     int i = 0;
+//     for (std::vector<int>::iterator stoIt = strOrderVec.begin(); stoIt != stoEnd; stoIt++)
+//     {
+//         *stoIt = i++;
+//     }
+//     // This will sort lexicographically, which is the right thing.
+//     // For categorical values, we just want equal values together.
+//     IndexComparator<std::vector<float>, std::less<std::vector<float>>> idxCompare(&phenvec);
+//     std::stable_sort(strOrderVec.begin(), strOrderVec.end(), idxCompare);
+// }
 
 // Count the number of defined strains
 int numDefinedStrains(char *pattern)
@@ -811,59 +862,6 @@ int numHaplotypes(char *pattern)
     }
     return numHap + 1;
 }
-
-// /* Returns a score that represents the interestingness of codon changes*/
-// int scoreChanges(std::string str)
-// {
-//     int count = 0;
-//     size_t pos = 0;
-//     size_t endpos = 0;
-//     while (true)
-//     {
-//         pos = str.find("<", pos + 1);
-//         if (pos == std::string::npos)
-//             break;
-//         endpos = str.find(">", pos + 1);
-//         int aa1 = str[pos - 1] - 'A';
-//         int aa2 = str[endpos + 5] - 'A';
-//         if (AACLASSES[aa1] != AACLASSES[aa2])
-//         {
-//             count++;
-//             int X = 'X' - 'A';
-//             if (aa1 == X || aa2 == X)
-//                 count += 2; // Higher weight if stop codon
-//         }
-//     }
-//     return count;
-// }
-
-// int interestingChanges(const std::map<std::string, std::string> &geneCodingMap)
-// {
-//     int changeCount = 0;
-//     for (std::map<std::string, std::string>::const_iterator git = geneCodingMap.begin();
-//          git != geneCodingMap.end(); git++)
-//     {
-//         if (git->second == "0" || git->second == "1")
-//             continue;
-//         changeCount += scoreChanges(git->second);
-// //        changeCount+=countInStr(git->second, "<->");
-// //        changeCount+=countInStr(git->second, "SPLICE_SITE");
-//     }
-//     return changeCount;
-// }
-
-// void setBlockStats()
-// {
-//     for (unsigned blkIdx = 0; blkIdx < blocks.size(); blkIdx++)
-//     {
-//         BlockSummary *pBlock = blocks[blkIdx];
-//         //if(!pBlock->isIgnored) {
-//         pBlock->numHaplo = numHaplotypes(pBlock->pattern);
-//         pBlock->numInteresting = interestingChanges(pBlock->geneIsCodingMap);
-//     }
-// }
-
-
 
 // Mark each block as ignored unless it has a coding gene.
 void filterCodingBlocks()
@@ -963,16 +961,6 @@ void readQPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec)
     }
 }
 
-// void setBlockStats()
-// {
-//     for (unsigned blkIdx = 0; blkIdx < blocks.size(); blkIdx++)
-//     {
-//         BlockSummary *pBlock = blocks[blkIdx];
-//         //if(!pBlock->isIgnored) {
-//         pBlock->numHaplo = numHaplotypes(pBlock->pattern);
-//         pBlock->numInteresting = interestingChanges(pBlock->geneIsCodingMap);
-//     }
-// }
 // Read a file of categorical phenotypes.
 void readCPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec)
 {
@@ -1115,69 +1103,6 @@ void writeSortedPattern(std::ostream &os, char *pattern, std::vector<int> &strOr
     free(sortedEqMap);
 }
 
-// Some vector arithmetic.
-// destroys first argument (like +=)
-void addVectors(std::vector<float> &v1, std::vector<float> &v2)
-{
-    if (v1.size() != v2.size())
-    {
-        std::cout << "addVectors:  Vector sizes differ: " << v1.size() << " vs. " << v2.size() << std::endl;
-        exit(1);
-    }
-    std::vector<float>::iterator vend = v1.end();
-    std::vector<float>::iterator vit2 = v2.begin();
-    for (std::vector<float>::iterator vit1 = v1.begin(); vit1 < vend; vit1++)
-    {
-        *vit1 += *vit2;
-        vit2++;
-    }
-}
-
-void subtractVectors(std::vector<float> &v1, std::vector<float> &v2)
-{
-    if (v1.size() != v2.size())
-    {
-        std::cout << "subtractVectors:  Vector sizes differ: " << v1.size() << " vs. " << v2.size() <<std::endl;
-        exit(1);
-    }
-    std::vector<float>::iterator vend = v1.end();
-    std::vector<float>::iterator vit2 = v2.begin();
-    for (std::vector<float>::iterator vit1 = v1.begin(); vit1 < vend; vit1++)
-    {
-        *vit1 -= *vit2;
-        vit2++;
-    }
-}
-
-//
-float dotVectors(std::vector<float> &v1, std::vector<float> &v2)
-{
-    float result = 0.0;
-    if (v1.size() != v2.size())
-    {
-        std::cout << "dotVectors:  Vector sizes differ: " << v1.size() << " vs. " << v2.size() << std::endl;
-        exit(1);
-    }
-    std::vector<float>::iterator vend = v1.end();
-    std::vector<float>::iterator vit2 = v2.begin();
-    for (std::vector<float>::iterator vit1 = v1.begin(); vit1 < vend; vit1++)
-    {
-        result += (*vit1) * (*vit2);
-        vit2++;
-    }
-    return result;
-}
-
-// multiply by scalar.  Destroys first argument.
-void scaleVector(std::vector<float> &v1, float c)
-{
-    std::vector<float>::iterator vend = v1.end();
-    for (std::vector<float>::iterator vit = v1.begin(); vit < vend; vit++)
-    {
-        *vit *= c;
-    }
-}
-
 // convert digits 0-9 in string to \000..\011 (but leave '?' printable).
 /// Mark: make ascii starts from 0, not '0'.
 void makeUnprintable(char *pattern)
@@ -1191,57 +1116,5 @@ void makeUnprintable(char *pattern)
         }
         p++;
     }
-}
-
-
-void bh_fdr(std::vector<BlockSummary *> & pval, float alpha, bool flag)
-{
-    //std::vector<bool> reject(pval.size(), false);
-    float m = pval.size();
-    uint32_t k = pval.size(); // This is the rank, doesn't need to be double.
-    float factor;
-    float p;
-    float previous_fdr;
-    //BlockSummary* pBlock = new BlockSummary();
-    // stored padj
-    if (flag) {
-        std::stable_sort(pval.begin(), pval.end(),
-                         [](BlockSummary* x, BlockSummary* y) {return x->pvalue > y->pvalue;});
-        previous_fdr =1.0;
-        for (unsigned i = 0; i < pval.size(); ++i) {
-            factor = k / m;
-            p = pval[i]->pvalue;
-            //if (p <= factor * alpha) {
-            //    pval[i]->relReject = true;
-            //}
-            p /= factor;
-            pval[i]->FDR = std::min(p, previous_fdr); // accumulate minimum
-            previous_fdr = pval[i]->FDR;
-            k--; //Decrease rank
-        }
-//        std::accumulate(pval.begin(), pval.end(), pBlock,
-//                        [](BlockSummary* x, BlockSummary* y)
-//                        { return std::min(x->FDR, y->FDR); });
-    } else {
-        std::stable_sort(pval.begin(), pval.end(),
-                         [](BlockSummary* x, BlockSummary* y) {return x->relPvalue > y->relPvalue;});
-        previous_fdr = 1.0;
-        for (unsigned i = 0; i < pval.size(); ++i) {
-            factor = k / m;
-            p = pval[i]->relPvalue;
-            if (p <= factor * alpha) {
-                pval[i]->relReject = true;
-            }
-            p /= factor;
-            pval[i]->relFDR = std::min(p, previous_fdr);
-            previous_fdr = pval[i]->relFDR;
-            k--; //Decrease rank
-        }
-//        std::accumulate(pval.begin(), pval.end(), pBlock->mFDR,
-//                        [](BlockSummary* x, BlockSummary* y)
-//                                   { return std::min(x->mFDR, y->mFDR) ; });
-
-    }
-    //delete pBlock;
 }
 

@@ -8,9 +8,298 @@
 #include "gsl/gsl_matrix.h"
 #include "gsl/gsl_statistics.h"
 #include "gsl/gsl_linalg.h"
+#include "gsl/gsl_math.h"
 #include "ColumnReader.h"
 #include "ghmap.h"
-#include "manova.h"
+#include "stats.h"
+
+void bh_fdr(std::vector<BlockSummary *> & pval, float alpha, bool flag)
+{
+    //std::vector<bool> reject(pval.size(), false);
+    float m = pval.size();
+    uint32_t k = pval.size(); // This is the rank, doesn't need to be double.
+    float factor;
+    float p;
+    float previous_fdr;
+    //BlockSummary* pBlock = new BlockSummary();
+    // stored padj
+    if (flag) {
+        std::stable_sort(pval.begin(), pval.end(),
+                         [](BlockSummary* x, BlockSummary* y) {return x->pvalue > y->pvalue;});
+        previous_fdr =1.0;
+        for (unsigned i = 0; i < pval.size(); ++i) {
+            factor = k / m;
+            p = pval[i]->pvalue;
+            //if (p <= factor * alpha) {
+            //    pval[i]->relReject = true;
+            //}
+            p /= factor;
+            pval[i]->FDR = std::min(p, previous_fdr); // accumulate minimum
+            previous_fdr = pval[i]->FDR;
+            k--; //Decrease rank
+        }
+//        std::accumulate(pval.begin(), pval.end(), pBlock,
+//                        [](BlockSummary* x, BlockSummary* y)
+//                        { return std::min(x->FDR, y->FDR); });
+    } else {
+        std::stable_sort(pval.begin(), pval.end(),
+                         [](BlockSummary* x, BlockSummary* y) {return x->relPvalue > y->relPvalue;});
+        previous_fdr = 1.0;
+        for (unsigned i = 0; i < pval.size(); ++i) {
+            factor = k / m;
+            p = pval[i]->relPvalue;
+            if (p <= factor * alpha) {
+                pval[i]->relReject = true;
+            }
+            p /= factor;
+            pval[i]->relFDR = std::min(p, previous_fdr);
+            previous_fdr = pval[i]->relFDR;
+            k--; //Decrease rank
+        }
+//        std::accumulate(pval.begin(), pval.end(), pBlock->mFDR,
+//                        [](BlockSummary* x, BlockSummary* y)
+//                                   { return std::min(x->mFDR, y->mFDR) ; });
+
+    }
+    //delete pBlock;
+}
+
+
+
+
+ANOVA::ANOVA(std::vector<std::vector<float>> &phenvec):
+_numHaplo(0),_pattern(nullptr),_FStat(INFINITY),_pvalue(1.0),_effect(0)
+{
+  this->phenvec = phenvec;
+  this->_numStrains = phenvec.size();
+}
+ANOVA::~ANOVA(){}
+
+std::vector<float> ANOVA::sumVector(std::vector<float> &vec) {
+    std::vector<float> res(1,0.0F);
+    //res[0] = std::accumulate(vec.begin(), vec.end(), 0.0F);
+    for (float & v: vec )
+        res[0] += v;
+    return res;
+}
+
+void ANOVA::subVector(std::vector<float> &vec, float value) {
+    for (float & v: vec ) 
+        v -= value;
+}
+
+// Some vector arithmetic.
+// destroys first argument (like +=)
+void ANOVA::addVectors(std::vector<float> &v1, std::vector<float> &v2)
+{
+    if (v1.size() != v2.size())
+    {
+        std::cout << "addVectors:  Vector sizes differ: " << v1.size() << " vs. " << v2.size() << std::endl;
+        exit(1);
+    }
+    std::vector<float>::iterator vend = v1.end();
+    std::vector<float>::iterator vit2 = v2.begin();
+    for (std::vector<float>::iterator vit1 = v1.begin(); vit1 < vend; vit1++)
+    {
+        *vit1 += *vit2;
+        vit2++;
+    }
+}
+
+void ANOVA::subtractVectors(std::vector<float> &v1, std::vector<float> &v2)
+{
+    if (v1.size() != v2.size())
+    {
+        std::cout << "subtractVectors:  Vector sizes differ: " << v1.size() << " vs. " << v2.size() <<std::endl;
+        exit(1);
+    }
+    std::vector<float>::iterator vend = v1.end();
+    std::vector<float>::iterator vit2 = v2.begin();
+    for (std::vector<float>::iterator vit1 = v1.begin(); vit1 < vend; vit1++)
+    {
+        *vit1 -= *vit2;
+        vit2++;
+    }
+}
+
+//
+float ANOVA::dotVectors(std::vector<float> &v1, std::vector<float> &v2)
+{
+    float result = 0.0;
+    if (v1.size() != v2.size())
+    {
+        std::cout << "dotVectors:  Vector sizes differ: " << v1.size() << " vs. " << v2.size() << std::endl;
+        exit(1);
+    }
+    std::vector<float>::iterator vend = v1.end();
+    std::vector<float>::iterator vit2 = v2.begin();
+    for (std::vector<float>::iterator vit1 = v1.begin(); vit1 < vend; vit1++)
+    {
+        result += (*vit1) * (*vit2);
+        vit2++;
+    }
+    return result;
+}
+
+// multiply by scalar.  Destroys first argument.
+void ANOVA::scaleVector(std::vector<float> &v1, float c)
+{
+    std::vector<float>::iterator vend = v1.end();
+    for (std::vector<float>::iterator vit = v1.begin(); vit < vend; vit++)
+    {
+        *vit *= c;
+    }
+}
+int ANOVA::numHaplotypes(char *pattern)
+{
+    int numHap = -1;
+    // int _numStrains = strlen(pattern);
+    for (unsigned str1 = 0; str1 < this->_numStrains; str1++)
+    {
+        int hap = pattern[str1];
+        if (pattern[str1] != '?' && numHap < hap)
+        {
+            numHap = hap ;
+        }
+    }
+    return numHap + 1;
+}
+void ANOVA::stat(char *pattern, float &FStat, float &pvalue, float &effect)
+{
+    int _numHaplo = this->numHaplotypes(pattern);
+    // int _numStrains = strlen(pattern);
+    // array haplotype -> num strains in haplotype.
+    std::vector<int> haploNum(_numHaplo, 0);
+    // array haplotype -> mean (std::vector<float>) for each haplotype. Note: numCategories is a global variable
+    std::vector<std::vector<float>> haploMean(_numHaplo, std::vector<float>(numCategories, 0.0F)); // size 1
+
+    float numDefined = 0.0F; // numbers of strains without ?
+    float numDefinedDataPoints = 0.0F; // number of all individual data point without '?' strain
+    std::vector<float> sumDefined(numCategories, 0.0F); //size 1
+
+    std::vector<std::vector<float>> sumStrains;
+
+    // Compute haplotype means
+    for (unsigned str1 = 0; str1 < _numStrains; str1++)
+    {
+        int hap = pattern[str1]; // 0,1,2,3,4
+        std::vector<float> &phen = this->phenvec[str1]; // multivalue?
+        if ('?' != hap)
+        {
+            numDefined ++;
+            numDefinedDataPoints += phen.size();
+            sumStrains.push_back(sumVector(phen));
+            //addVectors(sumDefined, sumStrains.back());
+            //haploNum[hap]++;
+
+            //addVectors(haploMean[hap], phen); // temporarily, the total, not mean.
+            addVectors(haploMean[hap], sumStrains.back());
+            haploNum[hap] += phen.size();
+        }
+    }
+
+    for (int hap = 0; hap < _numHaplo; hap++)
+    {
+        scaleVector(haploMean[hap], 1.0 / haploNum[hap]); // get the mean
+    }
+
+    if (traceFStat)
+    {
+        std::cout << "numDefined = " << numDefined << ", sumDefined = " << sumDefined.back() << std::endl;
+        std::cout << "haploNum[] = [";
+        for (int hap = 0; hap < _numHaplo; hap++)
+        {
+            std::cout << haploNum[hap] << " ";
+        }
+        std::cout << "]" << std::endl;
+
+        std::cout << "haploMean[] = [";
+        for (int hap = 0; hap < _numHaplo; hap++)
+        {
+            std::cout << haploMean[hap].back() << " ";
+        }
+        std::cout << "]" << std::endl;
+    }
+
+    std::vector<float> mean(1, 0.0F); // mean of all data
+    for (auto & s: sumStrains)
+        mean[0] += s.back();
+    // scaleVector(mean, 1.0 / numDefined);
+    scaleVector(mean, 1.0 / numDefinedDataPoints);
+
+    //float SST = 0.0F;
+    float SSW = 0.0F;
+    for (unsigned str1 = 0; str1 < _numStrains; str1++)
+    {
+        int hap = pattern[str1];
+        if ('?' != hap)
+        {
+            std::vector<float> resid = phenvec[str1];
+            subVector(resid, haploMean[hap].back());
+            SSW += dotVectors(resid, resid);
+            // vector<float> resid2 = phenvec[str1];
+            // subVector(resid2, mean.back());
+            // SST += dotVectors(resid2, resid2);
+        }
+    }
+
+    // SSB -- between sum of squares (sum over haplotypes hapsize*(hapmean-mean)^2
+    float SSB = 0.0;
+    for (int hap = 0; hap < _numHaplo; hap++)
+    {
+        std::vector<float> diff = haploMean[hap]; // copy so we don't destroy haploMeans
+        subtractVectors(diff, mean);         // (haplotype mean) - mean
+        float sq = haploNum[hap] * dotVectors(diff, diff);
+        SSB += sq;
+    }
+    // FIXME:
+    // my quick and dirty hack to penalize missing alleles.
+    // simulates additional error for each missing value (but ignores
+    // degrees of freedom).
+    SSW += 1.1 * (_numStrains - numDefined);
+
+    // mean square within
+    // df within is (numDefined-numHaplo)
+    float dfW = numDefinedDataPoints - _numHaplo; // degrees of freedom within
+    float dfB = _numHaplo - 1;          // degrees of freedom between.
+    if (dfW == 0.0)
+    {
+        // This happens when numDefined = numHaplo, which occurs rarely when there are
+        // lots of undefined strains and lots of haplotypes.
+        // This causes errors in gsl, and I don't know what the right thing to do is,
+        // so just punt.  We won't get a match for this.
+        pvalue = 1.0;
+        effect = 0.0;
+        return;
+    }
+    float MSW = SSW / dfW;
+    float MSB = SSB / dfB;
+
+    // This formula is the same as Peltz.  So, I think I've seen two totally
+    // different formulas for omega^2
+    // WARNING: This divides by 0 if SSW is 0.
+    // Which seems to work ok (F <- "inf").
+    FStat = MSB / MSW;
+
+    // out parameter for pvalue
+    if (gsl_isnan(FStat)) {
+        std::cout<<"FStat is NaN for entry: "<<" numHaplo: "
+        << _numHaplo <<", numStrains: "<< _numStrains << ", numDefinedStrains: " << numDefined <<", Haplotype: ";
+        for (unsigned i=0; i < _numStrains; ++i)
+            std::cout << (char)(pattern[i]+'0'); // ASCII -> char
+        std::cout<<std::endl;
+
+    }
+    pvalue = (float)gsl_cdf_fdist_Q((double)FStat,(double)dfB,(double)dfW);
+    if (gsl_isnan(pvalue))
+        pvalue = 1.0;
+
+    // Genetic effect
+    // Oh wow!  omega^2 is the "coefficient of determination"!
+    // http://faculty.chass.ncsu.edu/garson/PA765/anova.htm#anova2
+    effect = (float)((SSB - ( _numHaplo - 1) * MSW) / (SSW + SSB + MSW));
+}
+
 
 
 MANOVA::MANOVA(const char* MatFile, char* delimiter, unsigned int L):

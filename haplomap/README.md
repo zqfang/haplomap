@@ -147,14 +147,14 @@ Statistical testing
 |8 |Chr          | Chromosome      |
 |9 |ChrStart     | Chromosome begin position (1-based) |
 |10 |ChrEnd      | Chromosome end position   |
-|11 | BlockIdx   | HaploBlock ID; the second column of eblock -o output |
-|12 | BlockStart | SNP vector start index; row index (0-based) of eblock -p output |
-|13 | Blocksize | SNP number of the HaploBlock |
+|11 | BlockIdx   | HaploBlock's index; the second column of eblock -o output |
+|12 | BlockStart | SNPVector's index; row index (0-based) of eblock -p output |
+|13 | BlockSize  | SNP number of HaploBlock |
 |14 | Expression  | Gene expression Map, see header line  |
 
   * block-oriented result file
 
-BlockID | BlockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | Effect | FDR | CodingMap ...
+BlockIdx | BlockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | Effect | FDR | GeneExpMap | Gene | CodonFlag | ...
 
 
 

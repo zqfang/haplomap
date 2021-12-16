@@ -5,8 +5,7 @@
 #include <unordered_map>
 #include <memory>
 #include "ghmap.h"
-#include "manova.h"
-#include "fdr.h"
+#include "stats.h"
 #include "haplomap.h"
 
 struct GhmapOptions
@@ -316,11 +315,13 @@ int main_ghmap(int argc, char **argv)
         endPhase();
     }
 
-    std::shared_ptr<MANOVA> aov;
+    std::shared_ptr<MANOVA> manova;
+    std::shared_ptr<ANOVA> anova;
+    anova = std::make_shared<ANOVA>(phenvec);
     if (opts->geneticRelationMatrix != NULL) {
         beginPhase("reading genetic relation matrix");
-        aov = std::make_shared<MANOVA>(opts->geneticRelationMatrix, (char *)"\t",  4);
-        aov->setEigen(strainAbbrevs); // calculate eigenvectors for selected strains
+        manova = std::make_shared<MANOVA>(opts->geneticRelationMatrix, (char *)"\t",  4);
+        manova->setEigen(strainAbbrevs); // calculate eigenvectors for selected strains
         endPhase();
     }
 
@@ -345,12 +346,12 @@ int main_ghmap(int argc, char **argv)
         cout << endl;
       }
       // ANOVA analysis
-      ANOVA(phenvec, pBlock->pattern, pBlock->FStat, pBlock->pvalue, pBlock->effect);
-      // population structure
+      anova->stat(pBlock->pattern, pBlock->FStat, pBlock->pvalue, pBlock->effect);
+      // population structure analysis
       if (opts->geneticRelationMatrix != NULL) {
-          bool ok = aov->setNonQMarkMat(pBlock->pattern, strainAbbrevs);
+          bool ok = manova->setNonQMarkMat(pBlock->pattern, strainAbbrevs);
           if (ok)
-              aov->pillaiTrace(pBlock->relFStat, pBlock->relPvalue);
+              manova->pillaiTrace(pBlock->relFStat, pBlock->relPvalue);
       }
       if (pBlock->FStat == INFINITY && pBlock->effect < 0.0)
       {
