@@ -167,9 +167,11 @@ i. SNPs
   * 2: Splicing site change
   * 3: Stop codon
 
-ii. indels and structral variants (ghmap -a ): 
-  * HIGH
-  * MODERATE
-  * LOW
-  * MODIFIER
+ii. Indels and structral variants (ghmap -a ): 
+  * 2: HIGH
+  * 1: MODERATE
+  * 0: LOW
+  * -1: MODIFIER
+
+See more details from [here](https://uswest.ensembl.org/info/genome/variation/prediction/predicted_data.html) 
 

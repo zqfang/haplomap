@@ -341,9 +341,9 @@ int main_ghmap(int argc, char **argv)
     {
       if (traceFStat)
       {
-        cout << "Block: " << pBlock->chrName << "\t" << pBlock->blockIdx << "\t";
+        std::cout << "Block: " << pBlock->chrName << "\t" << pBlock->blockIdx << "\t";
         showPattern(pBlock->pattern);
-        cout << endl;
+        std::cout << endl;
       }
       // ANOVA analysis
       anova->stat(pBlock->pattern, pBlock->FStat, pBlock->pvalue, pBlock->effect);
@@ -393,13 +393,13 @@ int main_ghmap(int argc, char **argv)
         beginPhase("writing block-oriented results file for gene.");
         if (opts->isCategorical)
         {
-        // Find FStat cutoff
-        int cutoffBlockIdx = (int)(opts->pvalueCutoff * blocks.size());
-        float FCutoff = blocks[cutoffBlockIdx]->FStat;
-        //    cout << "pvalueCutoff = " << opts->pvalueCutoff << ", cutoffBlockIdx = " << cutoffBlockIdx
-        //	 << ", num blocks = " << blocks.size()
-        //	 << ", FCutoff = " << FCutoff << endl;
-        writeBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, FCutoff);
+            // Find FStat cutoff
+            int cutoffBlockIdx = (int)(opts->pvalueCutoff * blocks.size());
+            float FCutoff = blocks[cutoffBlockIdx]->FStat;
+            //    cout << "pvalueCutoff = " << opts->pvalueCutoff << ", cutoffBlockIdx = " << cutoffBlockIdx
+            //	 << ", num blocks = " << blocks.size()
+            //	 << ", FCutoff = " << FCutoff << endl;
+            writeBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, FCutoff);
         }
         else
         {
