@@ -54,10 +54,12 @@ make
 
 
 ## Usage  
+
+### 1. Run haplomap standalone
 See more detail in ``haplomap`` subfolder: [Run haplomap standalone](haplomap/README.md)
 
-Use `snakemake` workflow to run
-### 1. Prepare MPD `measnum` id file. One id per row, suffixed with "-m" or "-f"(f: female, m: male)
+### 2. Use `snakemake` workflow to run
+#### (1). Prepare MPD `measnum` id file. One id per row, suffixed with "-m" or "-f"(f: female, m: male)
 ```
 26720-m
 26720-f
@@ -67,7 +69,7 @@ Use `snakemake` workflow to run
 
 ```
 
-### 2. Edit the `config.yaml` file path in `workflows` folder:
+#### (2). Edit the `config.yaml` file path in `workflows` folder:
 
 only edit `HBCGM` section.
 ```yaml
@@ -105,16 +107,16 @@ HBCGM:
     KNOWNGENE: "/data/bases/shared/haplomap/PELTZ_20200429/mm10_knownGene.txt" 
 ```
 
-### 3. run haplomap pipeline
+#### (3). run haplomap pipeline
 
 Install `snakemake` first. You need `Miniconda` if conda is not installed
 
-#### 3.1 create conda envs
+#### (3.1) create conda envs
 ```shell
 conda create -n hbcgm -f environment.yaml
 ```
 
-#### 3.2 run on a local computing node.
+#### (3.2) run on a local computing node.
 
 ```shell
 source activate hbcgm
@@ -123,7 +125,7 @@ snakemake -s workflows/haplomap.smk \
           --configfile workflows/config.yaml 
           -k -p -j 24   
 ```
-#### 2.2 run on the HPC 
+### Run on the HPC, e.g. Stanford Sherlock 
 
 e.g. Sherlock slurm
 1. edit `slurm.submit.sh`, change file path to `HBCGM/workflows`
@@ -161,4 +163,8 @@ output explanation, see here: [Run haplomap standalone](haplomap/README.md)
 
 
 ## Contact
+
+Email: 
+- Zhuoqing Fang: fangzq@stanford.edu
+- Gary Peltz: gpeltz@stanford.edu
 
