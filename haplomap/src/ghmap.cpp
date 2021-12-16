@@ -29,6 +29,7 @@ BlockSummary::BlockSummary(const char *chrnm, int num, int start, int size,
 {
     chrName = strdup(chrnm);
     pattern = strdup(pat);
+    numHaplo = this->numHaplotypes();
 }
 
 BlockSummary::~BlockSummary()
@@ -37,13 +38,26 @@ BlockSummary::~BlockSummary()
     free(pattern);
     free(chrName);
 }
-
+int BlockSummary::numHaplotypes()
+    {
+        int numHap = -1;
+        int _numStrains = strlen(this->pattern);
+        for (int str1 = 0; str1 < _numStrains; str1++)
+        {
+            int hap = this->pattern[str1];
+            if (this->pattern[str1] != '?' && numHap < hap)
+            {
+                numHap = hap;
+            }
+        }
+        return numHap + 1;
+    }
 // summary of a block, read for the file.
 std::string BlockSummary::updateCodonScore(std::string str)
   {
     // input strings will be: INTRONIC, intergenic, SPLITE_SITE, 5PRIME_UTR, 3PRIME_UTR, 
     // NON_SYNONYMOUS_CODING(1), SYNONYMOUS_CODING (0), but these two have been reformat to <->
-    int missen_count = 0;
+    int count = 0;
     int synonymous_count = 0;
     size_t pos = 0;
     size_t endpos = 0;
@@ -59,10 +73,12 @@ std::string BlockSummary::updateCodonScore(std::string str)
 
       if (AACLASSES[aa1] != AACLASSES[aa2])
       {
-        missen_count++;
+        count++;
         int X = 'X' - 'A'; // 'X' termination condon
         if (aa1 == X || aa2 == X)
         { // stop codon
+          count += 2;
+          this->numInteresting = count;
           return "3"; //"stop_codon";
         }
       }
@@ -71,17 +87,18 @@ std::string BlockSummary::updateCodonScore(std::string str)
           synonymous_count++; 
       }
     }
+    this->numInteresting = count;
     if (str.find("SPLICE_SITE") != std::string::npos)
     {
       return "2"; //splicing";
     }
 
-    if (missen_count > 0)
+    if (count > 0)
     {
       return "1"; //codon_change";
     }
 
-    if ((missen_count == 0) && (synonymous_count > 0))
+    if ((count == 0) && (synonymous_count > 0))
     {
         return "0"; // synonymous
     }
@@ -90,20 +107,61 @@ std::string BlockSummary::updateCodonScore(std::string str)
   }
 
 void BlockSummary::updateGeneIsInteresting()
-  { // BY
+{ // BY
     for (std::map<std::string, std::string>::iterator giit = this->geneIsCodingMap.begin(); giit != this->geneIsCodingMap.end(); giit++)
     {
-      if (giit->second == "0" || giit->second == "1") // 1 already converted to AA strings, e.g. ACT/T<->GCT/A
-      {
+        if (giit->second == "0" || giit->second == "1") // 1 already converted to AA strings, e.g. ACT/T<->GCT/A
+        {
         // Our old SNP annotation only use NCBI database, which use condon flag [0,1,2] to indicate coding change
         // since we now using ANNOVAR to annotate SNPs, there's no 0,1s any more in the haploblock output files
         // we only keep this line here for back compatibe issues
         this->geneIsInteresting[giit->first] =  "-1"; //"no_codon_change"; 
         continue;
-      }
-      this->geneIsInteresting[giit->first] = this->updateCodonScore(giit->second);
+        }
+        this->geneIsInteresting[giit->first] = this->updateCodonScore(giit->second);
     }
-  }
+}
+
+/// old codonflag field code, now, in favor of ANNOVAR's new codonflag
+///
+// /* Returns a score that represents the interestingness of codon changes*/
+// int BlockSummary::scoreChanges(std::string str)
+// {
+//     int count = 0;
+//     size_t pos = 0;
+//     size_t endpos = 0;
+//     while (true)
+//     {
+//         pos = str.find("<", pos + 1);
+//         if (pos == std::string::npos)
+//             break;
+//         endpos = str.find(">", pos + 1);
+//         int aa1 = str[pos - 1] - 'A';
+//         int aa2 = str[endpos + 5] - 'A';
+//         if (AACLASSES[aa1] != AACLASSES[aa2])
+//         {
+//             count++;
+//             int X = 'X' - 'A';
+//             if (aa1 == X || aa2 == X)
+//                 count += 2; // Higher weight if stop codon
+//         }
+//     }
+//     return count;
+// }
+
+// void BlockSummary::interestingChanges()
+// {
+//     int changeCount = 0;
+//     for (std::map<std::string, std::string>::const_iterator git = this->geneIsCodingMap.begin();
+//          git != this->geneIsCodingMap.end(); git++)
+//     {
+//         if (git->second == "0" || git->second == "1")
+//             continue;
+//         changeCount += this->scoreChanges(git->second);
+//     }
+//     this->numInteresting = changeCount;
+// }
+
 
 bool BlocksComparator::operator()(const BlockSummary *pb1, const BlockSummary *pb2) const
   {
@@ -421,7 +479,7 @@ void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb
       os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) <<"\t"<< pb->effect
          << "\t" << pb->FDR << "\t" << pb->relPvalue<<"\t"<<pb->relFDR; // <<"\t"<<pb->relReject
       os << "\t" << pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd << "\t"
-         << pb->blockIdx << pb->blockStart << "\t" << pb->blockSize << "\t-------------" << std::endl;
+         << pb->blockIdx << "\t"<< pb->blockStart << "\t" << pb->blockSize << "\t-------------" << std::endl;
     }
     else
     {
@@ -432,7 +490,7 @@ void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb
         os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) <<"\t"<< pb->effect
            << "\t" <<pb->FDR << "\t" << pb->relPvalue<<"\t"<<pb->relFDR; 
         os << "\t" <<pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd
-           << "\t" <<pb->blockIdx << pb->blockStart << "\t" << pb->blockSize;
+           << "\t" <<pb->blockIdx << "\t"<< pb->blockStart << "\t" << pb->blockSize;
         std::string gname = (*giit).first;
         upcase(gname);
         if (geneExprMap.find(gname) == geneExprMap.end())
@@ -491,7 +549,7 @@ void showGeneBlockSums(std::ostream &os, bool isCategorical, std::vector<BlockSu
                 writeSortedPattern(os, pb->pattern, strOrderVec);
                 os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) << "\t" << pb->effect << "\t";
                 os << pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd << "\t";
-                os << pb->blockIdx << pb->blockStart << "\t" << pb->blockSize << std::endl;
+                os << pb->blockIdx << "\t"<< pb->blockStart<< "\t" << pb->blockSize << std::endl;
             }
             else
             {
@@ -517,7 +575,7 @@ void showGeneBlockSums(std::ostream &os, bool isCategorical, std::vector<BlockSu
                                 os << "\t" << pb_t->FDR;
                                 os << "\t" << pb_t->relPvalue<<"\t"<<pb_t->relFDR <<"\t"; 
                                 os << pb_t->chrName << "\t" << pb_t->chrBegin << "\t" << pb_t->chrEnd << "\t";
-                                os << pb_t->blockIdx << pb_t->blockStart << "\t" << pb_t->blockSize;
+                                os << pb_t->blockIdx << "\t"<< pb_t->blockStart<< "\t" << pb_t->blockSize;
                                 std::string upname = gname;
                                 upcase(upname);
                                 if (geneExprMap.find(upname) == geneExprMap.end())
@@ -550,8 +608,8 @@ void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetN
     writer.writeStrainNameAndValue(phenvec, strOrderVec);
     writer.os << "#GeneName\tCodonFlag\tHaplotype\t";
     writer.os << (isCategorical ? "FStat" : "Pvalue");
-    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tChr\tBlockStart\tBlockEnd\t";
-    writer.os << "BlockIdx\tBlockSize\tGeneExprMap\n";
+    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tChr\tChrStart\tChrEnd\t";
+    writer.os << "BlockIdx\tBlockStart\tBlockSize\tGeneExprMap\n";
 
     GenesComparator gcomp(isCategorical);
     std::vector<GeneSummary *> genes;
@@ -576,8 +634,8 @@ void writeGeneBlockByBlocks(bool isCategorical, char *outputFileName, char *data
     //writer.writeHeaders(header);
     writer.os << "#GeneName\tCodonFlag\tHaplotype\t";
     writer.os << (isCategorical ? "FStat" : "Pvalue");
-    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tChr\tBlockStart\tBlockEnd\t";
-    writer.os << "BlockIdx\tBlockSize\tGeneExprMap\n";
+    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tChr\tChrStart\tChrEnd\t";
+    writer.os << "BlockIdx\tBlockStart\tBlockSize\tGeneExprMap\n";
     showGeneBlockByBlocks(writer.os, isCategorical, blocks, pvalueCutoff, strOrderVec);
 }
 
@@ -591,7 +649,7 @@ void writeBlockSums(bool isCategorical, char *outputFileName,
     writer.sortStrainsByPheno(phenvec, strOrderVec);
     writer.writeExpressionNames(geneExprHeader);
     writer.writeStrainNameAndValue(phenvec, strOrderVec);
-    writer.os << "#BlockID\tBlockIdx\tBlockSize\tChr\tBlockStart\tBlockEnd\tHaplotype\t";
+    writer.os << "#BlockID\tBlockIdx\tBlockStart\tBlockSize\tChr\tChrStart\tChrEnd\tHaplotype\t";
     writer.os << (isCategorical ? "FStat" : "Pvalue");
     writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tGeneName\tCodonFlag\n";
     showBlockSums(writer.os, isCategorical, blocks, pvalueCutoff, strOrderVec);
@@ -610,7 +668,7 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
     // header
     writer.os << "#GeneName\tCodonFlag\tHaplotype\t";
     writer.os << (isCategorical ? "FStat" : "Pvalue");
-    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tChr\tBlockStart\tBlockEnd\tGeneExprMap\n";
+    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tChr\tChrStart\tChrEnd\tBlockIdx\tBlockStart\tBlockSize\tGeneExprMap\n";
     std::ofstream & genesout = writer.os;
 
     GenesComparator gcomp(isCategorical);
@@ -626,7 +684,7 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
 
         if ((*git)->isIgnored)
             continue; //simply don't write these genes
-        BlockSummary *pBestBlock = (*git)->blocks[0];
+        BlockSummary *pBestBlock = (*git)->blocks[0]; // FIXME: why only write the first best block ?
         if (isCategorical)
         {
             if (pBestBlock->FStat < cutoff)
@@ -657,6 +715,7 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
         bool hasSpliceChange = false;
         //ofstream debug_log;
         //debug_log.open("debug.log",ios::app);
+        pBestBlock->updateGeneIsInteresting();
         for (std::vector<BlockSummary *>::iterator blit = (*git)->blocks.begin(); blit != (*git)->blocks.end(); blit++)
         {
             if (isCutoff(isCategorical, cutoff, *blit))
@@ -684,7 +743,6 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
         //     codingCode = 1;
         // if (hasSpliceChange)
         //     codingCode = 2; //if this is true, will overwrite codingCode=1
-        pBestBlock->updateGeneIsInteresting();
         if ((isCoding || !filterCoding) || hasSpliceChange)
         {
             genesout << gname << "\t" << pBestBlock->geneIsInteresting[(*git)->name] << "\t";
@@ -694,6 +752,7 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
             genesout << "\t" << pBestBlock->effect <<"\t"<< pBestBlock->FDR;
             genesout << "\t" << pBestBlock->relPvalue<<"\t"<< pBestBlock->relFDR; 
             genesout << "\t" << pBestBlock->chrName << "\t" << pBestBlock->chrBegin << "\t" << pBestBlock->chrEnd;
+            genesout << "\t" << pBestBlock->blockIdx << "\t" << pBestBlock->blockStart << "\t" << pBestBlock->blockSize;
 
             // write gene expression values
             if (geneExprMap.find(ugname) == geneExprMap.end())
@@ -753,45 +812,58 @@ int numHaplotypes(char *pattern)
     return numHap + 1;
 }
 
-/* Returns a score that represents the interestingness of codon changes*/
-int scoreChanges(std::string str)
-{
-    int count = 0;
-    size_t pos = 0;
-    size_t endpos = 0;
-    while (true)
-    {
-        pos = str.find("<", pos + 1);
-        if (pos == std::string::npos)
-            break;
-        endpos = str.find(">", pos + 1);
-        int aa1 = str[pos - 1] - 'A';
-        int aa2 = str[endpos + 5] - 'A';
-        if (AACLASSES[aa1] != AACLASSES[aa2])
-        {
-            count++;
-            int X = 'X' - 'A';
-            if (aa1 == X || aa2 == X)
-                count += 2; // Higher weight if stop codon
-        }
-    }
-    return count;
-}
+// /* Returns a score that represents the interestingness of codon changes*/
+// int scoreChanges(std::string str)
+// {
+//     int count = 0;
+//     size_t pos = 0;
+//     size_t endpos = 0;
+//     while (true)
+//     {
+//         pos = str.find("<", pos + 1);
+//         if (pos == std::string::npos)
+//             break;
+//         endpos = str.find(">", pos + 1);
+//         int aa1 = str[pos - 1] - 'A';
+//         int aa2 = str[endpos + 5] - 'A';
+//         if (AACLASSES[aa1] != AACLASSES[aa2])
+//         {
+//             count++;
+//             int X = 'X' - 'A';
+//             if (aa1 == X || aa2 == X)
+//                 count += 2; // Higher weight if stop codon
+//         }
+//     }
+//     return count;
+// }
 
-int interestingChanges(const std::map<std::string, std::string> &geneCodingMap)
-{
-    int changeCount = 0;
-    for (std::map<std::string, std::string>::const_iterator git = geneCodingMap.begin();
-         git != geneCodingMap.end(); git++)
-    {
-        if (git->second == "0" || git->second == "1")
-            continue;
-        changeCount += scoreChanges(git->second);
-//        changeCount+=countInStr(git->second, "<->");
-//        changeCount+=countInStr(git->second, "SPLICE_SITE");
-    }
-    return changeCount;
-}
+// int interestingChanges(const std::map<std::string, std::string> &geneCodingMap)
+// {
+//     int changeCount = 0;
+//     for (std::map<std::string, std::string>::const_iterator git = geneCodingMap.begin();
+//          git != geneCodingMap.end(); git++)
+//     {
+//         if (git->second == "0" || git->second == "1")
+//             continue;
+//         changeCount += scoreChanges(git->second);
+// //        changeCount+=countInStr(git->second, "<->");
+// //        changeCount+=countInStr(git->second, "SPLICE_SITE");
+//     }
+//     return changeCount;
+// }
+
+// void setBlockStats()
+// {
+//     for (unsigned blkIdx = 0; blkIdx < blocks.size(); blkIdx++)
+//     {
+//         BlockSummary *pBlock = blocks[blkIdx];
+//         //if(!pBlock->isIgnored) {
+//         pBlock->numHaplo = numHaplotypes(pBlock->pattern);
+//         pBlock->numInteresting = interestingChanges(pBlock->geneIsCodingMap);
+//     }
+// }
+
+
 
 // Mark each block as ignored unless it has a coding gene.
 void filterCodingBlocks()
@@ -805,7 +877,8 @@ void filterCodingBlocks()
 
         for (std::map<std::string, std::string>::iterator gicmit = gicMap.begin(); gicmit != gicMap.end(); gicmit++)
         {
-            if ((*gicmit).second != "0")
+            //if ((*gicmit).second != "0") // FIXME: the old value is 0
+            if ((*gicmit).second != "-1")
             {
                 keep = true;
                 break;
@@ -890,16 +963,16 @@ void readQPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec)
     }
 }
 
-void setBlockStats()
-{
-    for (unsigned blkIdx = 0; blkIdx < blocks.size(); blkIdx++)
-    {
-        BlockSummary *pBlock = blocks[blkIdx];
-        //if(!pBlock->isIgnored) {
-        pBlock->numHaplo = numHaplotypes(pBlock->pattern);
-        pBlock->numInteresting = interestingChanges(pBlock->geneIsCodingMap);
-    }
-}
+// void setBlockStats()
+// {
+//     for (unsigned blkIdx = 0; blkIdx < blocks.size(); blkIdx++)
+//     {
+//         BlockSummary *pBlock = blocks[blkIdx];
+//         //if(!pBlock->isIgnored) {
+//         pBlock->numHaplo = numHaplotypes(pBlock->pattern);
+//         pBlock->numInteresting = interestingChanges(pBlock->geneIsCodingMap);
+//     }
+// }
 // Read a file of categorical phenotypes.
 void readCPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec)
 {

@@ -2327,11 +2327,10 @@ void writeBlockSNPs(char *fname, int minBlockSNPs)
   ofstream snpOut(fname);
   if (!snpOut.is_open())
   {
-    cerr << "Open of file \"" << fname << "\" failed: ";
-    perror("");
-    exit(1);
+    std::cerr << "Open of file \"" << fname << "\" failed: ";
+    std::exit(1);
   }
-
+  // snpOut<<"#Chr\tPosition\tSNP\tAlleles\tGene\tAnnotation"
   for (size_t snpIdx = 0; snpIdx < snpVec.size(); snpIdx++)
   {
     SNPInfo *pSNPInfo = snpVec[snpIdx];

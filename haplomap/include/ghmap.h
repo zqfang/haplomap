@@ -13,8 +13,6 @@
 
 
 int numHaplotypes(char *pattern); // forward decl.
-int interestingChanges(const std::map<std::string, std::string> &geneCodingMap);
-
 
 inline void upcase(std::string &str)
 {
@@ -33,9 +31,9 @@ class BlockSummary
 {
   public:
     char *chrName;
-    int blockIdx;
-    int blockStart;
-    int blockSize;
+    int blockIdx;  // block id
+    int blockStart; // snpvec index (0-based), output from eblocks -p
+    int blockSize;  // snpvec size
     int chrBegin;
     int chrEnd;
     char *pattern;
@@ -56,7 +54,7 @@ class BlockSummary
     BlockSummary(const char *chrnm, int num, int start, int size,
                 int chrbeg, int chrend, const char *pat);
     ~BlockSummary();
-
+    void setBlockStats();
     std::string updateCodonScore(std::string str);
     void updateGeneIsInteresting();
     // print a line of the blocks file.
@@ -75,6 +73,11 @@ class BlockSummary
                               std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec);
     friend void showGeneBlockByBlocks(std::ostream &os, bool isCategorical, std::vector<BlockSummary *> &blocks, 
                                       float cutoff, std::vector<int> &strOrderVec);
+private:
+    void interestingChanges();
+    int scoreChanges(std::string str);
+    // returns maximum eq. class + 1.
+    int numHaplotypes();
 };
 
 inline void showIsCoding(std::map<std::string, std::string> geneIsCodingMap)
@@ -196,7 +199,6 @@ public:
 
 /* Returns a score that represents the interestingness of codon changes*/
 int scoreChanges(std::string str);
-
 int interestingChanges(const std::map<std::string, std::string> &geneCodingMap);
 
 // Mark each block as ignored unless it has a coding gene.

@@ -79,8 +79,8 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
                         "                           output only genes with these terms\n"
                         "    -c                     phenotype (-p) is categorical\n"
                         "    -f                     filter out non-coding blocks\n"
-                        "    -g, --gene             output gene-oriented results file for gene. Default\n"
-                        "    -a                     annotate gene-oriented output with blockIndex.\n"
+                        "    -g, --gene             output gene-oriented results for best the block that overlap genes. Default\n"
+                        "    -a                     output gene-oriented results for all blocks that overalp genes.\n"
                         "    -k                     output blocks-oriented results\n"
                         "    -m                     output gene and haplotype block by block\n"
                         "    -l, --pvalue_cutoff    only write results with pvalue < cutoff\n"
@@ -360,14 +360,14 @@ int main_ghmap(int argc, char **argv)
     }
     }
     endPhase();
-    setBlockStats();
+
     beginPhase("Benjamini Hochberg procedure for controlling the FDR");
     if (opts->geneticRelationMatrix != NULL)
         bh_fdr(blocks, 0.05, 0); // pop structure pval correction
     if (!opts->isCategorical)
         bh_fdr(blocks, 0.05, 1); // annova pval correction
     endPhase();
-
+    //setBlockStats();
     beginPhase("sorting blocks");
     BlocksComparator bcomp(opts->isCategorical);
     std::sort(blocks.begin(), blocks.end(), bcomp);

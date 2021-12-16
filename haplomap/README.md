@@ -105,17 +105,31 @@ Statistical testing
 
 1. eblocks:
 
+- SNP file (-p):
+
 | NO | Field | Explanation |
 |--- | ---- | ------------ |
-|0 |chrom | chromosome idx      |
-|1 |Block | Block id            |
-|2 |Start | Block start idx     |
-|3 |Size  | Block size          |
-|4 |ChrBeg| Chromosome begin idx |
-|5 |ChrEnd| Chromosome end idx  |
+|0 |Chrom | chromosome      |
+|1 |Position | chromosome position (1-based) | 
+|2 |SNP | SNP name |
+|3 |Pattern | Binary pattern of alleles |
+|4 |GeneName| Associated Gene   |
+|5 |CodonFlag | Annotation |
+
+- Haploblock file (-o):
+
+| NO | Field | Explanation |
+|--- | ---- | ------------ |
+|0 |Chrom | chromosome idx      |
+|1 |BlockIdx | Block id            |
+|2 |BlockStart | SNP vector start index; row index (0-based) of eblock -p output |
+|3 |Size  | SNP number of the HaploBlock |
+|4 |ChrBeg| Chromosome begin position |
+|5 |ChrEnd| Chromosome end position  |
 |6 |Pattern | Haplotype pattern |
 |7 |GeneName| Associated Gene   |
-|8 |Codon Map | Whether Change Codon |
+|8 |CodonFlag | Annotation |
+
 
 2. ghmap:
   * gene-oriented results file
@@ -130,14 +144,17 @@ Statistical testing
 |5 |FDR          | Benjamini Hochberg. If categorical, skip |
 |6 |popPvalue    | Pillai’s Trace Pvalue |
 |7 |popFDR       | Pillai’s Trace FDR |
-|8 |Chrom        | Chromosome      |
-|9 |BlockEnd     | HaploBlock begin |
-|10 |BlockEnd    | HaploBlock end   |
-|11 |Expression  | Gene expression Map, see header line  |
+|8 |Chr          | Chromosome      |
+|9 |ChrStart     | Chromosome begin position |
+|10 |ChrEnd      | Chromosome end position   |
+|11 | BlockIdx   | HaploBlock ID; the second column of eblock -o output |
+|12 | BlockStart | SNP vector start index; row index (0-based) of eblock -p output |
+|13 | Blocksize | SNP number of the HaploBlock |
+|14 | Expression  | Gene expression Map, see header line  |
 
   * block-oriented result file
 
-BlockID | (IGNORED) | blockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | Effect | FDR | CodingMap ...
+BlockID | BlockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat/Pval | Effect | FDR | CodingMap ...
 
 
 
@@ -148,6 +165,7 @@ i. SNPs
   * 0: Synonymous (not important)
   * 1: missense/nonsense...
   * 2: Splicing site change
+  * 3: Stop codon
 
 ii. indels and structral variants (ghmap -a ): 
   * HIGH
