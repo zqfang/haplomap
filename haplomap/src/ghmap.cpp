@@ -27,22 +27,23 @@ BlockSummary::BlockSummary(const char *chrnm, int num, int start, int size,
           relFStat(INFINITY), relPvalue(1.0), relFDR(1.0), relReject(false),
           numHaplo(-1), numInteresting(-1)
 {
-    chrName = strdup(chrnm);
-    pattern = strdup(pat);
-    numHaplo = this->numHaplotypes();
+    this->chrName = strdup(chrnm);
+    this->pattern = strdup(pat);
+    this->numStrains = strlen(pat);
+    this->numHaplo = this->numHaplotypes();
+    this->makePatternUnprintable(); // this is usefull for downstream ANOVA analysis
 }
 
 BlockSummary::~BlockSummary()
 {
     /// FIXME: need to free memory if called strdup()
-    free(pattern);
-    free(chrName);
+    free(this->pattern);
+    free(this->chrName);
 }
 int BlockSummary::numHaplotypes()
     {
         int numHap = -1;
-        int _numStrains = strlen(this->pattern);
-        for (int str1 = 0; str1 < _numStrains; str1++)
+        for (int str1 = 0; str1 < this->numStrains; str1++)
         {
             int hap = this->pattern[str1];
             if (this->pattern[str1] != '?' && numHap < hap)
@@ -52,6 +53,21 @@ int BlockSummary::numHaplotypes()
         }
         return numHap + 1;
     }
+
+// convert digits 0-9 in string to \000..\011 (but leave '?' printable).
+/// Mark: make ascii starts from 0, not '0'.
+void BlockSummary::makePatternUnprintable()
+{
+    char *p = this->pattern;
+    while (*p != 0)
+    {
+        if (*p != '?')
+        {
+            *p -= '0';
+        }
+        p++;
+    }
+}
 // summary of a block, read for the file.
 std::string BlockSummary::updateCodonScore(std::string str)
   {
@@ -355,9 +371,6 @@ void GhmapWriter::writeSortedPattern(char *pattern, std::vector<int> &strOrderVe
     free(sortedEqMap);
 }
 
-
-
-
 void GhmapWriter::writeStrainNameAndValue(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec)
 {
     // output strain names.
@@ -477,16 +490,16 @@ void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
         }
     }
 
+    numStrains = blocks[0]->numStrains;
     // Separate pass to fix up patterns.
     // patterns are all the same length.
     // FIXME: this causes a seg fault when there are no blocks (happens under funny conditions).
-    numStrains = strlen(blocks[0]->pattern);
-
-    for (unsigned blkIdx = 0; blkIdx < blocks.size(); blkIdx++)
-    {
-        BlockSummary *block = blocks[blkIdx];
-        makeUnprintable(block->pattern);
-    }
+    // numStrains = strlen(blocks[0]->pattern);
+    // for (unsigned blkIdx = 0; blkIdx < blocks.size(); blkIdx++)
+    // {
+    //     BlockSummary *block = blocks[blkIdx];
+    //     makeUnprintable(block->pattern);
+    // }
 }
 
 // print a line of the blocks file.
@@ -935,19 +948,14 @@ void readQPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec)
     ColumnReader rdr(fname, (char *)"\t");
 
     int numtoks;
-
+    int qtok = 1; // floating point value token
+    std::string::size_type sz; 
     while ((numtoks = rdr.getLine()) >= 0)
     {
         if (rdr.getCurrentLineNum() < 1) continue;
-        // file has "Abbrev\tValue\n"
-        if (numtoks != 2)
-        {
-            std::cout << "Warning: numtoks = " << numtoks << std::endl;
-        }
+        // file has "Abbrev\tFullname\tValue1,Value2,Value3\n"
 
-        // FIXME: some unnecessary string copies
         std::string strain_abbrev = rdr.getToken(0);
-        std::vector<float> qphen;
         //qphen.push_back(std::stof(rdr.getToken(1)));
         //    int strIdx = strainAbbrevs.hasIndex(strain_abbrev);
         int strIdx = strainAbbrevs.addElementIfNew(strain_abbrev);
@@ -955,9 +963,26 @@ void readQPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec)
         {
            std::cout << "Undefined strain abbrev: " << strain_abbrev << std::endl;
         }
-        //phenvec[strIdx] = qphen;
-        // MARK: handle same animal with multiple values
-        phenvec[strIdx].push_back(std::stof(rdr.getToken(1)));
+
+        // test whether it's 2 columns or 3 columns format
+        try 
+        { 
+            std::stof(rdr.getToken(1), &sz); 
+            //qtok = 1;
+        } 
+        catch(std::exception& ia) 
+        { 
+            qtok = 2;
+        } 
+
+        // now parse the floating point values
+        std::vector<std::string> qphen;
+        rdr.split(rdr.getToken(qtok), (char *)",", qphen);
+        for (auto &q: qphen)
+        {
+            if (q.empty()) continue;
+            phenvec[strIdx].push_back(std::stof(q));
+        }
     }
 }
 
@@ -971,7 +996,8 @@ void readCPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec)
     catNames.resize(numStrains);
 
     int numtoks;
-
+    int qtok = 1; // floating point value token
+    std::string::size_type sz; 
     while ((numtoks = rdr.getLine()) >= 0)
     {
         if (rdr.getCurrentLineNum() < 1) continue;
@@ -980,10 +1006,20 @@ void readCPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec)
         {
             std::cout << "Warning: numtoks = " << numtoks << std::endl;
         }
+        // test whether it's 2 columns or 3 columns format
+        try 
+        { 
+            std::stof(rdr.getToken(1), &sz); 
+            //qtok = 1;
+        } 
+        catch(std::exception& ia) 
+        { 
+            qtok = 2;
+        } 
 
         // FIXME: some unnecessary string copies
         std::string strain_abbrev = rdr.getToken(0);
-        std::string catname = rdr.getToken(1);
+        std::string catname = rdr.getToken(qtok);
         int strIdx = strainAbbrevs.addElementIfNew(strain_abbrev);
         catNames[strIdx] = catname;
         categories.addElementIfNew(catname);
@@ -1101,20 +1137,5 @@ void writeSortedPattern(std::ostream &os, char *pattern, std::vector<int> &strOr
     }
     // memory leak?
     free(sortedEqMap);
-}
-
-// convert digits 0-9 in string to \000..\011 (but leave '?' printable).
-/// Mark: make ascii starts from 0, not '0'.
-void makeUnprintable(char *pattern)
-{
-    char *p = pattern;
-    while (*p != 0)
-    {
-        if (*p != '?')
-        {
-            *p -= '0';
-        }
-        p++;
-    }
 }
 

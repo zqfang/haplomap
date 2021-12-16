@@ -75,28 +75,20 @@ Statistical testing
 ## Input
 1. eblocks:
     - Strain file (-s): 
-      - two column txt file: |- abbrev -|- fullname -|
+      - Tree column txt file: "#Abbrev \t Fullname \t Values "
       - see `test.strain.txt` in the example folder
     - Allele file (-a): NIEHS compact format (use subcmd `niehs` to convert vcf to niehs)
     - Gene Annotation (-g): 
-      - format: <SNP_{chr}_{postion}>  <gene_name>  < SNP_cateogry> 
+      - format: " <SNP_{chr}_{postion}>  <gene_name>  < SNP_cateogry> "
       - see above to prepare this file
 
 2. ghmap:
     - Trait file (-p):  
-        - two column txt file: |- abbrev -|- value -|, see `test.trait.txt` in the example folder
-        - same `abbrev value` pair could be set multiple times, but need to keep same order to strain pattern of (-b). Example:
+        - Tree column txt file, same as eblocks -s:  "#Abbrev \t Fullname \t Values "
+        - If multiple aninmal values for same strain, seperate them by comma . Example:
         ```$xslt
-           129S1	18.2
-           129S1	19.1
-           129S1	14.3
-           129S1	17.2
-           A_J	19.3
-           A_J	18.2
-           AKR	22.1
-           AKR	20.0
-           AKR	24.6
-           AKR	21.4
+           129S1	18.2,19.1,14.3
+           A_J	19.3,18.2
         ```
     - haploblocks (-b): eblocks output file
     - genetic relation (-r): optional file, could obtain from plink pca
@@ -112,7 +104,7 @@ Statistical testing
 |0 |Chrom | chromosome      |
 |1 |Position | chromosome position (1-based) | 
 |2 |SNP | SNP name |
-|3 |Pattern | Binary pattern of alleles |
+|3 |Pattern | Binary pattern of alleles, strain order is same to the input strain file |
 |4 |GeneName| Associated Gene   |
 |5 |CodonFlag | Annotation |
 
@@ -126,7 +118,7 @@ Statistical testing
 |3 |Size  | SNP number of the HaploBlock |
 |4 |ChrBeg| Chromosome begin position (1-based) |
 |5 |ChrEnd| Chromosome end position  |
-|6 |Pattern | Haplotype pattern |
+|6 |Pattern | Haplotype pattern, strain order is same to the input strain file |
 |7 |GeneName| Associated Gene   |
 |8 |CodonFlag | Annotation |
 
@@ -138,7 +130,7 @@ Statistical testing
 |---| ---- | ------------ |
 |0 |GeneName     | Associated Gene     |
 |1 |CodonFlag    | -1: non-coding; 0: synonymouse; 1: missense; 2: splicing  |             |
-|2 |Haplotype    | Haplotype pattern, see header line for strains   |
+|2 |Haplotype    | Haplotype pattern, see header line for strain order   |
 |3 |FStat/Pvalue | isCategorical ? Fstat : Pvalue |
 |4 |EffectSize   | Genetic Effect ( Omega^2 )   |
 |5 |FDR          | Benjamini Hochberg. If categorical, skip |

@@ -48,13 +48,13 @@ class BlockSummary
     bool relReject;
     int numHaplo;
     int numInteresting;
+    int numStrains;
     std::map<std::string, std::string> geneIsInteresting; // gene name -> codon change, by gene BY
     std::map<std::string, std::string> geneIsCodingMap;   // gene name -> coding strings, eg. TGA/X<->GGA/R
     // constructor
     BlockSummary(const char *chrnm, int num, int start, int size,
                 int chrbeg, int chrend, const char *pat);
     ~BlockSummary();
-    void setBlockStats();
     std::string updateCodonScore(std::string str);
     void updateGeneIsInteresting();
     // print a line of the blocks file.
@@ -76,18 +76,13 @@ class BlockSummary
 private:
     void interestingChanges();
     int scoreChanges(std::string str);
-    // returns maximum eq. class + 1.
+    /// returns maximum eq. class + 1.
     int numHaplotypes();
+    /// convert digits 0-9 in string to \000..\011 (but leave '?' printable).
+    /// Mark: make ascii starts from 0, not '0'. Useful for downstream ANOVA analysis (a.k.a grouping number starts from 0)
+    void makePatternUnprintable();
 };
 
-inline void showIsCoding(std::map<std::string, std::string> geneIsCodingMap)
-{
-  for (std::map<std::string, std::string>::iterator giit = geneIsCodingMap.begin(); giit != geneIsCodingMap.end(); giit++)
-  {
-    std::cout << "\t" << (*giit).first << "\t" << (*giit).second;
-  }
-  std::cout << std::endl;
-}
 
 // This is to sort blocks in the best order.  First, sort by p-value
 // or F statistic, depending on whether the phenotype is quantitative
@@ -129,25 +124,16 @@ public:
   };
 };
 
+inline void showIsCoding(std::map<std::string, std::string> geneIsCodingMap)
+{
+  for (std::map<std::string, std::string>::iterator giit = geneIsCodingMap.begin(); giit != geneIsCodingMap.end(); giit++)
+  {
+    std::cout << "\t" << (*giit).first << "\t" << (*giit).second;
+  }
+  std::cout << std::endl;
+}
 
 void filterGoTerms(char *fname, std::vector<std::string> terms);
-
-std::vector<float> sumVector(std::vector<float> &vec);
-void subVector(std::vector<float> &vec, float value);
-// Some vector arithmetic.
-// destroys first argument (like +=)
-void addVectors(std::vector<float> &v1, std::vector<float> &v2);
-
-void subtractVectors(std::vector<float> &v1, std::vector<float> &v2);
-
-//
-float dotVectors(std::vector<float> &v1, std::vector<float> &v2);
-
-// multiply by scalar.  Destroys first argument.
-void scaleVector(std::vector<float> &v1, float c);
-
-// convert digits 0-9 in string to \000..\011 (but leave '?' printable).
-void makeUnprintable(char *pattern);
 
 
 // read in the block summary file.
