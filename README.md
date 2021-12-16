@@ -136,27 +136,6 @@ sbatch slurm.submit.sh
 ```
 
 
-
-## Input
-1. eblocks:
-    - Strain file (-s): column1 -> abbrev, column2 -> fullname
-    - Allele file (-a): NIEHS compact format
-    - Gene Annotation (-g): 
-       - format: <SNP_{chr}_{postion}>  <gene_name>  < SNP_cateogry> 
-
-2. ghmap:
-    - Trait file (-p):  column1 -> abbrev, column2 -> value
-    - eblock output (-o): haplotype blocks
-
-3. Get SNP database
-  - select snakemake pipelines in workflow folder.
-  - edit the input and output files, then run  
-    e.g.
-    ```shell
-    # modify the file path in haplomap and run with 24 cores
-    snakemake -s workflows/bcftools.call.smk -k -p -j 24   
-    ```
-
 ## Output
 output explanation, see here: [Run haplomap standalone](haplomap/README.md)
 

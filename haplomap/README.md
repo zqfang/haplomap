@@ -124,7 +124,7 @@ Statistical testing
 |1 |BlockIdx | Block id            |
 |2 |BlockStart | SNP vector start index; row index (0-based) of eblock -p output |
 |3 |Size  | SNP number of the HaploBlock |
-|4 |ChrBeg| Chromosome begin position |
+|4 |ChrBeg| Chromosome begin position (1-based) |
 |5 |ChrEnd| Chromosome end position  |
 |6 |Pattern | Haplotype pattern |
 |7 |GeneName| Associated Gene   |
@@ -145,7 +145,7 @@ Statistical testing
 |6 |popPvalue    | Pillai’s Trace Pvalue |
 |7 |popFDR       | Pillai’s Trace FDR |
 |8 |Chr          | Chromosome      |
-|9 |ChrStart     | Chromosome begin position |
+|9 |ChrStart     | Chromosome begin position (1-based) |
 |10 |ChrEnd      | Chromosome end position   |
 |11 | BlockIdx   | HaploBlock ID; the second column of eblock -o output |
 |12 | BlockStart | SNP vector start index; row index (0-based) of eblock -p output |
