@@ -2,10 +2,10 @@
 // Created by Zhuoqing Fang on 7/1/20.
 //
 
-#include <numeric>
-#include "gsl/gsl_cdf.h"
-#include "gsl/gsl_math.h"
-#include "ghmap.h"
+// #include <numeric>
+// #include "gsl/gsl_cdf.h"
+// #include "gsl/gsl_math.h"
+// #include "ghmap.h"
 
 //// old code
 //void ANOVA(std::vector<std::vector<float>> &phenvec, char *pattern, float &FStat, float &pvalue, float &effect)

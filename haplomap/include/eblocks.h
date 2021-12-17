@@ -28,14 +28,7 @@
 
 //using namespace std;
 
-// For setting initial datastructure sizes
-extern const int approxNumSNPs;
 
-// If SNP is not defined for at least this many strains, ignore it.
-extern int minDefined;
-
-// Forward decls
-int allelesToPattern(char *astr, char *pattern);
 
 // Allocation of pattern strings.  all constructors should allocate.
 // destructor should free never assign to the strings.  Do memcpy.
@@ -45,10 +38,11 @@ int allelesToPattern(char *astr, char *pattern);
 /*****************************************************************
  * Global variables and constants			  	 *
  *****************************************************************/
-
+extern const int approxNumSNPs;
+// If SNP is not defined for at least this many strains, ignore it.
+extern int minDefined;
 // FIXME: haploLimit should probably depend on number of strains
 // tooLong should be configurable (options file?)
-
 extern const int haploLimit;    // Maximum number of haplotypes to allow in a block.
 extern const int tooLong; // A block cannot span more than 1 million base pairs
 

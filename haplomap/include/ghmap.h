@@ -12,7 +12,7 @@
 //using namespace std;
 
 
-int numHaplotypes(char *pattern); // forward decl.
+// int numHaplotypes(char *pattern); // forward decl.
 
 inline void upcase(std::string &str)
 {
@@ -71,8 +71,7 @@ class BlockSummary
     }
     friend void showBlockSums(std::ostream &os, bool isCategorical,
                               std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec);
-    friend void showGeneBlockByBlocks(std::ostream &os, bool isCategorical, std::vector<BlockSummary *> &blocks, 
-                                      float cutoff, std::vector<int> &strOrderVec);
+
 private:
     void interestingChanges();
     int scoreChanges(std::string str);
@@ -81,6 +80,8 @@ private:
     /// convert digits 0-9 in string to \000..\011 (but leave '?' printable).
     /// Mark: make ascii starts from 0, not '0'. Useful for downstream ANOVA analysis (a.k.a grouping number starts from 0)
     void makePatternUnprintable();
+    /// return a printable Patten
+    char * showPatternPrintable();
 };
 
 
@@ -105,7 +106,10 @@ public:
   std::vector<BlockSummary *> blocks; // vector of blocks overlapping this gene.
   std::vector<std::string> goTerms;
   bool isIgnored;
-  GeneSummary(bool ignoreDefault) : isIgnored(ignoreDefault){};
+  GeneSummary(bool ignoreDefault);
+  ~GeneSummary();
+
+  void showIsCoding(std::map<std::string, std::string> geneIsCodingMap);
 };
 
 // Genes comparator -- compares by best blocks in gene.
@@ -124,17 +128,8 @@ public:
   };
 };
 
-inline void showIsCoding(std::map<std::string, std::string> geneIsCodingMap)
-{
-  for (std::map<std::string, std::string>::iterator giit = geneIsCodingMap.begin(); giit != geneIsCodingMap.end(); giit++)
-  {
-    std::cout << "\t" << (*giit).first << "\t" << (*giit).second;
-  }
-  std::cout << std::endl;
-}
 
 void filterGoTerms(char *fname, std::vector<std::string> terms);
-
 
 // read in the block summary file.
 // If geneName is non-null, only read the SNPs for that gene.
@@ -142,22 +137,24 @@ void readBlockSummary(char *fname, char *geneName, bool ignoreDefault);
 
 // Order strain indices by decreasing phenotype value (or just group
 // them, if categorical).
-void sortStrainsByPheno(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec);
+// void sortStrainsByPheno(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec);
 
-// Write summaries of the blocks.  The CGI script will read this and render it nicely in
-// HTML.
+
+// Write summaries of the blocks.  The CGI script will read this and render it nicely in HTML.
 void showGeneBlockSums(std::ostream &os, bool isCategorical, std::vector<BlockSummary *> &blocks, 
-                       float cutoff, std::vector<int> &strOrderVec, std::vector<GeneSummary *> genesList);
-
+                        float cutoff, std::vector<int> &strOrderVec, std::vector<GeneSummary *> genesList);
 // BY ADDITION
+void showGeneBlockByBlocks(std::ostream &os, bool isCategorical, std::vector<BlockSummary *> &blocks, 
+                                    float cutoff, std::vector<int> &strOrderVec);
+
 void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetName,
         std::vector<std::vector<float>> &phenvec, std::vector<BlockSummary *> &blocks, float pvalueCutoff);
 
 void writeGeneBlockByBlocks(bool isCategorical, char *outputFileName, char *datasetName,
         std::vector<std::vector<float>> &phenvec, std::vector<BlockSummary *> &blocks, float pvalueCutoff);
 
-void writeBlockSums(bool isCategorical, char *outputFileName,
-                    char *datasetName, std::vector<std::vector<float> > &phenvec,
+void writeBlockSums(bool isCategorical, char *outputFileName, char *datasetName, 
+                    std::vector<std::vector<float> > &phenvec,
                     std::vector<BlockSummary *> &blocks, float pvalueCutoff);
 
 // Write gene-oriented summary.
@@ -185,7 +182,6 @@ public:
 };
 
 
-
 // Mark each block as ignored unless it has a coding gene.
 void filterCodingBlocks();
 
@@ -202,16 +198,6 @@ void readEqualFile(char *fname, std::vector<int> &equalStrains);
 
 //reads first column of tsv fname into vector vec
 void readFileToVec(char *fname, std::vector<std::string> &vec);
-
-// This version takes vector of vectors in phenotypes, so that it can handle normal
-// and categorical data in the same code.
-// Handling of categorical data is as described to me by Ming.
-// Means are means of vectors.
-// SSW is sum of squares of Euclidean distances of phenotype vectors to the phenotype mean.
-// SSB is sum of squares of Euclidean distances of haplotype averages to global mean.
-// This does not actually compute the p-value.  It stops with the F statistic.
-// void ANOVA(std::vector<std::vector<float>> &phenvec, char *pattern, float &FStat, float &pvalue, float &effect);
-
 
 // defined globals
 /* use `extern` to declare global variable, to use it

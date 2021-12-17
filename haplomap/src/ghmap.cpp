@@ -31,7 +31,7 @@ BlockSummary::BlockSummary(const char *chrnm, int num, int start, int size,
     this->pattern = strdup(pat);
     this->numStrains = strlen(pat);
     this->numHaplo = this->numHaplotypes();
-    this->makePatternUnprintable(); // this is usefull for downstream ANOVA analysis
+    this->makePatternUnprintable(); // this is usefull for downstream ANOVA analysis, once called, strlen(pat) will fail
 }
 
 BlockSummary::~BlockSummary()
@@ -68,6 +68,24 @@ void BlockSummary::makePatternUnprintable()
         p++;
     }
 }
+char * BlockSummary::showPatternPrintable()
+{
+    /// Memory Leak, be careful
+    char *newpat = (char *)malloc(numStrains);
+    std::memcpy(newpat, this->pattern, numStrains);
+
+    char *p = newpat;
+    while (*p != 0)
+    {
+        if (*p != '?')
+        {
+            *p += '0';
+        }
+        p++;
+    }
+    return newpat;
+}
+
 // summary of a block, read for the file.
 std::string BlockSummary::updateCodonScore(std::string str)
   {
@@ -156,47 +174,6 @@ void BlockSummary::updateGeneIsInteresting()
         this->geneIsInteresting[giit->first] = this->updateCodonScore(giit->second);
     }
 }
-
-/// old codonflag field code, now, in favor of ANNOVAR's new codonflag
-///
-// /* Returns a score that represents the interestingness of codon changes*/
-// int BlockSummary::scoreChanges(std::string str)
-// {
-//     int count = 0;
-//     size_t pos = 0;
-//     size_t endpos = 0;
-//     while (true)
-//     {
-//         pos = str.find("<", pos + 1);
-//         if (pos == std::string::npos)
-//             break;
-//         endpos = str.find(">", pos + 1);
-//         int aa1 = str[pos - 1] - 'A';
-//         int aa2 = str[endpos + 5] - 'A';
-//         if (AACLASSES[aa1] != AACLASSES[aa2])
-//         {
-//             count++;
-//             int X = 'X' - 'A';
-//             if (aa1 == X || aa2 == X)
-//                 count += 2; // Higher weight if stop codon
-//         }
-//     }
-//     return count;
-// }
-
-// void BlockSummary::interestingChanges()
-// {
-//     int changeCount = 0;
-//     for (std::map<std::string, std::string>::const_iterator git = this->geneIsCodingMap.begin();
-//          git != this->geneIsCodingMap.end(); git++)
-//     {
-//         if (git->second == "0" || git->second == "1")
-//             continue;
-//         changeCount += this->scoreChanges(git->second);
-//     }
-//     this->numInteresting = changeCount;
-// }
-
 
 bool BlocksComparator::operator()(const BlockSummary *pb1, const BlockSummary *pb2) const
   {
@@ -312,6 +289,19 @@ bool BlocksComparator::operator()(const BlockSummary *pb1, const BlockSummary *p
   }
 
 
+GeneSummary::GeneSummary(bool ignoreDefault) : isIgnored(ignoreDefault){}
+GeneSummary::~GeneSummary() {}
+
+void GeneSummary::showIsCoding(std::map<std::string, std::string> geneIsCodingMap)  
+{
+    for (std::map<std::string, std::string>::iterator giit = geneIsCodingMap.begin(); giit != geneIsCodingMap.end(); giit++)
+    {
+      std::cout << "\t" << (*giit).first << "\t" << (*giit).second;
+    }
+    std::cout << std::endl;
+}
+
+
 GhmapWriter::GhmapWriter(char *outputFileName, char *datasetName, bool isCategorical):
 _dataset_name(datasetName), _isCategorical(isCategorical)
 {
@@ -345,12 +335,24 @@ void GhmapWriter::sortStrainsByPheno(std::vector<std::vector<float>> &phenvec, s
 // renumber eqclasses in pattern so the increase from left to right
 void GhmapWriter::writeSortedPattern(char *pattern, std::vector<int> &strOrderVec)
 {
-    int numHaplo = numHaplotypes(pattern);
+    /// int numHaplo = numHaplotypes(pattern);
+    int numStrains = strOrderVec.size();
+    int numHaplo = -1;
+    for (int str1 = 0; str1 < numStrains; str1++)
+    {
+        int hap = pattern[str1];
+        if (pattern[str1] != '?' && numHaplo < hap)
+        {
+            numHaplo = hap;
+        }
+    }
+    numHaplo += 1;
+
     char *sortedEqMap = (char *)malloc(numHaplo);
     memset(sortedEqMap, '?', numHaplo);
     char curEq = 0;
-    int _numStrains = strOrderVec.size();
-    for (int strIdx = 0; strIdx < _numStrains; strIdx++)
+
+    for (int strIdx = 0; strIdx < numStrains; strIdx++)
     {
         int str = strOrderVec[strIdx];
         int eqclass = (int)pattern[str];
@@ -665,6 +667,7 @@ void showGeneBlockSums(std::ostream &os, bool isCategorical, std::vector<BlockSu
 void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetName,
                         std::vector<std::vector<float>> &phenvec, std::vector<BlockSummary *> &blocks, float pvalueCutoff)
 {
+    int numStrains = phenvec.size();
     std::vector<int> strOrderVec(numStrains); // will contain strain indices.
     GhmapWriter writer(outputFileName, datasetName, isCategorical);
     writer.sortStrainsByPheno(phenvec, strOrderVec);
@@ -690,6 +693,7 @@ void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetN
 void writeGeneBlockByBlocks(bool isCategorical, char *outputFileName, char *datasetName,
                             std::vector<std::vector<float>> &phenvec,std::vector<BlockSummary *> &blocks, float pvalueCutoff)
 {
+    int numStrains = phenvec.size();
     std::vector<int> strOrderVec(numStrains); // will contain strain indices.
     GhmapWriter writer(outputFileName, datasetName, isCategorical);
     writer.sortStrainsByPheno(phenvec, strOrderVec);
@@ -709,6 +713,7 @@ void writeBlockSums(bool isCategorical, char *outputFileName,
                     std::vector<BlockSummary *> &blocks, float pvalueCutoff)
 {
     GhmapWriter writer(outputFileName, datasetName, isCategorical);
+    int numStrains = phenvec.size();
     std::vector<int> strOrderVec(numStrains);
     writer.sortStrainsByPheno(phenvec, strOrderVec);
     writer.writeExpressionNames(geneExprHeader);
@@ -725,6 +730,7 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
                    std::vector<BlockSummary *> &blocks, float cutoff, bool filterCoding)
 {
     GhmapWriter writer(outputFileName, datasetName, isCategorical);
+    int numStrains = phenvec.size();
     std::vector<int> strOrderVec(numStrains);
     writer.sortStrainsByPheno(phenvec, strOrderVec);
     writer.writeExpressionNames(geneExprHeader);
@@ -830,50 +836,6 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
             }
         }
     }
-}
-
-
-// void sortStrainsByPheno(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec)
-// {
-//     std::vector<int>::iterator stoEnd = strOrderVec.end();
-//     int i = 0;
-//     for (std::vector<int>::iterator stoIt = strOrderVec.begin(); stoIt != stoEnd; stoIt++)
-//     {
-//         *stoIt = i++;
-//     }
-//     // This will sort lexicographically, which is the right thing.
-//     // For categorical values, we just want equal values together.
-//     IndexComparator<std::vector<float>, std::less<std::vector<float>>> idxCompare(&phenvec);
-//     std::stable_sort(strOrderVec.begin(), strOrderVec.end(), idxCompare);
-// }
-
-// Count the number of defined strains
-int numDefinedStrains(char *pattern)
-{
-    int count = 0;
-    for (int str1 = 0; str1 < numStrains; str1++)
-    {
-        if (pattern[str1] != '?')
-        {
-            count++;
-        }
-    }
-    return count;
-}
-
-// returns maximum eq. class + 1.
-int numHaplotypes(char *pattern)
-{
-    int numHap = -1;
-    for (int str1 = 0; str1 < numStrains; str1++)
-    {
-        int hap = pattern[str1];
-        if (pattern[str1] != '?' && numHap < hap)
-        {
-            numHap = hap;
-        }
-    }
-    return numHap + 1;
 }
 
 // Mark each block as ignored unless it has a coding gene.
@@ -1110,10 +1072,54 @@ void filterGoTerms(char *fname, std::vector<std::string> terms)
     }
 }
 
+
+
+// Count the number of defined strains
+// int numDefinedStrains(char *pattern)
+// {
+//     int count = 0;
+//     for (int str1 = 0; str1 < numStrains; str1++)
+//     {
+//         if (pattern[str1] != '?')
+//         {
+//             count++;
+//         }
+//     }
+//     return count;
+// }
+
+// // returns maximum eq. class + 1.
+// int numHaplotypes(char *pattern)
+// {
+//     int numHap = -1;
+//     for (int str1 = 0; str1 < numStrains; str1++)
+//     {
+//         int hap = pattern[str1];
+//         if (pattern[str1] != '?' && numHap < hap)
+//         {
+//             numHap = hap;
+//         }
+//     }
+//     return numHap + 1;
+// }
+
+
 // renumber eqclasses in pattern so the increase from left to right
 void writeSortedPattern(std::ostream &os, char *pattern, std::vector<int> &strOrderVec)
 {
-    int numHaplo = numHaplotypes(pattern);
+    /// int numHaplo = numHaplotypes(pattern); 
+    int numStrains = strOrderVec.size();
+    int numHaplo = -1;
+    for (int str1 = 0; str1 < numStrains; str1++)
+    {
+        int hap = pattern[str1];
+        if (pattern[str1] != '?' && numHaplo < hap)
+        {
+            numHaplo = hap;
+        }
+    }
+    numHaplo += 1;
+    ///
     char *sortedEqMap = (char *)malloc(numHaplo);
     memset(sortedEqMap, '?', numHaplo);
     char curEq = 0;

@@ -318,6 +318,7 @@ int main_ghmap(int argc, char **argv)
     std::shared_ptr<MANOVA> manova;
     std::shared_ptr<ANOVA> anova;
     anova = std::make_shared<ANOVA>(phenvec);
+
     if (opts->geneticRelationMatrix != NULL) {
         beginPhase("reading genetic relation matrix");
         manova = std::make_shared<MANOVA>(opts->geneticRelationMatrix, (char *)"\t",  4);

@@ -109,7 +109,8 @@ void readStrains(char *fname)
   int numtoks;
   while ((numtoks = rdr.getLine()) >= 0)
   {
-    // file has "Name\tAbbrev\n"
+    if (rdr.getCurrentLineNum() < 1) continue;
+    // file has "Abbrev\tOfficalName\n"
     if (numtoks != 2)
     {
       std::cerr << "Warning: numtoks = " << numtoks << std::endl;
