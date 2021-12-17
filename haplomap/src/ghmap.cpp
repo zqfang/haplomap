@@ -552,7 +552,6 @@ void showBlockSum(std::ostream &os, bool isCategorical, BlockSummary *pb, std::v
 
     os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) <<"\t" << pb->effect << "\t" <<pb->FDR;
     os << "\t" <<pb->relPvalue<<"\t"<<pb->relFDR; 
-    //pb->updateGeneIsInteresting();
 
     // gene names and coding bits
     std::map<std::string, std::string> &geneIsCodingMap = pb->geneIsCodingMap;
@@ -567,7 +566,6 @@ void showBlockSum(std::ostream &os, bool isCategorical, BlockSummary *pb, std::v
 // gene	codon_flag	pattern	pval	effect	chromosome	begin	end	blockIdx	blockStart	blockSize	expression
 void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb, std::vector<int> &strOrderVec)
   {
-    //pb->updateGeneIsInteresting();
     std::map<std::string, std::string> &geneIsCodingMap = pb->geneIsCodingMap;
     std::map<std::string, std::string>::iterator giit = geneIsCodingMap.begin();
     if (giit == geneIsCodingMap.end())
@@ -642,7 +640,6 @@ void showGeneBlockSums(std::ostream &os, bool isCategorical, std::vector<BlockSu
             std::map<std::string, std::string>::iterator giit = geneIsCodingMap.begin();
             if (geneIsCodingMap.size() == 0)
             { // no genes in this block
-                //pb->updateGeneIsInteresting();
                 os << "None\tNone\t";
                 writeSortedPattern(os, pb->pattern, strOrderVec);
                 os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) << "\t" << pb->effect << "\t";
@@ -666,7 +663,6 @@ void showGeneBlockSums(std::ostream &os, bool isCategorical, std::vector<BlockSu
                             for (unsigned j = 0; j < ((*git)->blocks).size(); j++)
                             {
                                 BlockSummary *pb_t = (*git)->blocks[j];
-                                //pb_t->updateGeneIsInteresting();
                                 os << gname << "\t" << pb_t->geneIsInteresting[(*giit).first] << "\t";
                                 writeSortedPattern(os, pb_t->pattern, strOrderVec);
                                 os << "\t" << (isCategorical ? pb_t->FStat : pb_t->pvalue) <<"\t"<< pb_t->effect;
@@ -816,8 +812,6 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
         bool hasSpliceChange = false;
         //ofstream debug_log;
         //debug_log.open("debug.log",ios::app);
-        //pBestBlock->updateGeneIsInteresting();
-
         // iter all blocks that overlap a gene, find the interesting change
         for (std::vector<BlockSummary *>::iterator blit = (*git)->blocks.begin(); blit != (*git)->blocks.end(); blit++)
         {
@@ -834,10 +828,9 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
                 //      ((*blit)->geneIsCodingMap[gname] != "0") &&
                 //      ((*blit)->geneIsCodingMap[gname].find("<") == std::string::npos ) &&
                 //      ((*blit)->geneIsCodingMap[gname] != "MODIFIER") )
-                if ( (*blit)->geneIsInteresting[gname] != "-1")
-                { //if the gene had SNPs marked as NON_SYNONYMOUS_CODING, with <->, or as SPLICE_SITE, isCoding is true
-                    isCoding |= true;
-                }       
+
+                //if the gene had SNPs marked as NON_SYNONYMOUS_CODING, with <->, or as SPLICE_SITE, isCoding is true
+                isCoding |= ((*blit)->geneIsInteresting[gname] != "-1");
                 hasInteresting |= ((*blit)->numInteresting > 0);   //has a major amino acid change
                 hasSpliceChange |= (((*blit)->geneIsCodingMap[gname]).find("SPLICE_SITE") != std::string::npos);
                 //if "SPLICE_SITE" was in there that means that the gene had a splice change
