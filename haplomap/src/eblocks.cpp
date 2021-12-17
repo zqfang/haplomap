@@ -2163,65 +2163,68 @@ void writeBlockGeneNames(std::ofstream &os, HaploBlock *pHB)
 
     for (std::map<std::string, std::string>::iterator gcit = geneCodonMap.begin(); gcit != geneCodonMap.end(); gcit++)
     {
-      //cout << (*gcit).first << "\t" << gcit->first << "\t" << (*gcit).second << "\t" << pSNPInfo->position << endl;
-      if (geneIsCodingMap[(*gcit).first] == "")
-      {
-        //debug_log << "The first time: " << gcit->first << " " << gcit->second << endl;
-        if ((*gcit).second.find("NON_SYNONYMOUS_CODING") != std::string::npos) // indicate matches
-        {
-          geneIsCodingMap[(*gcit).first] = "1";
-        }
-        else if ((*gcit).second.find("<") != std::string::npos || (*gcit).second.find("SPLICE_SITE") != std::string::npos)
-        {
-          geneIsCodingMap[(*gcit).first] = (*gcit).second; // 2
-        }
-        else if ((*gcit).second.find("SYNONYMOUS_CODING") != std::string::npos)
-        {
-          geneIsCodingMap[(*gcit).first] = "0";
-        }
-        else
-        {
-          // patch for SV input: 2,1,0,-1
-          geneIsCodingMap[(*gcit).first] = (*gcit).second; 
-        }
-      }
-      else
-      {
-        //debug_log << "NOT the first time: " << gcit->first << " " << gcit->second << endl;
-        if ((*gcit).second.find("NON_SYNONYMOUS_CODING") != std::string::npos)
-        {
-          if (geneIsCodingMap[(*gcit).first] == "0")
-            geneIsCodingMap[(*gcit).first] = "1"; 
-          //continue;
-        }
+      // record all string representation of gene's codonmap, strings will be updated to CondonFlag in ghmap module
+      geneIsCodingMap[(*gcit).first] = (*gcit).second;
+      // //cout << (*gcit).first << "\t" << gcit->first << "\t" << (*gcit).second << "\t" << pSNPInfo->position << endl;
+      // if (geneIsCodingMap[(*gcit).first] == "")
+      // {
+      //   //debug_log << "The first time: " << gcit->first << " " << gcit->second << endl;
+      //   if ((*gcit).second.find("NON_SYNONYMOUS_CODING") != std::string::npos) // indicate matches
+      //   {
+      //     geneIsCodingMap[(*gcit).first] = "1"; 
+      //   }
+      //   else if ((*gcit).second.find("<") != std::string::npos || (*gcit).second.find("SPLICE_SITE") != std::string::npos)
+      //   {
+      //     geneIsCodingMap[(*gcit).first] = (*gcit).second; // save the strings with "<->" or SPLITE_SITE
+      //   }
+      //   else if ((*gcit).second.find("SYNONYMOUS_CODING") != std::string::npos)
+      //   {
+      //     geneIsCodingMap[(*gcit).first] = "0"; //
+      //   }
+      //   else
+      //   {
+      //     // patch for SV input: 2,1,0,-1
+      //     geneIsCodingMap[(*gcit).first] = (*gcit).second; 
+      //   }
+      // }
+      // else
+      // {
+      //   //debug_log << "NOT the first time: " << gcit->first << " " << gcit->second << endl;
+      //   if ((*gcit).second.find("NON_SYNONYMOUS_CODING") != std::string::npos)
+      //   {
+      //     if (geneIsCodingMap[(*gcit).first] == "0")
+      //       geneIsCodingMap[(*gcit).first] = "1"; 
+      //     //continue;
+      //   }
 
-        if ((*gcit).second.find("<") != std::string::npos || (*gcit).second.find("SPLICE_SITE") != std::string::npos)
-        {
-          //debug_log << "splice site in" << gcit->first << endl;
-          if (geneIsCodingMap[(*gcit).first] == "0" || geneIsCodingMap[(*gcit).first] == "1")
-          {
-            geneIsCodingMap[(*gcit).first] = (*gcit).second;
-            //debug_log << "changing from 0/1: gene name: " << gcit->first << "descriptions: " << geneIsCodingMap[gcit->first] << endl;
-          }
-          else
-          {
-            geneIsCodingMap[(*gcit).first] = geneIsCodingMap[(*gcit).first] + "!" + (*gcit).second;
-            //debug_log << "gene name: " << gcit->first << "descriptions: " << geneIsCodingMap[gcit->first] << endl;
-          }
-        }
-        else if ((*gcit).second.find("SYNONYMOUS_CODING") != std::string::npos)
-        {
-          geneIsCodingMap[(*gcit).first] = "0";
-        } 
-        else 
-        {
-          // patch for SV input
-           geneIsCodingMap[(*gcit).first] = (*gcit).second; 
-        }
-      }
+      //   if ((*gcit).second.find("<") != std::string::npos || (*gcit).second.find("SPLICE_SITE") != std::string::npos)
+      //   {
+      //     //debug_log << "splice site in" << gcit->first << endl;
+      //     if (geneIsCodingMap[(*gcit).first] == "0" || geneIsCodingMap[(*gcit).first] == "1")
+      //     {
+      //       geneIsCodingMap[(*gcit).first] = (*gcit).second;
+      //       //debug_log << "changing from 0/1: gene name: " << gcit->first << "descriptions: " << geneIsCodingMap[gcit->first] << endl;
+      //     }
+      //     else
+      //     {
+      //       geneIsCodingMap[(*gcit).first] = geneIsCodingMap[(*gcit).first] + "!" + (*gcit).second;
+      //       //debug_log << "gene name: " << gcit->first << "descriptions: " << geneIsCodingMap[gcit->first] << endl;
+      //     }
+      //   }
+      //   else if ((*gcit).second.find("SYNONYMOUS_CODING") != std::string::npos)
+      //   {
+      //     geneIsCodingMap[(*gcit).first] = "0";
+      //   } 
+      //   else 
+      //   {
+      //     // patch for SV input
+      //      geneIsCodingMap[(*gcit).first] = (*gcit).second; 
+      //   }
+      // }
     }
     //debug_log.close();
   }
+  // write all gene names and annotation for the single block
   for (std::map<std::string, std::string>::iterator gicit = geneIsCodingMap.begin(); gicit != geneIsCodingMap.end(); gicit++)
   {
     os << "\t" << (*gicit).first << "\t" << (*gicit).second;
@@ -2250,15 +2253,15 @@ int writeChrBlockSummary(std::ofstream &os, size_t blkIdx, int minBlockSNPs)
       SNPInfo *pFirstSNP = snpVec[pHB->start];
       SNPInfo *pLastSNP = snpVec[pHB->start + pHB->size - 1];
 
-      int qs = 0;
-      for (int i = pHB->start; i < (pHB->start + pHB->size); i++)
-      {
-        if (snpVec[i]->qMarks)
-        {
-          qs = 1;
-          break;
-        }
-      }
+      // int qs = 0;
+      // for (int i = pHB->start; i < (pHB->start + pHB->size); i++)
+      // {
+      //   if (snpVec[i]->qMarks)
+      //   {
+      //     qs = 1;
+      //     break;
+      //   }
+      // }
       os << chrName << "\t" << blkIdx << "\t" << pHB->start << "\t"
          << pHB->size << "\t" << pFirstSNP->position << "\t"
          << pLastSNP->position << "\t";
