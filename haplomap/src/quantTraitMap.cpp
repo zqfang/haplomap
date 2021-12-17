@@ -328,37 +328,37 @@ int main_ghmap(int argc, char **argv)
     beginPhase("computing ANOVA p-values");
     for (unsigned blkIdx = 0; blkIdx < blocks.size(); blkIdx++)
     {
-    BlockSummary *pBlock = blocks[blkIdx];
-    //cout << "Block: " << pBlock->chrName << "\t" << pBlock->blockIdx << endl;
-    if (pBlock->isIgnored)
-    {
-      if (traceFStat)
-      {
-        cout << "Block: " << pBlock->chrName << "\t" << pBlock->blockIdx << "\tINGORED" << endl;
-      }
-    }
-    else
-    {
-      if (traceFStat)
-      {
-        std::cout << "Block: " << pBlock->chrName << "\t" << pBlock->blockIdx << "\t";
-        showPattern(pBlock->pattern);
-        std::cout << endl;
-      }
-      // ANOVA analysis
-      anova->stat(pBlock->pattern, pBlock->FStat, pBlock->pvalue, pBlock->effect);
-      // population structure analysis
-      if (opts->geneticRelationMatrix != NULL) {
-          bool ok = manova->setNonQMarkMat(pBlock->pattern, strainAbbrevs);
-          if (ok)
-              manova->pillaiTrace(pBlock->relFStat, pBlock->relPvalue);
-      }
-      if (pBlock->FStat == INFINITY && pBlock->effect < 0.0)
-      {
-        cout << "Weird effect:" << endl;
-        cout << "blockIdx = " << pBlock->blockIdx << ", FStat = " << pBlock->FStat << ", effect = " << pBlock->effect << endl;
-      }
-    }
+        BlockSummary *pBlock = blocks[blkIdx];
+        //cout << "Block: " << pBlock->chrName << "\t" << pBlock->blockIdx << endl;
+        if (pBlock->isIgnored)
+        {
+            if (traceFStat)
+            {
+                cout << "Block: " << pBlock->chrName << "\t" << pBlock->blockIdx << "\tINGORED" << endl;
+            }
+        }
+        else
+        {
+            if (traceFStat)
+            {
+                std::cout << "Block: " << pBlock->chrName << "\t" << pBlock->blockIdx << "\t";
+                showPattern(pBlock->pattern);
+                std::cout << endl;
+            }
+            // ANOVA analysis
+            anova->stat(pBlock->pattern, pBlock->FStat, pBlock->pvalue, pBlock->effect);
+            // population structure analysis
+            if (opts->geneticRelationMatrix != NULL) {
+                bool ok = manova->setNonQMarkMat(pBlock->pattern, strainAbbrevs);
+                if (ok)
+                    manova->pillaiTrace(pBlock->relFStat, pBlock->relPvalue);
+            }
+            if (pBlock->FStat == INFINITY && pBlock->effect < 0.0)
+            {
+                cout << "Weird effect:" << endl;
+                cout << "blockIdx = " << pBlock->blockIdx << ", FStat = " << pBlock->FStat << ", effect = " << pBlock->effect << endl;
+            }
+        }
     }
     endPhase();
 
@@ -368,7 +368,7 @@ int main_ghmap(int argc, char **argv)
     if (!opts->isCategorical)
         bh_fdr(blocks, 0.05, 1); // annova pval correction
     endPhase();
-    //setBlockStats();
+
     beginPhase("sorting blocks");
     BlocksComparator bcomp(opts->isCategorical);
     std::sort(blocks.begin(), blocks.end(), bcomp);
