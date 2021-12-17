@@ -42,6 +42,8 @@ class BlockSummary
     std::string updateCodonScore(std::string str);
     void updateGeneIsInteresting();
     void showIsCoding();
+    /// whether a string is number
+    bool isNumber(const std::string & str);
     // Return true if pval is above cutoff or FStat is below it.
     bool isCutoff(bool isCategorical, float cutoff);
     // print a line of the blocks file.

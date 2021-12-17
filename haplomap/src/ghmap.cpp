@@ -91,6 +91,15 @@ void BlockSummary::showIsCoding()
     }
     std::cout << std::endl;
 }
+bool BlockSummary::isNumber(const std::string & str) {
+{
+    for (char const &c : str) 
+    {
+        if (std::isdigit(c) == 0) return false;
+    }
+    return true;
+}
+}
 // summary of a block, read for the file.
 std::string BlockSummary::updateCodonScore(std::string str)
   {
@@ -168,15 +177,17 @@ void BlockSummary::updateGeneIsInteresting()
 { // BY
     for (std::map<std::string, std::string>::iterator giit = this->geneIsCodingMap.begin(); giit != this->geneIsCodingMap.end(); giit++)
     {
-        if (giit->second == "0" || giit->second == "1") // 1 already converted to AA strings, e.g. ACT/T<->GCT/A
+        if (this->isNumber(giit->second)) 
         {
-        // Our old SNP annotation only use NCBI database, which use condon flag [0,1,2] to indicate coding change
+        // Our old SNP annotation only use NCBI database, which use condon flag [0,1,2,3] to indicate coding change
         // since we now using ANNOVAR to annotate SNPs, there's no 0,1s any more in the haploblock output files
-        // we only keep this line here for back compatibe issues
-        this->geneIsInteresting[giit->first] =  "-1"; //"no_codon_change"; 
-        continue;
+        // we only keep this line here for compatibe issues
+        this->geneIsInteresting[giit->first] =  giit->second;  
+        } 
+        else
+        { 
+            this->geneIsInteresting[giit->first] = this->updateCodonScore(giit->second);
         }
-        this->geneIsInteresting[giit->first] = this->updateCodonScore(giit->second);
     }
 }
 
@@ -501,13 +512,17 @@ void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
                 // Add block to GeneSummary
                 //      cout << "  Adding block for " << *git << ": " << pLastBlock->blockIdx << endl;
                 geneTable[*git]->blocks.push_back(pBlock);
-
+                // Mark each block as ignored unless it has a coding gene.
                 // wether the block has coding strings or not MODIFIER <-> 
-                if (((*(git + 1)).find("MODIFIER") == std::string::npos) || ((*(git + 1)).find("<") != std::string::npos))
+                if (((*(git + 1)) != "-1") &&
+                     ((*(git + 1)) != "0") &&
+                     ((*(git + 1)).find("<") == std::string::npos ) &&
+                     ((*(git + 1)) != "MODIFIER") )
                 {
-                    keep |= true; // |= as style to allow multiple filters.
-                }   
+                    keep |= true;
+                }  
             }
+            
             pBlock->isIgnored = !keep; 
             // Add to blocks.
             blocks.push_back(pBlock);
@@ -763,7 +778,6 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
     writer.os << (isCategorical ? "FStat" : "Pvalue");
     writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tChr\tChrStart\tChrEnd\tBlockIdx\tBlockStart\tBlockSize\tGeneExprMap\n";
     std::ofstream & genesout = writer.os;
-
     GenesComparator gcomp(isCategorical);
     // Copy genesTable values into a vector and sort using GenesComparator
     std::vector<GeneSummary *> genes;
@@ -820,12 +834,15 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
             else
             {
                 //debug_log << gname << "\t" << (*blit)->geneIsCodingMap[gname] << endl;
-                // if ((*blit)->geneIsCodingMap[gname] != "0" )
-                // We've update the CodingMap, so the code should be updated
-                if ((*blit)->geneIsCodingMap[gname] != "MODIFIER" || (*blit)->geneIsCodingMap[gname].find("<") != std::string::npos)
+                // We've update the CodingMap, so the code should be updated "0" -> "-1"
+                // we only select the bestBLock, so need to search all blocks overlap to a gene
+                if (((*blit)->geneIsCodingMap[gname] != "-1") &&
+                     ((*blit)->geneIsCodingMap[gname] != "0") &&
+                     ((*blit)->geneIsCodingMap[gname].find("<") == std::string::npos ) &&
+                     ((*blit)->geneIsCodingMap[gname] != "MODIFIER") )
                 { //if the gene had SNPs marked as NON_SYNONYMOUS_CODING, with <->, or as SPLICE_SITE, isCoding is true
-                    isCoding = true;
-                }
+                    isCoding |= true;
+                }       
                 hasInteresting |= ((*blit)->numInteresting > 0);   //has a major amino acid change
                 hasSpliceChange |= (((*blit)->geneIsCodingMap[gname]).find("SPLICE_SITE") != std::string::npos);
                 //if "SPLICE_SITE" was in there that means that the gene had a splice change
@@ -866,28 +883,30 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
     }
 }
 
-// Mark each block as ignored unless it has a coding gene.
-void filterCodingBlocks()
-{
-    for (unsigned blkIdx = 0; blkIdx < blocks.size(); blkIdx++)
-    {
-        BlockSummary *pBlock = blocks[blkIdx];
-        // look for a coding gene
-        bool keep = false;
-        std::map<std::string, std::string> &gicMap = pBlock->geneIsCodingMap;
+// // Mark each block as ignored unless it has a coding gene.
+// void filterCodingBlocks()
+// {
+//     for (unsigned blkIdx = 0; blkIdx < blocks.size(); blkIdx++)
+//     {
+//         BlockSummary *pBlock = blocks[blkIdx];
+//         // look for a coding gene
+//         bool keep = false;
+//         std::map<std::string, std::string> &gicMap = pBlock->geneIsCodingMap;
 
-        for (std::map<std::string, std::string>::iterator gicmit = gicMap.begin(); gicmit != gicMap.end(); gicmit++)
-        {
-            //if ((*gicmit).second != "0") // FIXME
-            if (((*gicmit).second.find("MODIFIER") == std::string::npos) || ((*gicmit).second.find("<") != std::string::npos))
-            {
-                keep = true;
-                break;
-            }
-        }
-        pBlock->isIgnored |= !keep; // |= as style to allow multiple filters.
-    }
-}
+//         for (std::map<std::string, std::string>::iterator gicmit = gicMap.begin(); gicmit != gicMap.end(); gicmit++)
+//         {
+//             if (((*gicmit).second.find("MODIFIER") == std::string::npos) || 
+//                 ((*gicmit).second.find("<") != std::string::npos) ||
+//                 (*gicmit).second != "0") || 
+//                 (*gicmit).second != "-1") )
+//             {
+//                 keep = true;
+//                 break;
+//             }
+//         }
+//         pBlock->isIgnored |= !keep; // |= as style to allow multiple filters.
+//     }
+// }
 
 void filterEqualBlocks(std::vector<int> equalRegions)
 {

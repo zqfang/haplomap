@@ -298,12 +298,12 @@ int main_ghmap(int argc, char **argv)
     }
     endPhase();
 
-    if (opts->filterCoding)
-    {
-        beginPhase("filtering blocks by coding");
-        filterCodingBlocks();
-        endPhase();
-    }
+    // if (opts->filterCoding)
+    // {
+    //     beginPhase("filtering blocks by coding");
+    //     filterCodingBlocks();
+    //     endPhase();
+    // }
 
     if (opts->equalFile)
     {
