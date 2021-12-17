@@ -1,8 +1,6 @@
 #include <algorithm>
 #include <functional>
 #include "ghmap.h"
-#include "gsl/gsl_cdf.h"
-
 
 // defined globals
 int numCategories = 1; // default for non-categorical data.
@@ -492,7 +490,7 @@ void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
         }
     }
 
-    numStrains = blocks[0]->numStrains;
+    numStrains = blocks[0]->numStrains; // this line is required
     // Separate pass to fix up patterns.
     // patterns are all the same length.
     // FIXME: this causes a seg fault when there are no blocks (happens under funny conditions).

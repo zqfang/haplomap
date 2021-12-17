@@ -57,8 +57,8 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
             {"gene", required_argument, 0, 'g'},
             {"expression_file", required_argument, 0, 'e'},
             {"equal_file", required_argument, 0, 'q'},
-            {"goterms_file", required_argument, 0, 'q'},
-            {"goterms_include_file", required_argument, 0, 'q'},
+            {"goterms_file", required_argument, 0, 't'},
+            {"goterms_include_file", required_argument, 0, 'i'},
             {"relation", required_argument, 0, 'r'},
             /*{"version", no_argument, 0, 0},*/
             {0, 0, 0, 0}};
@@ -270,7 +270,6 @@ int main_ghmap(int argc, char **argv)
     beginPhase("reading blocks summary file");
     readBlockSummary(opts->blocksFileName, opts->geneName, opts->goTermFile);
     endPhase();
-
     std::vector<std::vector<float>> phenvec(numStrains);
     beginPhase("reading phenotype file");
     if (opts->isCategorical)
