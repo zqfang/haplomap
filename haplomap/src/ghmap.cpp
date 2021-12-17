@@ -175,6 +175,7 @@ std::string BlockSummary::updateCodonScore(std::string str)
 
 void BlockSummary::updateGeneIsInteresting()
 { // BY
+    bool keep = false;
     for (std::map<std::string, std::string>::iterator giit = this->geneIsCodingMap.begin(); giit != this->geneIsCodingMap.end(); giit++)
     {
         if (this->isNumber(giit->second)) 
@@ -188,7 +189,11 @@ void BlockSummary::updateGeneIsInteresting()
         { 
             this->geneIsInteresting[giit->first] = this->updateCodonScore(giit->second);
         }
+
+        if (this->geneIsInteresting[giit->first] != "-1")
+            keep |= true;
     }
+    this->isIgnored = !keep;
 }
 
 // Return true if pval is above cutoff or FStat is below it.
@@ -492,7 +497,6 @@ void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
                                                     std::stoi(rdr.getToken(5)),
                                                     rdr.getToken(6).c_str());
 
-            bool keep = false;
             // For each gene, add gene summary to the gene table (if not there already),
             // and insert block in the block set.
             // This iterates over list of alternating gene name/codon tokens.
@@ -512,18 +516,8 @@ void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
                 // Add block to GeneSummary
                 //      cout << "  Adding block for " << *git << ": " << pLastBlock->blockIdx << endl;
                 geneTable[*git]->blocks.push_back(pBlock);
-                // Mark each block as ignored unless it has a coding gene.
-                // wether the block has coding strings or not MODIFIER <-> 
-                if (((*(git + 1)) != "-1") &&
-                     ((*(git + 1)) != "0") &&
-                     ((*(git + 1)).find("<") == std::string::npos ) &&
-                     ((*(git + 1)) != "MODIFIER") )
-                {
-                    keep |= true;
-                }  
             }
-            
-            pBlock->isIgnored = !keep; 
+            pBlock->updateGeneIsInteresting();
             // Add to blocks.
             blocks.push_back(pBlock);
             // cout << "Gene names for block " << blocks.back().blockIdx << ": " << blocks.back().geneNames << endl;
@@ -558,7 +552,7 @@ void showBlockSum(std::ostream &os, bool isCategorical, BlockSummary *pb, std::v
 
     os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) <<"\t" << pb->effect << "\t" <<pb->FDR;
     os << "\t" <<pb->relPvalue<<"\t"<<pb->relFDR; 
-    pb->updateGeneIsInteresting();
+    //pb->updateGeneIsInteresting();
 
     // gene names and coding bits
     std::map<std::string, std::string> &geneIsCodingMap = pb->geneIsCodingMap;
@@ -573,7 +567,7 @@ void showBlockSum(std::ostream &os, bool isCategorical, BlockSummary *pb, std::v
 // gene	codon_flag	pattern	pval	effect	chromosome	begin	end	blockIdx	blockStart	blockSize	expression
 void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb, std::vector<int> &strOrderVec)
   {
-    pb->updateGeneIsInteresting();
+    //pb->updateGeneIsInteresting();
     std::map<std::string, std::string> &geneIsCodingMap = pb->geneIsCodingMap;
     std::map<std::string, std::string>::iterator giit = geneIsCodingMap.begin();
     if (giit == geneIsCodingMap.end())
@@ -648,7 +642,7 @@ void showGeneBlockSums(std::ostream &os, bool isCategorical, std::vector<BlockSu
             std::map<std::string, std::string>::iterator giit = geneIsCodingMap.begin();
             if (geneIsCodingMap.size() == 0)
             { // no genes in this block
-                pb->updateGeneIsInteresting();
+                //pb->updateGeneIsInteresting();
                 os << "None\tNone\t";
                 writeSortedPattern(os, pb->pattern, strOrderVec);
                 os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) << "\t" << pb->effect << "\t";
@@ -672,7 +666,7 @@ void showGeneBlockSums(std::ostream &os, bool isCategorical, std::vector<BlockSu
                             for (unsigned j = 0; j < ((*git)->blocks).size(); j++)
                             {
                                 BlockSummary *pb_t = (*git)->blocks[j];
-                                pb_t->updateGeneIsInteresting();
+                                //pb_t->updateGeneIsInteresting();
                                 os << gname << "\t" << pb_t->geneIsInteresting[(*giit).first] << "\t";
                                 writeSortedPattern(os, pb_t->pattern, strOrderVec);
                                 os << "\t" << (isCategorical ? pb_t->FStat : pb_t->pvalue) <<"\t"<< pb_t->effect;
@@ -822,7 +816,7 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
         bool hasSpliceChange = false;
         //ofstream debug_log;
         //debug_log.open("debug.log",ios::app);
-        pBestBlock->updateGeneIsInteresting();
+        //pBestBlock->updateGeneIsInteresting();
 
         // iter all blocks that overlap a gene, find the interesting change
         for (std::vector<BlockSummary *>::iterator blit = (*git)->blocks.begin(); blit != (*git)->blocks.end(); blit++)
@@ -836,10 +830,11 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
                 //debug_log << gname << "\t" << (*blit)->geneIsCodingMap[gname] << endl;
                 // We've update the CodingMap, so the code should be updated "0" -> "-1"
                 // we only select the bestBLock, so need to search all blocks overlap to a gene
-                if (((*blit)->geneIsCodingMap[gname] != "-1") &&
-                     ((*blit)->geneIsCodingMap[gname] != "0") &&
-                     ((*blit)->geneIsCodingMap[gname].find("<") == std::string::npos ) &&
-                     ((*blit)->geneIsCodingMap[gname] != "MODIFIER") )
+                // if (((*blit)->geneIsCodingMap[gname] != "-1") &&
+                //      ((*blit)->geneIsCodingMap[gname] != "0") &&
+                //      ((*blit)->geneIsCodingMap[gname].find("<") == std::string::npos ) &&
+                //      ((*blit)->geneIsCodingMap[gname] != "MODIFIER") )
+                if ( (*blit)->geneIsInteresting[gname] != "-1")
                 { //if the gene had SNPs marked as NON_SYNONYMOUS_CODING, with <->, or as SPLICE_SITE, isCoding is true
                     isCoding |= true;
                 }       
