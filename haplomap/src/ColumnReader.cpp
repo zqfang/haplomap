@@ -106,7 +106,7 @@ int ColumnReader::getLine()
 
   if (_line.find("#") == 0)
   {
-      // header line
+      // comment/header line stats with #
       size_t start = _line.find_first_not_of('#');
       std::vector<std::string> __head;
       int num = this->split(_line.substr(start), _delimiters, __head);

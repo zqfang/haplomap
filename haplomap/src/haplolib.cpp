@@ -111,10 +111,10 @@ void readStrains(char *fname)
   {
     if (rdr.getCurrentLineNum() < 1) continue;
     // file has "Abbrev\tOfficalName\n"
-    if (numtoks != 2)
-    {
-      std::cerr << "Warning: numtoks = " << numtoks << std::endl;
-    }
+    // if (numtoks != 2)
+    // {
+    //   std::cerr << "Warning: numtoks = " << numtoks << std::endl;
+    // }
 
     // FIXME: some unnecessary string copies
     std::string name = rdr.getToken(1);
@@ -192,6 +192,11 @@ char * SNPInfo::initPattern()
     std::memset(tmpPattern, '?', numStrains);
     return tmpPattern;
 }
+
+char SNPInfo::getAllele(int i) { return alleles[i]; }
+void SNPInfo::setAllele(int i, char a) { alleles[i] = a; }
+
+
 
 SNPInfo & SNPInfo::operator=(const SNPInfo &si)
 {
@@ -301,4 +306,16 @@ void showBlocks(std::vector<HaploBlock *> &hbv)
     {
         std::cout << *(hbv[i]) << std::endl;
     }
+}
+
+// Test patterns for exact equality
+bool eqPatterns(const char *pat1, const char *pat2)
+{
+    //  cout << "Pattern eq ";
+    //  showPattern(pat1);
+    //  cout << " = ";
+    //  showPattern(pat2);
+    bool result = std::memcmp(pat1, pat2, numStrains) == 0;
+    //  cout << " result = " << result << endl;
+    return result;
 }

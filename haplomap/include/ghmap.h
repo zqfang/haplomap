@@ -9,22 +9,6 @@
 #include <functional>
 #include "haplolib.h"
 
-//using namespace std;
-
-
-// int numHaplotypes(char *pattern); // forward decl.
-
-inline void upcase(std::string &str)
-{
-  std::transform(str.begin(), str.end(), str.begin(), ::toupper);
-}
-
-// Read the file of gene expression data
-void readCompactGeneExpr(char *fname);
-
-// renumber eqclasses in pattern so the increase from left to right
-void writeSortedPattern(std::ostream &os, char *pattern, std::vector<int> &strOrderVec);
-
 
 // summary of a block, read for the file.
 class BlockSummary
@@ -57,18 +41,15 @@ class BlockSummary
     ~BlockSummary();
     std::string updateCodonScore(std::string str);
     void updateGeneIsInteresting();
+    void showIsCoding();
+    // Return true if pval is above cutoff or FStat is below it.
+    bool isCutoff(bool isCategorical, float cutoff);
     // print a line of the blocks file.
     // blockIdx	blockStart	blockSize	chromosome	begin	end	pattern	pval	effect	genename genehascoding ...
     friend void showBlockSum(std::ostream &os, bool isCategorical, BlockSummary *pb, std::vector<int> &strOrderVec);
     // BY addition, output as such:
     // gene	codon_flag	pattern	pval	effect	chromosome	begin	end	blockIdx	blockStart	blockSize	expression
     friend void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb, std::vector<int> &strOrderVec);
-
-    // Return true if pval is above cutoff or FStat is below it.
-    friend bool isCutoff(bool isCategorical, float cutoff, BlockSummary *pBlock)
-    {
-      return (isCategorical) ? (pBlock->FStat < cutoff) : (pBlock->pvalue > cutoff);
-    }
     friend void showBlockSums(std::ostream &os, bool isCategorical,
                               std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec);
 
@@ -94,7 +75,7 @@ public:
   bool isCategorical;
 
   // constructor
-  BlocksComparator(bool isCat) : isCategorical(isCat){};
+  BlocksComparator(bool isCat);
   bool operator()(const BlockSummary *pb1, const BlockSummary *pb2) const;
 };
 
@@ -108,8 +89,6 @@ public:
   bool isIgnored;
   GeneSummary(bool ignoreDefault);
   ~GeneSummary();
-
-  void showIsCoding(std::map<std::string, std::string> geneIsCodingMap);
 };
 
 // Genes comparator -- compares by best blocks in gene.
@@ -119,16 +98,22 @@ public:
   BlocksComparator bcomp;
 
   // constructor
-  GenesComparator(bool isCat) : bcomp(BlocksComparator(isCat)){};
-  bool operator()(const GeneSummary *pg1, const GeneSummary *pg2) const
-  {
-    BlockSummary *pb1 = pg1->blocks[0];
-    BlockSummary *pb2 = pg2->blocks[0];
-    return bcomp(pb1, pb2);
-  };
+  GenesComparator(bool isCat);
+  bool operator()(const GeneSummary *pg1, const GeneSummary *pg2) const;
 };
 
 
+
+// upase strings
+inline void upcase(std::string &str)
+{
+  std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+}
+
+// Read the file of gene expression data
+void readCompactGeneExpr(char *fname);
+
+// 
 void filterGoTerms(char *fname, std::vector<std::string> terms);
 
 // read in the block summary file.
@@ -139,6 +124,8 @@ void readBlockSummary(char *fname, char *geneName, bool ignoreDefault);
 // them, if categorical).
 // void sortStrainsByPheno(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec);
 
+// renumber eqclasses in pattern so the increase from left to right
+void writeSortedPattern(std::ostream &os, char *pattern, std::vector<int> &strOrderVec);
 
 // Write summaries of the blocks.  The CGI script will read this and render it nicely in HTML.
 void showGeneBlockSums(std::ostream &os, bool isCategorical, std::vector<BlockSummary *> &blocks, 

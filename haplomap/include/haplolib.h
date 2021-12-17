@@ -25,13 +25,9 @@
 
 //using namespace std;
 
-// FIXME: tasteless global variables (maybe verbose is ok).
 
-extern int numStrains;
-extern bool verbose; // in haploLib
-
-extern Dynum<std::string> relevantStrains;
-extern Dynum<std::string> strainAbbrevs;
+// Copy a pattern string.
+char *dupPattern(char *pattern);
 
 std::ostream &showPattern(const char *pattern);
 std::ostream &showPattern(const char *pattern, size_t len);
@@ -45,19 +41,7 @@ void beginPhase(const char *msg);
 void endPhase();
 void endPhase(const char *msg, std::string chr);
 
-template <typename T>
-decltype(std::bind(&T::value_type::second, std::placeholders::_1)) select2nd() {
-    return std::bind(&T::value_type::second, std::placeholders::_1);
-}
-// with parameters
-//template <typename T>
-//decltype(std::bind(&T::value_type::second, std::placeholders::_1)) select2nd(T m) {
-//    return std::bind(&T::value_type::second, std::placeholders::_1);
-//}
 
-
-// Copy a pattern string.
-char *dupPattern(char *pattern);
 // Everything we need to know about a SNP.
 class SNPInfo
 {
@@ -93,8 +77,8 @@ public:
     bool used;                        // Is this SNP in a chosen block?
     bool qMarks;                      //Are there any unkowns in this SNP?
 
-    char getAllele(int i) { return alleles[i]; }
-    void setAllele(int i, char a) { alleles[i] = a; }
+    char getAllele(int i);
+    void setAllele(int i, char a);
 };
 
 
@@ -141,16 +125,7 @@ struct rCompareByScore
 
 
 // Test patterns for exact equality
-inline bool eqPatterns(const char *pat1, const char *pat2)
-{
-    //  cout << "Pattern eq ";
-    //  showPattern(pat1);
-    //  cout << " = ";
-    //  showPattern(pat2);
-    bool result = std::memcmp(pat1, pat2, numStrains) == 0;
-    //  cout << " result = " << result << endl;
-    return result;
-}
+bool eqPatterns(const char *pat1, const char *pat2);
 
 // hash function -- standard char* hash fails because of null termination
 struct PatternHash
@@ -167,9 +142,6 @@ struct PatternEq
     }
 };
 
-//typedef hash_set<char*, PatternHash, PatternEq> PatternSet;
-typedef std::unordered_set<char *, PatternHash, PatternEq> PatternSet;
-extern PatternSet patternUniqueTable;
 
 // for debugging
 inline void showBlock(const HaploBlock &hb)
@@ -180,7 +152,28 @@ inline void showBlock(const HaploBlock &hb)
 void showBlocks(std::vector<HaploBlock *> &hbv);
 
 
+template <typename T>
+decltype(std::bind(&T::value_type::second, std::placeholders::_1)) select2nd() {
+    return std::bind(&T::value_type::second, std::placeholders::_1);
+}
+// with parameters
+//template <typename T>
+//decltype(std::bind(&T::value_type::second, std::placeholders::_1)) select2nd(T m) {
+//    return std::bind(&T::value_type::second, std::placeholders::_1);
+//}
+
+//typedef hash_set<char*, PatternHash, PatternEq> PatternSet;
+typedef std::unordered_set<char *, PatternHash, PatternEq> PatternSet;
+// FIXME: tasteless global variables (maybe verbose is ok).
+
+extern int numStrains;
+extern bool verbose; // in haploLib
+
+extern Dynum<std::string> relevantStrains;
+extern Dynum<std::string> strainAbbrevs;
+extern PatternSet patternUniqueTable;
 // Map chromosome names to numerical indices.
 extern Dynum<std::string> chromosomes;
 // vector of all good SNPs in order of chromosome, position.
 extern std::vector<SNPInfo *> snpVec;
+
