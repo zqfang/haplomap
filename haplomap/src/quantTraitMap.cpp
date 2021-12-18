@@ -268,17 +268,20 @@ int main_ghmap(int argc, char **argv)
     GhmapOptions *opts = parseGhmapOptions(argc, argv);
 
     beginPhase("reading blocks summary file");
-    readBlockSummary(opts->blocksFileName, opts->geneName, opts->goTermFile);
+    readBlockSummary(opts->blocksFileName); // store in blocks
     endPhase();
+    /// global variable defined in haplolib
+    // Dynum<std::string> strainAbbrevs;
+    // int numStrains = -1;
     std::vector<std::vector<float>> phenvec(numStrains);
     beginPhase("reading phenotype file");
     if (opts->isCategorical)
     {
-        readCPhenotypes(opts->phenotypeFileName, phenvec);
+        readCPhenotypes(opts->phenotypeFileName, phenvec, strainAbbrevs);
     }
     else
     {
-        readQPhenotypes(opts->phenotypeFileName, phenvec);
+        readQPhenotypes(opts->phenotypeFileName, phenvec, strainAbbrevs);
     }
     endPhase();
 
@@ -298,12 +301,6 @@ int main_ghmap(int argc, char **argv)
     }
     endPhase();
 
-    // if (opts->filterCoding)
-    // {
-    //     beginPhase("filtering blocks by coding");
-    //     filterCodingBlocks();
-    //     endPhase();
-    // }
 
     if (opts->equalFile)
     {

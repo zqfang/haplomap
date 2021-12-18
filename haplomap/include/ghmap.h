@@ -120,7 +120,7 @@ void filterGoTerms(char *fname, std::vector<std::string> terms);
 
 // read in the block summary file.
 // If geneName is non-null, only read the SNPs for that gene.
-void readBlockSummary(char *fname, char *geneName, bool ignoreDefault);
+void readBlockSummary(char *fname);
 
 // Order strain indices by decreasing phenotype value (or just group
 // them, if categorical).
@@ -177,10 +177,10 @@ void filterCodingBlocks();
 void filterEqualBlocks(std::vector<int> equalRegions);
 
 // Read a file of quantitative phenotypes.
-void readQPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec);
+void readQPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec, Dynum<std::string> & strainAbbrevs);
 
 // Read a file of categorical phenotypes.
-void readCPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec);
+void readCPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec, Dynum<std::string> & strainAbbrevs);
 
 //read in equal class
 void readEqualFile(char *fname, std::vector<int> &equalStrains);

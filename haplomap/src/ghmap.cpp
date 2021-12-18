@@ -473,7 +473,7 @@ void GhmapWriter::writeHeaders(std::vector<std::string> &header)
 
 
 
-void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
+void readBlockSummary(char *fname)
 {
     ColumnReader rdr(fname, (char *)"\t");
 
@@ -517,23 +517,20 @@ void readBlockSummary(char *fname, char *geneName, bool ignoreDefault)
                 //      cout << "  Adding block for " << *git << ": " << pLastBlock->blockIdx << endl;
                 geneTable[*git]->blocks.push_back(pBlock);
             }
-            pBlock->updateGeneIsInteresting();
+            pBlock->updateGeneIsInteresting(); //
             // Add to blocks.
             blocks.push_back(pBlock);
             // cout << "Gene names for block " << blocks.back().blockIdx << ": " << blocks.back().geneNames << endl;
         }
     }
-
-    numStrains = blocks[0]->numStrains; // this line is required
     // Separate pass to fix up patterns.
     // patterns are all the same length.
     // FIXME: this causes a seg fault when there are no blocks (happens under funny conditions).
-    // numStrains = strlen(blocks[0]->pattern);
-    // for (unsigned blkIdx = 0; blkIdx < blocks.size(); blkIdx++)
-    // {
-    //     BlockSummary *block = blocks[blkIdx];
-    //     makeUnprintable(block->pattern);
-    // }
+    if (blocks.empty())
+    {
+        std::cerr<<"Input filename has not content : "<<fname<<std::endl;
+    }
+    numStrains = blocks[0]->numStrains; // this line is required
 }
 
 // print a line of the blocks file.
@@ -940,7 +937,7 @@ void readCompactGeneExpr(char *fname)
 }
 
 // Read a file of quantitative phenotypes.
-void readQPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec)
+void readQPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec, Dynum<std::string> & strainAbbrevs)
 {
     ColumnReader rdr(fname, (char *)"\t");
 
@@ -984,7 +981,7 @@ void readQPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec)
 }
 
 // Read a file of categorical phenotypes.
-void readCPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec)
+void readCPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec, Dynum<std::string> & strainAbbrevs)
 {
 
     ColumnReader rdr(fname, (char *)"\t");
