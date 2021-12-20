@@ -119,7 +119,7 @@ bool BlockSummary::isNumber(const std::string & str) {
 }
 }
 // summary of a block, read for the file.
-std::string BlockSummary::updateCodonScore(std::string str)
+int BlockSummary::updateCodonScore(std::string str)
   {
     // if input strings from ANNOVAR (INTRONIC, intergenic, SPLITE_SITE, 5PRIME_UTR, 3PRIME_UTR ...)
     // NON_SYNONYMOUS_CODING(1), SYNONYMOUS_CODING (0), but these two have been reformat to <->
@@ -145,7 +145,7 @@ std::string BlockSummary::updateCodonScore(std::string str)
         { // stop codon
           count += 2;
           this->numInteresting = count;
-          return "3"; //"stop_codon";
+          return 3; //"stop_codon";
         }
       }
       else
@@ -156,39 +156,39 @@ std::string BlockSummary::updateCodonScore(std::string str)
     this->numInteresting = count;
     if (str.find("SPLICE_SITE") != std::string::npos)
     {
-      return "2"; //splicing";
+      return 2; //splicing";
     }
 
     if (count > 0)
     {
-      return "1"; //codon_change";
+      return 1; //codon_change";
     }
 
     if ((count == 0) && (synonymous_count > 0))
     {
-        return "0"; // synonymous
+        return 0; // synonymous
     }
 
     /// if input string from Ensemble VEP Impact (HIGH, MODERATE, LOW, MODIFIER)
     /// see details here: https://uswest.ensembl.org/info/genome/variation/prediction/predicted_data.html
     if (str.find("HIGH") != std::string::npos)
     {
-        return "2"; // Frameshift, stop gain, stop lost ...
+        return 2; // Frameshift, stop gain, stop lost ...
     }
     else if (str.find("MODERATE") != std::string::npos)
     {
-        return "1"; // 	Missense
+        return 1; // 	Missense
     }
     else if (str.find("LOW") != std::string::npos)
     {
-        return "0"; // Synonymous
+        return 0; // Synonymous
     }
     else if (str.find("MODIFIER") != std::string::npos)
     {
-        return "-1"; // 5 prime UTR, TF binding site varian, Intergenic ...
+        return -1; // 5 prime UTR, TF binding site varian, Intergenic ...
     }
 
-    return "-1"; //no_codon_change"; include INTRONIC, intergenic, 5PRIME_UTR, 3PRIME_UTR
+    return -1; //no_codon_change"; include INTRONIC, intergenic, 5PRIME_UTR, 3PRIME_UTR
   }
 
 void BlockSummary::updateGeneIsInteresting()
@@ -201,14 +201,14 @@ void BlockSummary::updateGeneIsInteresting()
         // Our old SNP annotation only use NCBI database, which use condon flag [0,1,2,3] to indicate coding change
         // since we now using ANNOVAR to annotate SNPs, there's no 0,1s any more in the haploblock output files
         // we only keep this line here for compatibe issues
-        this->geneIsInteresting[giit->first] =  giit->second;  
+        this->geneIsInteresting[giit->first] =  std::stoi(giit->second);  
         } 
         else
         { 
             this->geneIsInteresting[giit->first] = this->updateCodonScore(giit->second);
         }
 
-        if (this->geneIsInteresting[giit->first] != "-1")
+        if (this->geneIsInteresting[giit->first] >= 0 )
             keep |= true;
     }
     this->isIgnored = !keep;
@@ -670,8 +670,8 @@ void GhmapWriter::showGeneBestBlockSums(std::vector<GeneSummary *> geneList,
         upcase(ugname);
 
         bool isCoding = false;
-        bool hasInteresting = false;
-        bool hasSpliceChange = false;
+        // bool hasInteresting = false;
+        // bool hasSpliceChange = false;
         //ofstream debug_log;
         //debug_log.open("debug.log",ios::app);
         // iter all blocks that overlap a gene, find the interesting change
@@ -684,15 +684,16 @@ void GhmapWriter::showGeneBestBlockSums(std::vector<GeneSummary *> geneList,
             else
             {
                 //if the gene had SNPs marked as NON_SYNONYMOUS_CODING, with <->, or as SPLICE_SITE, isCoding is true
-                isCoding |= ((*blit)->geneIsInteresting[gname] != "-1");
-                hasInteresting |= ((*blit)->numInteresting > 0);   //has a major amino acid change
-                hasSpliceChange |= (((*blit)->geneIsCodingMap[gname]).find("SPLICE_SITE") != std::string::npos);
+                isCoding |= ((*blit)->geneIsInteresting[gname] >=0 );
+                // hasInteresting |= ((*blit)->numInteresting > 0);   //has a major amino acid change
+                // hasSpliceChange |= (((*blit)->geneIsCodingMap[gname]).find("SPLICE_SITE") != std::string::npos);
                 //if "SPLICE_SITE" was in there that means that the gene had a splice change
             }
         }
 
-        if ((isCoding || !filterCoding) || hasSpliceChange)
+        if ((isCoding || !filterCoding) )
         {
+            
             os << gname << "\t" << pBestBlock->geneIsInteresting[(*git)->name] << "\t";
             /// for debug
             // os << gname << "\t" << pBestBlock->geneIsInteresting[(*git)->name] << "\t" << pBestBlock->geneIsCodingMap[gname] << "\t";
@@ -783,7 +784,7 @@ void writeBlockSums(bool isCategorical, char *outputFileName,
     writer.sortStrainsByPheno(phenvec, strOrderVec);
     writer.writeExpressionNames(geneExprHeader);
     writer.writeStrainNameAndValue(phenvec, strOrderVec);
-    writer.os << "#BlockIdx\tBlockStart\tBlockSize\tChr\tChrStart\tChrEnd\tHaplotype\t";
+    writer.os << "#BlockIdx\tIGNORED\tBlockStart\tBlockSize\tChr\tChrStart\tChrEnd\tHaplotype\t";
     writer.os << (isCategorical ? "FStat" : "Pvalue");
     writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tGeneName\tCodonFlag\n";
     writer.showBlockSums(blocks, pvalueCutoff, strOrderVec);

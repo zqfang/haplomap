@@ -33,13 +33,13 @@ class BlockSummary
     int numHaplo;
     int numInteresting;
     int numStrains;
-    std::map<std::string, std::string> geneIsInteresting; // gene name -> codon change, by gene BY
+    std::map<std::string, int> geneIsInteresting; // gene name -> codon change, by gene BY
     std::map<std::string, std::string> geneIsCodingMap;   // gene name -> coding strings, eg. TGA/X<->GGA/R
     // constructor
     BlockSummary(const char *chrnm, int num, int start, int size,
                 int chrbeg, int chrend, const char *pat);
     ~BlockSummary();
-    std::string updateCodonScore(std::string str);
+    int updateCodonScore(std::string str);
     void updateGeneIsInteresting();
     void showIsCoding();
     void showPatten(); // for debug
