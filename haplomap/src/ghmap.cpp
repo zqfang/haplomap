@@ -497,6 +497,10 @@ void GhmapWriter::showBlockSum(BlockSummary *pb, std::vector<int> &strOrderVec)
     {
         os << "\t(IGNORED)";
     }
+    else 
+    {
+        os <<"\t";
+    }
     os << "\t" << pb->blockStart << "\t" << pb->blockSize
         << "\t" << pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd << "\t";
 
@@ -640,6 +644,7 @@ void GhmapWriter::showGeneBlockSums(std::vector<BlockSummary *> &blocks,
     }
 }
 
+// only write the best pvalue block. which overlaps a gene.
 void GhmapWriter::showGeneBestBlockSums(std::vector<GeneSummary *> geneList,
                                         std::vector<int> &strOrderVec, float cutoff, bool filterCoding)
 {
