@@ -1665,7 +1665,7 @@ void findAllMaximalBlocks(int haploLimit, int minSNPBlocks)
   {
     HaploBlock *prevSavedBlock = NULL;
 
-    for (int blockstart = 0; blockstart < snpVec.size(); blockstart++)
+    for (int blockstart = 0; blockstart < (int)snpVec.size(); blockstart++)
     {
       // Only try sizes that aren't going to be subsumed!
       if (NULL != prevSavedBlock)

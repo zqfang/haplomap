@@ -42,16 +42,9 @@ class BlockSummary
     std::string updateCodonScore(std::string str);
     void updateGeneIsInteresting();
     void showIsCoding();
+    void showPatten(); // for debug
     // Return true if pval is above cutoff or FStat is below it.
     bool isCutoff(bool isCategorical, float cutoff);
-    // print a line of the blocks file.
-    // blockIdx	blockStart	blockSize	chromosome	begin	end	pattern	pval	effect	genename genehascoding ...
-    friend void showBlockSum(std::ostream &os, bool isCategorical, BlockSummary *pb, std::vector<int> &strOrderVec);
-    // BY addition, output as such:
-    // gene	codon_flag	pattern	pval	effect	chromosome	begin	end	blockIdx	blockStart	blockSize	expression
-    friend void showGeneBlockByBlock(std::ostream &os, bool isCategorical, BlockSummary *pb, std::vector<int> &strOrderVec);
-    friend void showBlockSums(std::ostream &os, bool isCategorical,
-                              std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec);
 
 private:
     void interestingChanges();
@@ -61,8 +54,8 @@ private:
     /// convert digits 0-9 in string to \000..\011 (but leave '?' printable).
     /// Mark: make ascii starts from 0, not '0'. Useful for downstream ANOVA analysis (a.k.a grouping number starts from 0)
     void makePatternUnprintable();
-    /// return a printable Patten
-    char * showPatternPrintable();
+    /// return a printable Patten, need free memroy
+    char * getPatternPrintable();
     /// whether a string is number
     bool isNumber(const std::string & str);
 };
@@ -89,7 +82,7 @@ public:
   std::vector<BlockSummary *> blocks; // vector of blocks overlapping this gene.
   std::vector<std::string> goTerms;
   bool isIgnored;
-  GeneSummary(bool ignoreDefault);
+  GeneSummary(bool ignoreDefault = false);
   ~GeneSummary();
 };
 
@@ -129,13 +122,6 @@ void readBlockSummary(char *fname);
 // renumber eqclasses in pattern so the increase from left to right
 void writeSortedPattern(std::ostream &os, char *pattern, std::vector<int> &strOrderVec);
 
-// Write summaries of the blocks.  The CGI script will read this and render it nicely in HTML.
-void showGeneBlockSums(std::ostream &os, bool isCategorical, std::vector<BlockSummary *> &blocks, 
-                        float cutoff, std::vector<int> &strOrderVec, std::vector<GeneSummary *> genesList);
-// BY ADDITION
-void showGeneBlockByBlocks(std::ostream &os, bool isCategorical, std::vector<BlockSummary *> &blocks, 
-                                    float cutoff, std::vector<int> &strOrderVec);
-
 void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetName,
         std::vector<std::vector<float>> &phenvec, std::vector<BlockSummary *> &blocks, float pvalueCutoff);
 
@@ -156,10 +142,16 @@ class GhmapWriter
 {
 private:
     std::string _dataset_name;
-    bool _isCategorical;
-
+    bool isCategorical;
+    float pvalueCutoff;
+    // BY addition, output as such:
+    // gene	codon_flag	pattern	pval	effect	chromosome	begin	end	blockIdx	blockStart	blockSize	expression
+    void showGeneBlockByBlock(BlockSummary *pb, std::vector<int> &strOrderVec);
+    // print a line of the blocks file.
+    // blockIdx	blockStart	blockSize	chromosome	begin	end	pattern	pval	effect	genename genehascoding ...
+    void showBlockSum(BlockSummary *pb, std::vector<int> &strOrderVec);
 public:
-    GhmapWriter(char *outputFileName, char *datasetName, bool isCategorical);
+    GhmapWriter(char *outputFileName, char *datasetName, bool categorical, float pvalCutoff);
     ~GhmapWriter();
     void sortStrainsByPheno(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec);
     void writeSortedPattern(char *pattern, std::vector<int> &strOrderVec); // NOTE: the input pattern has been makeUnprintable
@@ -167,6 +159,16 @@ public:
     void writeExpressionNames(std::vector<std::string> &exprOrderVec);
     void writeHeaders(std::vector<std::string> &header);
 
+    void showBlockSums(std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec);
+    // Write summaries of the blocks.  The CGI script will read this and render it nicely in HTML.
+    void showGeneBlockSums(std::vector<BlockSummary *> &blocks, 
+                            float cutoff, std::vector<int> &strOrderVec, std::vector<GeneSummary *> genesList);
+
+    void showGeneBestBlockSums(std::vector<GeneSummary *> geneList,
+                              std::vector<int> &strOrderVec, float cutoff, bool filterCoding);
+    // BY ADDITION
+    void showGeneBlockByBlocks(std::vector<BlockSummary *> &blocks, 
+                                        float cutoff, std::vector<int> &strOrderVec);
     std::ofstream os;
 };
 

@@ -52,6 +52,7 @@ private:
     // multiply by scalar inplace.  Destroys first argument.
     void scaleVector(std::vector<float> &v1, float c);
     int numHaplotypes(char *pattern);
+    int numDefinedStrains(char *pattern);
 
 public:
     ANOVA(std::vector<std::vector<float>> &phenvec);

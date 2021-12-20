@@ -164,6 +164,20 @@ int ANOVA::numHaplotypes(char *pattern)
     }
     return numHap + 1;
 }
+
+int ANOVA::numDefinedStrains(char *pattern)    
+{
+    int count = 0;
+    for (unsigned str1 = 0; str1 < this->_numStrains; str1++)
+    {
+        if (pattern[str1] != '?')
+        {
+            count++;
+        }
+    }
+    return count;
+}
+
 void ANOVA::stat(char *pattern, float &FStat, float &pvalue, float &effect)
 {
     int _numHaplo = this->numHaplotypes(pattern);
