@@ -362,7 +362,8 @@ _dataset_name(datasetName), isCategorical(categorical), pvalueCutoff(pvalCutoff)
         std::exit(1);
     }
     os << "##" << datasetName << std::endl;
-    os << "##CodonFlag\t0:Synonymous\t1:Non-Synonymous\t2:Splicing\t3:Stop\t-1:Non-Coding(INTRONIC,intergenic,5PRIME_UTR,3PRIME_UTR)"<<std::endl;
+    // Non-Coding -> (INTRONIC,intergenic,5PRIME_UTR,3PRIME_UTR)
+    os << "##CodonFlag\t0:Synonymous\t1:Non-Synonymous\t2:Splicing\t3:Stop\t-1:Non-Coding"<<std::endl;
 }
 
 GhmapWriter::~GhmapWriter() {}
