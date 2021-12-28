@@ -1,0 +1,23 @@
+{% extends base %}
+
+{% block title %}HBCGM Data Visualization{% endblock %}
+
+{% block postamble %}
+  <style>
+    {% include 'styles.css' %}
+  </style>
+{% endblock %}
+
+{% block contents %}
+  <div class="content">
+    <h1>HBCGM v2.0 Data Visualization tool </h1>
+
+    <p>HBCGM v2.0 is an evloved version. We refactor the old code and support more utilities</p>
+
+    {{ super() }}
+
+    <!-- <div class="videoWrapper">
+      <iframe width="420" height="315" src="https://www.youtube.com/embed/hVimVzgtD6w" frameborder="0" allowfullscreen></iframe>
+    </div> -->
+  </div>
+{% endblock %}
