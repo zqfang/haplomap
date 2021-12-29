@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 from functools import lru_cache
+from pathlib import Path
 
 dict_color = {'0':'#1f77b4','1':'#ff7f0e','2':'#2ca02c','3':'#d62728','4':'#9467bd', '?':'#ffffff'}
 expr_color = {'P':'#D13917', 'A': '#4C4A4B', 'M':'#ffffff', '-':'#ffffff'}
@@ -58,7 +59,7 @@ def get_color(pattern):
         colors.append(c)
     return colors
 
-def get_expr2(pattern, gene_expr_order):
+def get_expr(pattern, gene_expr_order):
     ep, ep2 = "", ""
     for r, g in zip(list(pattern), gene_expr_order):
         c = expr_color.get(r)
@@ -67,3 +68,12 @@ def get_expr2(pattern, gene_expr_order):
         ep += s 
         ep2 += s2
     return ep, ep2
+
+
+def get_datasets(data_dir):
+    data = []
+    path = Path(data_dir).glob("*results.txt")
+    for p in path:
+        d = p.stem.split(".")[0]
+        data.append(d)
+    return data
