@@ -31,10 +31,12 @@ with open(TRAIT_IDS, 'r') as t:
     IDS_ = t.read().strip().split()
     assert len(IDS_) >= 1
 ## skip run if already done
-pat = config['HBCGM']['WORKSPACE'] + "MPD_{ids}/chrX.results.txt"
+pat1 = config['HBCGM']['WORKSPACE'] + "MPD_{ids}/chrX.results.txt"
+pat2 = config['HBCGM']['WORKSPACE'] + "MPD_{ids}/chr1.results.txt"
+pat3 = config['HBCGM']['WORKSPACE'] + "MPD_{ids}/chr9.results.txt"
 IDS = []
 for mnum in IDS_:
-    if os.path.exists(pat.format(ids = mnum)):
+    if os.path.exists(pat1.format(ids = mnum)) and os.path.exists(pat2.format(ids = mnum)) and os.path.exists(pat3.format(ids = mnum)):
         continue
     IDS.append(mnum)
 
@@ -88,8 +90,8 @@ rule annotateSNPs:
         kgxref = KNOWNGENE_META, 
         knowngene= KNOWNGENE,
     output:
-        hgnc = "MPD_{ids}/chr{i}.genename.txt",
-        ensemble = "MPD_{ids}/chr{i}.geneid.txt",
+        hgnc = "MPD_{ids}/hblocks/chr{i}.genename.txt",
+        ensemble = temp("MPD_{ids}/hblocks/chr{i}.geneid.txt"),
     script:
         "../scripts/annotateSNPs.py"
 
@@ -97,11 +99,11 @@ rule annotateSNPs:
 rule eblocks:
     input: 
         snps = os.path.join(SNPDB, "chr{i}.txt"),
-        gene_anno = "MPD_{ids}/chr{i}.genename.txt",
+        gene_anno = "MPD_{ids}/hblocks/chr{i}.genename.txt",
         strains = "MPD_{ids}/strain.{ids}.txt",
     output: 
-        hb = protected("MPD_{ids}/chr{i}.hblocks.txt"),
-        snphb = temp("MPD_{ids}/chr{i}.snp.hblocks.txt")
+        hb = protected("MPD_{ids}/hblocks/chr{i}.hblocks.txt"),
+        snphb = protected("MPD_{ids}/hblocks/chr{i}.snp.hblocks.txt")
     params:
         bin = HBCGM_BIN,
     log: "logs/MPD_{ids}.chr{i}.eblocks.log"
@@ -113,11 +115,10 @@ rule eblocks:
 # statistical testing with trait data       
 rule ghmap:
     input: 
-        hb = "MPD_{ids}/chr{i}.hblocks.txt",
+        hb = "MPD_{ids}/hblocks/chr{i}.hblocks.txt",
         trait = "MPD_{ids}/trait.{ids}.txt",
         gene_exprs = GENE_EXPRS,
-        rel = GENETIC_REL,
-        relid = GENETIC_REL+".id"
+        rel = GENETIC_REL
     output: "MPD_{ids}/chr{i}.results.txt"
     params:
         bin = HBCGM_BIN,
