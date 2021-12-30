@@ -223,4 +223,4 @@ layout = column(inputs, o)
     
 # source.selected.on_change('indices', function_source)
 curdoc().add_root(layout)
-curdoc().title = "HBCGM"
+curdoc().title = "HBCGM Dashboard"
