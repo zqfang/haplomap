@@ -105,6 +105,12 @@ inline void upcase(std::string &str)
   std::transform(str.begin(), str.end(), str.begin(), ::toupper);
 }
 
+inline void lowercase(std::string &str) 
+{
+  std::transform(str.begin(), str.end(), str.begin(),
+    [](unsigned char c){ return std::tolower(c); });
+}
+
 // Read the file of gene expression data
 void readCompactGeneExpr(char *fname);
 

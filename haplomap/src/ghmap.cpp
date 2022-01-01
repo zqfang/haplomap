@@ -152,6 +152,8 @@ int BlockSummary::updateCodonScore(std::string str)
       {
           synonymous_count++; 
       }
+      /// FIXED: iterative find < >
+      pos = endpos; // find 
     }
     this->numInteresting = count;
     if (str.find("SPLICE_SITE") != std::string::npos)
@@ -362,9 +364,20 @@ _dataset_name(datasetName), isCategorical(categorical), pvalueCutoff(pvalCutoff)
         std::exit(1);
     }
     os << "##" << datasetName << std::endl;
+    // use datasetname to specify the codon flag explicity
+    std::string dn(datasetName);
+    upcase(dn);
+    if  ((dn.find("INDEL") != std::string::npos) || (dn.find("_SV") != std::string::npos))
+    {
+        os << "##CodonFlag\t0:Low\t1:Moderate\t2:High\t-1:Modifier"<<std::endl;
+    }
+    else 
+    {
     // Non-Coding -> (INTRONIC,intergenic,5PRIME_UTR,3PRIME_UTR)
-    os << "##CodonFlag\t0:Synonymous\t1:Non-Synonymous\t2:Splicing\t3:Stop\t-1:Non-Coding"<<std::endl;
+        os << "##CodonFlag\t0:Synonymous\t1:Non-Synonymous\t2:Splicing\t3:Stop\t-1:Non-Coding"<<std::endl;
+    }
 }
+
 
 GhmapWriter::~GhmapWriter() {}
 
