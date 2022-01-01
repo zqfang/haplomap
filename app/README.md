@@ -1,5 +1,7 @@
 # Bokeh app for Data Visualization of HBCGM output
 
+This is a bokeh application for exploring HBCGM results interactively and download results.
+
 ## Run 
 
 debug  
@@ -14,6 +16,9 @@ bokeh serve --show app --allow-websocket-origin=peltz-app-03:5006
 ```
 
 view at: peltz-app-03:5006
+
+**Note**:
+HBCGM results must be prioritzation by MeSH terms (GNN model) first, then run this app
 
 
 ## Dev
