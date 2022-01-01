@@ -687,10 +687,13 @@ void GhmapWriter::showGeneBestBlockSums(std::vector<GeneSummary *> geneList,
         std::string &gname = (*git)->name;
         std::string ugname = gname; // gene names in expression data are upper case.
         upcase(ugname);
-
+        // coding bit is subtle.  This iterates over all of the blocks that are < pvalue cutoff
+        // (or > for FStat).  If any has a non-synonmous SNP, the bit is 1.  So, the coding
+        // change may not be in the best block for the gene, and may change if the pvalue cutoff
+        // is changed.
         bool isCoding = false;
-        // bool hasInteresting = false;
-        // bool hasSpliceChange = false;
+        bool hasInteresting = false;
+        bool hasSpliceChange = false;
         //ofstream debug_log;
         //debug_log.open("debug.log",ios::app);
         // iter all blocks that overlap a gene, find the interesting change
@@ -703,19 +706,27 @@ void GhmapWriter::showGeneBestBlockSums(std::vector<GeneSummary *> geneList,
             else
             {
                 //if the gene had SNPs marked as NON_SYNONYMOUS_CODING, with <->, or as SPLICE_SITE, isCoding is true
-                isCoding |= ((*blit)->geneIsInteresting[gname] >=0 );
-                // hasInteresting |= ((*blit)->numInteresting > 0);   //has a major amino acid change
-                // hasSpliceChange |= (((*blit)->geneIsCodingMap[gname]).find("SPLICE_SITE") != std::string::npos);
+                isCoding |= ((*blit)->geneIsInteresting[gname] >=0 ); // synousmous or missene
+                hasInteresting |= ((*blit)->numInteresting > 0);   //has a major amino acid change, missense 
+                hasSpliceChange |= (((*blit)->geneIsCodingMap[gname]).find("SPLICE_SITE") != std::string::npos);
                 //if "SPLICE_SITE" was in there that means that the gene had a splice change
             }
         }
 
-        if ((isCoding || !filterCoding) )
+        //New thing: -1 means not coding, 0 means coding but not important
+        //Anything else is the number of important
+        int codingCode = -1;
+        if(isCoding) codingCode = 0;
+        if(hasInteresting) codingCode = 1;
+        if (hasSpliceChange) codingCode = 2;
+
+        if ((isCoding || !filterCoding)||hasSpliceChange) 
         {
             
-            os << gname << "\t" << pBestBlock->geneIsInteresting[(*git)->name] << "\t";
+            // os << gname << "\t" << pBestBlock->geneIsInteresting[(*git)->name] << "\t";
             /// for debug
             // os << gname << "\t" << pBestBlock->geneIsInteresting[(*git)->name] << "\t" << pBestBlock->geneIsCodingMap[gname] << "\t";
+            os << gname << "\t" << codingCode << "\t";
             this->writeSortedPattern(pBestBlock->pattern, strOrderVec);
             os << "\t" << (isCategorical ? pBestBlock->FStat : pBestBlock->pvalue);
             os << "\t" << pBestBlock->effect <<"\t"<< pBestBlock->FDR;
