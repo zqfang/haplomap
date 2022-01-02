@@ -53,7 +53,7 @@ view = CDSView(source=source, filters=[BooleanFilter(), GroupFilter()])
 
 ## Datatable
 columns = ['GeneName', 'CodonFlag','Haplotype', 'Pvalue', 'EffectSize', 'FDR',
-           'PopPvalue', 'PopFDR', 'Chr', 'ChrStart', 'ChrEnd', 'BlockStart', 'LitScore'] 
+           'PopPvalue', 'PopFDR', 'Chr', 'ChrStart', 'ChrEnd', 'LitScore'] 
 columns = [ TableColumn(field=c, title=c, formatter=HTMLTemplateFormatter() 
                         if c == 'Haplotype' else CellFormatter()) for c in columns ] # skip index                       
 myTable = DataTable(source=source, columns=columns, width =1000, height = 600, index_position=0,
@@ -162,7 +162,7 @@ def data_update(attr, old, new):
         return
     # update new data
     df, headers = load_ghmap(DATASET)
-    #df = df[df.CodonFlag>=0]
+    df = df[df.CodonFlag>=0]
 
     # update mesh, bar, scatter
     mesh_columns = [m for m in df.columns if m.startswith("MeSH") ]
@@ -182,7 +182,7 @@ def data_update(attr, old, new):
     source.data = df
     source.data.update(LitScore=df.loc[:, mesh_columns[0]].to_list())
     myTable.source = source # datatable
-    source_bar.data.update(strains=x_range, traits=traits, colors=['#583A9C']*len(strains))
+    source_bar.data.update(strains=x_range, traits=traits, colors=['#A19B9B']*len(strains))
 
     bar.xaxis.ticker = FixedTicker(ticks=x_range)
     bar.xaxis.major_label_overrides = {k: str(v) for k, v in zip(x_range, strains)}

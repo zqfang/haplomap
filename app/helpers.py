@@ -6,7 +6,19 @@ from pathlib import Path
 
 from bokeh.palettes import Category10
 
-dict_color = {'0':'#1f77b4','1':'#ff7f0e','2':'#2ca02c','3':'#d62728','4':'#9467bd', '?':'#ffffff'}
+## AAAS colors
+dict_color = {'0':'#3B4992',
+              '1':'#EE0000',
+              '2':'#008B45',
+              '3':'#631879',
+              '4':'#9467bd', 
+              '5':'#008280',
+              '6':'#BB0021',
+              '7':'#5F559B',
+              '8':'#A20056',
+              '9':'#808180',
+              '?':'#ffffff',#'#1B1919',}
+             }
 expr_color = {'P':'#D13917', 'A': '#4C4A4B', 'M':'#ffffff', '-':'#ffffff'}
 codon_flag = {'0':'Synonymous','1':'Non-Synonymous','2':'Splicing', '3':'Stop', '-1':'Non-Coding'}
 codon_color_dict = {str(i) : Category10[10][i+1] for i in range(-1, 8)}
