@@ -732,7 +732,7 @@ void GhmapWriter::showGeneBestBlockSums(std::vector<GeneSummary *> geneList,
             os << "\t" << pBestBlock->effect <<"\t"<< pBestBlock->FDR;
             os << "\t" << pBestBlock->relPvalue<<"\t"<< pBestBlock->relFDR; 
             os << "\t" << pBestBlock->chrName << "\t" << pBestBlock->chrBegin << "\t" << pBestBlock->chrEnd;
-            os << "\t" << pBestBlock->blockIdx << "\t" << pBestBlock->blockStart << "\t" << pBestBlock->blockSize;
+            //os << "\t" << pBestBlock->blockIdx << "\t" << pBestBlock->blockStart << "\t" << pBestBlock->blockSize;
 
             // write gene expression values
             if (geneExprMap.find(ugname) == geneExprMap.end())
@@ -878,7 +878,7 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
     // header
     writer.os << "#GeneName\tCodonFlag\tHaplotype\t";
     writer.os << (isCategorical ? "FStat" : "Pvalue");
-    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tChr\tChrStart\tChrEnd\tBlockIdx\tBlockStart\tBlockSize\tGeneExprMap\n";
+    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tChr\tChrStart\tChrEnd\tGeneExprMap\n";
 
     GenesComparator gcomp(isCategorical);
     // Copy genesTable values into a vector and sort using GenesComparator

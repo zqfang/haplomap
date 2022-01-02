@@ -14,7 +14,7 @@ struct GhmapOptions
     bool filterCoding;
     bool haploBlocks;
     bool geneBlocks;
-    bool geneByBlocks;
+    bool geneAllBlocks;
     float pvalueCutoff;
     char *datasetName;
     char *phenotypeFileName;
@@ -48,7 +48,7 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
             {"filter_coding", no_argument, 0, 'f'},
             {"haploblocks", no_argument, 0, 'k'},
             {"gene_block", no_argument, 0, 'm'},
-            {"gene_block_by_block", no_argument, 0, 'a'},
+            {"gene_all", no_argument, 0, 'a'},
             {"pvalue_cutoff", no_argument, 0, 'l'},
             {"name", required_argument, 0, 'n'},
             {"phenotypes_file", required_argument, 0, 'p'},
@@ -65,27 +65,31 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
 
     const char *usage = "usage: ghmap [options]\n"
                         "\nrequired arguments:\n"
-                        "    -p, --phenotypes_file  <phenotype file> strain order should match to (-b)\n"
-                        "    -b, --blocks_file      <output file from eblocks>\n"
+                        "    -p, --phenotypes_file  <phenotype file> strain order should match to (eblocks -b)\n"
+                        "    -b, --blocks_file      <output file from (eblocks -o) >\n"
                         "    -o, --output_file      <output file name>\n"
                         "\noptional arguments:\n"
                         "    -r, --relation         <genetic relation file .rel>  n x n matrix\n"
-                        "    -n, --name             <name of phenotype dataset>\n"
+                        "    -n, --name             name of phenotype dataset. \n"
+                        "                           suffix with _INDEL or _SV to indicate indel/SV blocks\n"
                         "    -e, --expression_file  <name of file>\n"
                         "    -q, --equal_file       <name of file>\n"
                         "    -t, --goterms_file     <name of file>\n"
                         "    -i, --goterms_include_file <name of file>\n"
                         "                           output only genes with these terms\n"
-                        "    -c                     phenotype (-p) is categorical\n"
-                        "    -f                     filter out non-coding blocks\n"
-                        "    -g, --gene             output gene-oriented results for the best block that overlap a gene. Default.\n"
-                        "                           WARNING:: The best block means a block with best pvalue/Fstat. \n"
+                        "    -c, --categorical      phenotype (-p) is categorical\n"
+                        "    -f, --filter_coding    filter out non-coding blocks\n"
+                        "    -g, --gene             output gene-oriented results for aggregated blocks that overlap a gene. Default.\n"
+                        "                           Aggregate the results for all blocks that overlap a gene, \n"
+                        "                           Only write the best block to represent all overlapped blocks. \n"
+                        "                           WARNING:: The best means the block with best pvalue/Fstat. \n"
                         "                                     Its CodonFlag only indicates there exist coding changes in a gene. \n"
                         "                                     The block itself might not contain any coding changes. \n "
                         "                                     Please, run the ghmap with -a tag will give you all blocks with correct CodonFlag.\n"
-                        "    -a                     output gene-oriented results for all blocks that overalp genes with correct CodonFlag.\n"
-                        "    -k                     output blocks-oriented results\n"
-                        "    -m                     output gene and haplotype block by block\n"
+                        "    -a, --gene_all_blocks  output gene-oriented results for all blocks that overalp genes. \n"
+                        "                           recommended this option\n"
+                        "    -k, --haploblocks      output blocks-oriented results\n"
+                        "    -m, --gene_block       output gene and haplotype block by block\n"
                         "    -l, --pvalue_cutoff    only write results with pvalue < cutoff\n"
                         "    -v, --verbose\n"
                         "    -h, --help\n";
@@ -131,7 +135,7 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
 
             case 'a':
             {
-                opts->geneByBlocks = true;
+                opts->geneAllBlocks = true;
                 break;
             }
 
@@ -403,7 +407,7 @@ int main_ghmap(int argc, char **argv)
     {
         writeGeneBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
     }
-    else if (opts->geneByBlocks)  // -a
+    else if (opts->geneAllBlocks)  // -a
     {
         writeGeneBlockByBlocks(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
     }
