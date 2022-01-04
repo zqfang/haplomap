@@ -13,13 +13,22 @@ body {
 }
 .content {
     margin: 0em;
+    font-family: 'Julius Sans One', sans-serif;
 }
 h1 {
     margin: 2em 0 0 0;
     color: #2e484c;
     font-family: 'Julius Sans One', sans-serif;
     font-size: 1.8em;
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
+}
+
+h2 {
+    margin: 1.5em 0 0 0;
+    color: #2e484c;
+    font-family: 'Julius Sans One', sans-serif;
+    font-size: 1.4em;
+    /* text-transform: uppercase; */
 }
 a:link {
     font-weight: bold;
@@ -55,3 +64,9 @@ p {
     width: 100%;
     height: 100%;
 }
+
+.footer {
+    background-color: #F1F1F1;
+    text-align: center;
+    padding: 10px;
+  }

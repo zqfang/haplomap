@@ -16,7 +16,7 @@ from bokeh.core.enums import MarkerType
 from .helpers import gene_expr_order, codon_flag, mesh_terms
 from .helpers import load_ghmap, get_color, get_expr, get_datasets
 ######### global variable
-DATA_DIR = "/home/fangzq/github/HBCGM/example/PeltzData/" # RUN_000.results.txt
+DATA_DIR = "/data/bases/shared/haplomap/MPD_MeSH_Indel"#"/home/fangzq/github/HBCGM/example/PeltzData/" # RUN_000.results.txt
 
 
 fcmap = factor_cmap('impact', palette=Category10[6], factors=['0','1','2','3','-1'])#['Synonymous','Non-Synonymous','Splicing', 'Stop', 'Non-Coding'])
@@ -52,7 +52,7 @@ slider = RangeSlider(title="LitScore Range", start=0.0, end=1.0, value=(0.5, 1.0
 view = CDSView(source=source, filters=[BooleanFilter(), GroupFilter()])
 
 ## Datatable
-columns = ['GeneName', 'CodonFlag','Haplotype', 'Pvalue', 'EffectSize', 'FDR',
+columns = ['GeneName', 'CodonFlag','Haplotype','EffectSize', 'Pvalue', 'FDR',
            'PopPvalue', 'PopFDR', 'Chr', 'ChrStart', 'ChrEnd', 'LitScore'] 
 columns = [ TableColumn(field=c, title=c, formatter=HTMLTemplateFormatter() 
                         if c == 'Haplotype' else CellFormatter()) for c in columns ] # skip index                       
@@ -104,7 +104,7 @@ sca = figure(plot_width=550, plot_height=500,
 sca.add_layout(Legend(), 'above') # put legend outside
 sca.legend.orientation = "horizontal"
 sca.toolbar.logo = None
-sca.xaxis.axis_label = "Genetic:  - log10 Pvalue"#r"$$\text{Genetic} - \log_{10} \text{Pvalue}$$"
+sca.xaxis.axis_label = "Genetic:  - log10 Pvalue"# #r"$$\text{Genetic} - \log_{10} \text{Pvalue}$$" # latex
 sca.yaxis.axis_label = "Literature Score" #"MeSH"
 sca.scatter('logPvalue', 'LitScore', 
             size=8, 
@@ -163,12 +163,17 @@ def data_update(attr, old, new):
     # update new data
     df, headers = load_ghmap(DATASET)
     df = df[df.CodonFlag>=0]
+    if df.columns.str.startswith("Pop").sum() == 0: 
+        # kick out 'PopPvalue', 'PopFDR',
+        myTable.columns = [ columns[i] for i in range(len(columns)) if  i not in [6,7] ]   
+    else:
+        myTable.columns = columns
 
     # update mesh, bar, scatter
     mesh_columns = [m for m in df.columns if m.startswith("MeSH") ]
     dataset_name, codon_flag, gene_expr_order, strains, traits, mesh_terms = headers[:6]
-    if (dataset_name[0].lower().find("indel") != -1) or (dataset_name[0].lower().find("_sv") != -1):
-        codon_flag = {'0':'Low','1':'Moderate','2':'High', '-1':'Modifier'}
+    # if (dataset_name[0].lower().find("indel") != -1) or (dataset_name[0].lower().find("_sv") != -1):
+    #     codon_flag = {'0':'Low','1':'Moderate','2':'High', '-1':'Modifier'}
     x_range = list(range(0, len(strains)))
     # updates
     message.text = f"<p> Loaded dataset {ds}</p>"

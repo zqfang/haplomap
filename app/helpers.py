@@ -36,7 +36,7 @@ def get_html_string(pattern):
 @lru_cache()
 def load_ghmap(dataset):
     fname = os.path.join(dataset)
-    df = pd.read_table(fname, skiprows=6, dtype={'Haplotype': str})
+    df = pd.read_table(fname, skiprows=6, dtype={'Haplotype': str, 'Chr': str})
     headers = []
     with open(fname, 'r') as d:
         for i, line in enumerate(d):
