@@ -25,7 +25,7 @@ dbSNP: "/home/fangzq/genome/mouse/mouse.dbsnp.vcf.gz" # mm10
 
 HBCGM:
     # working directory
-    WORKSPACE: "/data/bases/shared/haplomap/MPD_MeSH"
+    WORKSPACE: "/data/bases/shared/haplomap/MPD_MeSH_Indel"
     # path to haplomap
     BIN: "/home/fangzq/github/HBCGM/build/bin"
     
@@ -35,28 +35,25 @@ HBCGM:
     # set to true if input individual animal data. Default: use strain means.   
     USE_RAWDATA: false 
     # use custom database instead of using MPD API to get data.
-    TRAIT_DATA: "" # "/data/bases/shared/haplomap/PELTZ_20210609/strainmeans.csv" # default: MPD database
+    TRAIT_DATA:  "" # default: MPD database
 
     # genetic relation file from PLink output
     GENETIC_REL: "/data/bases/shared/haplomap/PELTZ_20210609/mouse54_grm.rel"
     # gene expression file
     GENE_EXPRS: "/data/bases/shared/haplomap/PELTZ_20210609/mus.compact.exprs.txt"
     # MeSH mapping
-    MPD2MeSH: "/data/bases/shared/haplomap/PELTZ_20210609/mpd2mesh.json"
+    MPD2MeSH: "/data/bases/shared/haplomap/PELTZ_20210609/mpd2mesh.json"    
     ######### eblock input ######### 
+    STRAIN48: "/data/bases/shared/haplomap/PELTZ_20210609/strain.54.txt"
     # strains metadata. 
     STRAIN_ANNO: "/data/bases/shared/haplomap/PELTZ_20210609/strains.metadata.csv"
     # path to SNP database
-    SNPS_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/SNPs"
+    SNPS_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/INDELs"
     # PATH to SNP annotations for all genes
-    ANNOVAR: "/data/bases/shared/haplomap/PELTZ_20210609/SNP_Annotation" 
-    # snp, geneid,genename mapping
-    KNOWNGENE_META: "/data/bases/shared/haplomap/PELTZ_20210609/SNP_Annotation/mm10_kgXref.txt" 
-    KNOWNGENE: "/data/bases/shared/haplomap/PELTZ_20210609/SNP_Annotation/mm10_knownGene.txt" 
-
+    ANNOVAR: "/data/bases/shared/haplomap/PELTZ_20210609/INDELs_Annotation" 
     ######### others #########
     # open chromatin regions to annotate haploblocks.
-    ATAC_PEAKS: "Path/to/beds/*.blacklist_removed.broadPeak"
+    ATAC_PEAKS: "/scratch/users/fangzq/MouseEpigenomeAtlas/beds/*.blacklist_removed.broadPeak"
 
 
 ## ensemble-vep

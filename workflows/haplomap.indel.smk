@@ -1,5 +1,5 @@
 import os, glob, json
-import pandas as pd
+import pandas as pd 
 ############################# Required ###################################
 # set output directory 
 #configfile: "config.yaml"
@@ -14,13 +14,13 @@ else:
 # ghmap input
 TRAIT_DATA =  config['HBCGM']['TRAIT_DATA']
 GENETIC_REL = config['HBCGM']['GENETIC_REL']
-MPD2MeSH = config['HBCGM']['MPD2MeSH'] # json file
+
+MPD2MeSH = config['HBCGM']['MPD2MeSH']
+
 # eblock input
 STRAIN_ANNO = config['HBCGM']['STRAIN_ANNO']
 SNPDB = config['HBCGM']['SNPS_DIR']
-ANNOVAR = config['HBCGM']['ANNOVAR'] 
-KNOWNGENE_META = config['HBCGM']['KNOWNGENE_META']
-KNOWNGENE = config['HBCGM']['KNOWNGENE']
+ANNOVAR = config['HBCGM']['ANNOVAR']
 GENE_EXPRS = config['HBCGM']['GENE_EXPRS']
 # open chromatin regions input
 ATAC_PEAKS = glob.glob(config['HBCGM']['ATAC_PEAKS'])
@@ -40,29 +40,20 @@ IDS = [i for i in IDS_ if i.split("-")[0] in MESH_DICT ]
 pat = config['HBCGM']['WORKSPACE'] + "MPD_{ids}_Indel.results.mesh.txt"
 IDS = [mnum for mnum in IDS if not os.path.exists(pat.format(ids = mnum))]
 
-# ## skip run if already done
-# pat1 = config['HBCGM']['WORKSPACE'] + "MPD_{ids}/chrX.results.txt"
-# pat2 = config['HBCGM']['WORKSPACE'] + "MPD_{ids}/chr1.results.txt"
-# pat3 = config['HBCGM']['WORKSPACE'] + "MPD_{ids}/chr9.results.txt"
-# IDS = []
-# for mnum in IDS_:
-#     if os.path.exists(pat1.format(ids = mnum)) and os.path.exists(pat2.format(ids = mnum)) and os.path.exists(pat3.format(ids = mnum)):
-#         continue
-#     IDS.append(mnum)
-
 CHROMOSOMES = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
 # output files
 # SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOMES)
-HBCGM =  expand("MPD_{ids}/chr{i}.results.txt", ids=IDS, i=CHROMOSOMES)
-HBLOCKS = expand("MPD_{ids}/chr{i}.hblocks.txt", ids=IDS, i=CHROMOSOMES)
-HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.open_region.bed", ids=IDS, i=CHROMOSOMES)
-HBCGM_MESH = expand("MPD_{ids}.results.mesh.txt", ids=IDS)
+HBCGM =  expand("MPD_{ids}_Indel/chr{i}.results.txt", ids=IDS, i=CHROMOSOMES)
+HBLOCKS = expand("MPD_{ids}_Indel/chr{i}.hblocks.txt", ids=IDS, i=CHROMOSOMES)
+MESH = expand("MPD_{ids}_Indel.results.mesh.txt", ids=IDS)
+#HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.open_region.bed", ids=IDS, i=CHROMOSOMES)
+
 # rules that not work in a new node
-#localrules: target, traits, strain2trait  
+# localrules: target, traits, strain2trait  
 
 
 rule target:
-    input: HBCGM_MESH, #HBCGM_NONCODING
+    input: HBCGM, MESH#HBCGM_NONCODING
 
 
 # rule pheno:
@@ -89,30 +80,20 @@ rule target:
 #         traitid = "{ids}",
 #         rawdata = config['HBCGM']['USE_RAWDATA']
 #     script:
-#         "../scripts/strain2traits.py"
+#         "scripts/strain2traits.py"
 
-# rule annotateSNPs:
-#     input:
-#         strains = "MPD_{ids}/strain.{ids}.txt",
-#         snps = os.path.join(SNPDB, "chr{i}.txt"), 
-#         annodb = os.path.join(ANNOVAR, "chr{i}.AA_by_strains.pkl"),
-#         kgxref = KNOWNGENE_META, 
-#         knowngene= KNOWNGENE,
-#     output:
-#         hgnc = "MPD_{ids}/hblocks/chr{i}.genename.txt",
-#         ensemble = temp("MPD_{ids}/hblocks/chr{i}.geneid.txt"),
-#     script:
-#         "../scripts/annotateSNPs.py"
 
-# find haplotypes
+
+# # find haplotypes
 rule eblocks:
     input: 
         snps = os.path.join(SNPDB, "chr{i}.txt"),
-        gene_anno = "MPD_{ids}/hblocks/chr{i}.genename.txt",
-        strains = "MPD_{ids}/strain.{ids}.txt",
+        #gene_anno = "MPD_{ids}/chr{i}.genename.txt",
+        gene_anno = os.path.join(ANNOVAR, "chr{i}.annotation.eblocks.txt"),
+        strains = "strain.{ids}.txt",
     output: 
-        hb = protected("MPD_{ids}/hblocks/chr{i}.hblocks.txt"),
-        snphb = protected("MPD_{ids}/hblocks/chr{i}.snp.hblocks.txt")
+        hb = protected("MPD_{ids}_Indel/chr{i}.hblocks.txt"),
+        snphb = protected("MPD_{ids}_Indel/chr{i}.snp.hblocks.txt")
     params:
         bin = HBCGM_BIN,
     log: "logs/MPD_{ids}.chr{i}.eblocks.log"
@@ -124,11 +105,11 @@ rule eblocks:
 # statistical testing with trait data       
 rule ghmap:
     input: 
-        hb = "MPD_{ids}/hblocks/chr{i}.hblocks.txt",
-        trait = "MPD_{ids}/trait.{ids}.txt",
+        hb = "MPD_{ids}_Indel/chr{i}.hblocks.txt",
+        trait = "trait.{ids}.txt",
         gene_exprs = GENE_EXPRS,
-        rel = GENETIC_REL
-    output: "MPD_{ids}/chr{i}.results.txt"
+        rel = GENETIC_REL,
+    output: "MPD_{ids}_Indel/chr{i}.results.txt"
     params:
         bin = HBCGM_BIN,
         cat = "MPD_{ids}/trait.{ids}.categorical"
@@ -139,17 +120,43 @@ rule ghmap:
         cmd = "{params.bin}/haplomap ghmap %s "%categorical +\
               "-e {input.gene_exprs} -r {input.rel} " +\
               "-p {input.trait} -b {input.hb} -o {output} " +\
-              "-n MPD_{wildcards.ids}%s -a -v > {log}"%cats
-        shell(cmd)
+              "-n MPD_{wildcards.ids}_Indel%s -a -v > {log}"%cats
+
+        if os.stat(input.hb).st_size == 0:
+            shell("touch {output}")
+        else:
+            shell(cmd)
+
+# rule open_chrom:
+#     input: 
+#         ghmap="MPD_{ids}_Indel/chr{i}.results.txt",
+#         peaks=ATAC_PEAKS,
+#     output:
+#         "MPD_{ids}/chr{i}.open_region.bed",
+#     params:
+#         peaks=" ".join(ATAC_PEAKS)
+#     shell:
+#         "sed '1,3d' {input.ghmap} | cut -f6-8 | "
+#         # add 'chr' and convert hblocks to 0-based coordinate #BEGIN {{FS = \"\\t\";OFS = \"\\t\" }};
+#         "awk -F'\\t' -v OFS='\\t' -v s=1 '{{print \"chr\"$1, $2-s, $3}}' | "
+#         "sort -k1,1 -k2,2n | "
+#         "bedtools intersect -sorted -a stdin -b {params.peaks} -wa -wb > {output}"
+
+# about sort -k field1[,field2]
+# To sort on the first field and then on the second: sort -k1,1 -k2,2
+# The arguments field1 and field2 have the form m.n (m,n > 0) 
+# and can be followed by one or more of the modifiers b, d, f, i, n, g, M and r,
+# which correspond to the sort options. -n: numberic sort
+
+
 
 rule ghmap_aggregate:
-    input: 
-        res = ["MPD_{ids}/chr%s.results.txt"%c for c in CHROMOSOMES]
-    output: temp("MPD_{ids}.results.txt")
+    input: ["MPD_{ids}_Indel/chr%s.results.txt"%c for c in CHROMOSOMES]
+    output: temp("MPD_{ids}_Indel.results.txt")
     run:
         # read input
         dfs = []
-        for p in input.res:
+        for p in input:
             case = pd.read_table(p, skiprows=5, dtype=str)
             dfs.append(case)
         result = pd.concat(dfs)
@@ -158,7 +165,7 @@ rule ghmap_aggregate:
         with open(p, 'r') as r:
             for i, line in enumerate(r):
                 headers.append(line)
-                if i >= 5: break 
+                if i >= 4: break 
 
         if os.path.exists(output[0]): os.remove(output[0])
         # write output
@@ -170,9 +177,9 @@ rule ghmap_aggregate:
 
 rule mesh:
     input: 
-        res = expand("MPD_{ids}.results.txt", ids=IDS),
+        res = expand("MPD_{ids}_Indel.results.txt", ids=IDS),
         json = MPD2MeSH,
-    output: expand("MPD_{ids}.results.mesh.txt", ids=IDS)
+    output: expand("MPD_{ids}_Indel.results.mesh.txt", ids=IDS)
     params: 
         # mesh = lambda wildcards: MESH_DICT[wildcards.ids]
         res_dir = config['HBCGM']['WORKSPACE'],
@@ -183,27 +190,3 @@ rule mesh:
         "--bundle /data/bases/fangzq/Pubmed/bundle " 
         "--hbcgm_result_dir {params.res_dir} "
         "--mesh_terms {input.json} --num_cpus {threads} "
-
-
-rule open_chrom:
-    input: 
-        ghmap="MPD_{ids}/chr{i}.results.txt",
-        peaks=ATAC_PEAKS,
-    output:
-        "MPD_{ids}/chr{i}.open_region.bed",
-    params:
-        peaks=" ".join(ATAC_PEAKS)
-    shell:
-        "sed '1,3d' {input.ghmap} | cut -f6-8 | "
-        # add 'chr' and convert hblocks to 0-based coordinate #BEGIN {{FS = \"\\t\";OFS = \"\\t\" }};
-        "awk -F'\\t' -v OFS='\\t' -v s=1 '{{print \"chr\"$1, $2-s, $3}}' | "
-        "sort -k1,1 -k2,2n | "
-        "bedtools intersect -sorted -a stdin -b {params.peaks} -wa -wb > {output}"
-
-# about sort -k field1[,field2]
-# To sort on the first field and then on the second: sort -k1,1 -k2,2
-# The arguments field1 and field2 have the form m.n (m,n > 0) 
-# and can be followed by one or more of the modifiers b, d, f, i, n, g, M and r,
-# which correspond to the sort options. -n: numberic sort
-
-
