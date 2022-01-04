@@ -34,7 +34,7 @@ void beginPhase(const char *msg)
 {
   if (verbose)
   {
-    std::cout << "[" << msg << "... " << getpid() << std::endl;
+    std::cout << "[" << msg << " ... PID: " << getpid() << std::endl;
     time(&start_time);
   }
 }
@@ -55,7 +55,7 @@ void endPhase(const char *msg, std::string chr)
   {
     time_t end_time;
     time(&end_time);
-    std::cout << "[" << msg << "... " << chr;
+    std::cout << "[" << msg << " ... " << chr;
     std::cout << " (" << difftime(end_time, start_time) << " s)]" << std::endl;
   }
 }
@@ -109,7 +109,8 @@ void readStrains(char *fname)
   int numtoks;
   while ((numtoks = rdr.getLine()) >= 0)
   {
-    if (rdr.getCurrentLineNum() < 1) continue;
+    if (rdr.getCurrentLineNum() < 1)
+      continue;
     // file has "Abbrev\tOfficalName\n"
     // if (numtoks != 2)
     // {
@@ -125,12 +126,11 @@ void readStrains(char *fname)
   }
 }
 
-
 char *dupPattern(char *pattern)
 {
-    char *newpat = (char *)malloc(numStrains);
-    std::memcpy(newpat, pattern, numStrains);
-    return newpat;
+  char *newpat = (char *)malloc(numStrains);
+  std::memcpy(newpat, pattern, numStrains);
+  return newpat;
 }
 
 // default constructor
@@ -139,10 +139,10 @@ SNPInfo::SNPInfo() : alleles(initAlleles()), frozen(false), used(false), qMarks(
 // constructor for stuff in chr_info_perl file.
 //  SNPInfo(string n, int ci, int pos) : name(n), chrIdx(ci), position(pos) { alleles = initAlleles(); };
 SNPInfo::SNPInfo(std::string n, int ci, int pos) : name(n), chrIdx(ci), position(pos),
-                                              alleles(initAlleles()),
-                                              frozen(false), used(false), qMarks(true)
+                                                   alleles(initAlleles()),
+                                                   frozen(false), used(false), qMarks(true)
 {
-    pattern = initPattern();
+  pattern = initPattern();
 };
 
 // copy constructor
@@ -152,77 +152,74 @@ SNPInfo::SNPInfo(SNPInfo const &snpInfo) : name(snpInfo.name), chrIdx(snpInfo.ch
                                            frozen(snpInfo.frozen), used(false), qMarks(true)
 {
 
-    std::cerr << "Illegal call to SNPInfo copy constructor" << std::endl;
-    exit(1);
-//     if (frozen) {
-//       cerr << "Copy constructor applied to frozen SNPInfo:" << this << endl;
-//     }
-//     cout << "Pattern copy: old " << hex << (size_t) snpInfo.pattern << ", new "
-// 	 << (size_t) pattern << endl;
-//     pattern = dupPattern(snpInfo.pattern);
+  std::cerr << "Illegal call to SNPInfo copy constructor" << std::endl;
+  exit(1);
+  //     if (frozen) {
+  //       cerr << "Copy constructor applied to frozen SNPInfo:" << this << endl;
+  //     }
+  //     cout << "Pattern copy: old " << hex << (size_t) snpInfo.pattern << ", new "
+  // 	 << (size_t) pattern << endl;
+  //     pattern = dupPattern(snpInfo.pattern);
 }
 
 // destructor
 SNPInfo::~SNPInfo()
 {
-    free(alleles);
-    if (!frozen)
-    {
-        free(pattern);
-    }
+  free(alleles);
+  if (!frozen)
+  {
+    free(pattern);
+  }
 }
 
-char * SNPInfo::initAlleles()
+char *SNPInfo::initAlleles()
 {
-    if (numStrains < 0)
-    {
-        std::cerr << "FATAL: Cannot allocate allele strings until strains_index.txt has been read." << std::endl;
-        exit(1);
-    }
-    char *tmpAlleles = (char *)malloc(numStrains + 1);
-    std::memset(tmpAlleles, '?', numStrains);
-    tmpAlleles[numStrains] = '\000';
-    return tmpAlleles;
+  if (numStrains < 0)
+  {
+    std::cerr << "FATAL: Cannot allocate allele strings until strains_index.txt has been read." << std::endl;
+    exit(1);
+  }
+  char *tmpAlleles = (char *)malloc(numStrains + 1);
+  std::memset(tmpAlleles, '?', numStrains);
+  tmpAlleles[numStrains] = '\000';
+  return tmpAlleles;
 };
 
 // has to be called after initAlleles.
-char * SNPInfo::initPattern()
+char *SNPInfo::initPattern()
 {
-    char *tmpPattern = (char *)malloc(numStrains);
-    std::memset(tmpPattern, '?', numStrains);
-    return tmpPattern;
+  char *tmpPattern = (char *)malloc(numStrains);
+  std::memset(tmpPattern, '?', numStrains);
+  return tmpPattern;
 }
 
 char SNPInfo::getAllele(int i) { return alleles[i]; }
 void SNPInfo::setAllele(int i, char a) { alleles[i] = a; }
 
-
-
-SNPInfo & SNPInfo::operator=(const SNPInfo &si)
+SNPInfo &SNPInfo::operator=(const SNPInfo &si)
 {
-    std::cerr << "Illegal call to SNPInfo assignment operator." << std::endl;
-    exit(1);
-    if (this != &si)
+  std::cerr << "Illegal call to SNPInfo assignment operator." << std::endl;
+  exit(1);
+  if (this != &si)
+  {
+    if (frozen)
     {
-        if (frozen)
-        {
-            std::cerr << "Assignment of frozen SNPInfo:" << this << std::endl;
-        }
-        name = si.name;
-        chrIdx = si.chrIdx;
-        position = si.position;
-        qMarks = si.qMarks;
-        std::strcpy(alleles, si.alleles);
-        // memcpy(pattern, si.pattern, numStrains);
+      std::cerr << "Assignment of frozen SNPInfo:" << this << std::endl;
     }
-    return *this;
+    name = si.name;
+    chrIdx = si.chrIdx;
+    position = si.position;
+    qMarks = si.qMarks;
+    std::strcpy(alleles, si.alleles);
+    // memcpy(pattern, si.pattern, numStrains);
+  }
+  return *this;
 }
-
 
 void HaploBlock::init()
 {
-    pattern = (char *)malloc(numStrains);
-    std::memset(pattern, '?', numStrains);
+  pattern = (char *)malloc(numStrains);
+  std::memset(pattern, '?', numStrains);
 }
 
 // default constructor
@@ -231,91 +228,89 @@ HaploBlock::HaploBlock() : chosen(false), score(0.0) { init(); }
 // copy constructor
 //
 HaploBlock::HaploBlock(HaploBlock const &hb) : start(hb.start), size(hb.size),
-                                   chosen(hb.chosen), score(hb.score)
+                                               chosen(hb.chosen), score(hb.score)
 {
-    pattern = dupPattern(hb.pattern);
+  pattern = dupPattern(hb.pattern);
 }
 
 // Overload assignment to memcpy, so we don't have to worry about string copying.
-HaploBlock & HaploBlock::operator=(const HaploBlock &hb)
+HaploBlock &HaploBlock::operator=(const HaploBlock &hb)
 {
-    if (this != &hb)
-    {
-        start = hb.start;
-        size = hb.size;
-        chosen = hb.chosen;
-        score = hb.score;
-        std::memcpy(pattern, hb.pattern, numStrains);
-    }
-    return *this;
+  if (this != &hb)
+  {
+    start = hb.start;
+    size = hb.size;
+    chosen = hb.chosen;
+    score = hb.score;
+    std::memcpy(pattern, hb.pattern, numStrains);
+  }
+  return *this;
 }
 
 // destructor
 HaploBlock::~HaploBlock() { free(pattern); }
 
-
 // print a SNPInfo
 std::ostream &operator<<(std::ostream &os, const SNPInfo &s)
 {
-    os << s.name << ", chromosome = " << chromosomes.eltOf(s.chrIdx)
-       << ", location = " << s.position
-       << ", alleles = " << s.alleles
-       << ", pattern = ";
-    showPattern(os, s.pattern);
-    for (std::map<std::string, std::string>::const_iterator gmit = s.geneCodonMap.begin(); gmit != s.geneCodonMap.end(); gmit++)
-    {
-        os << ", " << (*gmit).first << " (" << (*gmit).second << ")";
-    }
-    os << std::endl;
-    return os;
+  os << s.name << ", chromosome = " << chromosomes.eltOf(s.chrIdx)
+     << ", location = " << s.position
+     << ", alleles = " << s.alleles
+     << ", pattern = ";
+  showPattern(os, s.pattern);
+  for (std::map<std::string, std::string>::const_iterator gmit = s.geneCodonMap.begin(); gmit != s.geneCodonMap.end(); gmit++)
+  {
+    os << ", " << (*gmit).first << " (" << (*gmit).second << ")";
+  }
+  os << std::endl;
+  return os;
 };
 
 // print a HaploBlock
 std::ostream &operator<<(std::ostream &os, const HaploBlock &hb)
 {
-    SNPInfo *pSNPInfo = snpVec[hb.start];
-    os << "SNP " << hb.start << ": " << pSNPInfo->name
-       << ", chromosome " << chromosomes.eltOf(pSNPInfo->chrIdx)
-       << ", size " << hb.size
-       << ", chosen  " << hb.chosen
-       << ", pattern ";
-    showPattern(hb.pattern);
-    std::cout << ", score " << hb.score
-         << std::endl;
-    return os;
+  SNPInfo *pSNPInfo = snpVec[hb.start];
+  os << "SNP " << hb.start << ": " << pSNPInfo->name
+     << ", chromosome " << chromosomes.eltOf(pSNPInfo->chrIdx)
+     << ", size " << hb.size
+     << ", chosen  " << hb.chosen
+     << ", pattern ";
+  showPattern(hb.pattern);
+  std::cout << ", score " << hb.score
+            << std::endl;
+  return os;
 };
-
 
 size_t PatternHash::operator()(const char *s) const
 {
-    //    cout << "Pattern hash: ";
-    //    showPattern(s);
-    // cout << " returns ";
-    size_t h = 0;
-    for (int i = 0; i < numStrains; i++)
-    {
-        h = 5 * h + s[i];
-    }
-    //    cout << h << endl;
-    return h;
+  //    cout << "Pattern hash: ";
+  //    showPattern(s);
+  // cout << " returns ";
+  size_t h = 0;
+  for (int i = 0; i < numStrains; i++)
+  {
+    h = 5 * h + s[i];
+  }
+  //    cout << h << endl;
+  return h;
 }
 
 void showBlocks(std::vector<HaploBlock *> &hbv)
 {
-    for (unsigned i = 0; i < hbv.size(); i++)
-    {
-        std::cout << *(hbv[i]) << std::endl;
-    }
+  for (unsigned i = 0; i < hbv.size(); i++)
+  {
+    std::cout << *(hbv[i]) << std::endl;
+  }
 }
 
 // Test patterns for exact equality
 bool eqPatterns(const char *pat1, const char *pat2)
 {
-    //  cout << "Pattern eq ";
-    //  showPattern(pat1);
-    //  cout << " = ";
-    //  showPattern(pat2);
-    bool result = std::memcmp(pat1, pat2, numStrains) == 0;
-    //  cout << " result = " << result << endl;
-    return result;
+  //  cout << "Pattern eq ";
+  //  showPattern(pat1);
+  //  cout << " = ";
+  //  showPattern(pat2);
+  bool result = std::memcmp(pat1, pat2, numStrains) == 0;
+  //  cout << " result = " << result << endl;
+  return result;
 }

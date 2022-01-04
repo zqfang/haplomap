@@ -1,7 +1,6 @@
 
 #include "eblocks.h"
 
-
 // For setting initial datastructure sizes
 const int approxNumSNPs = 8000000;
 
@@ -66,7 +65,8 @@ int readDynumList(char *fname, Dynum<std::string> &dn)
   int numtoks;
   while ((numtoks = rdr.getLine()) >= 0)
   {
-    if (rdr.getCurrentLineNum() < 1) continue;
+    if (rdr.getCurrentLineNum() < 1)
+      continue;
     if (numtoks > 0)
     {
       dn.addElementIfNew(rdr.getToken(0));
@@ -88,7 +88,8 @@ void readPerlegenSNPvsmgene(const char *fname)
   // example:	1!NES16340864!ENSMUSG00000073722!4931408C20Rik!!0!up  !96472!26728479!0!1!
   while ((numtoks = rdr.getLine()) >= 0)
   {
-    if (rdr.getCurrentLineNum() < 1) continue;
+    if (rdr.getCurrentLineNum() < 1)
+      continue;
     std::string snpName = rdr.getToken(1);
     std::string geneName = rdr.getToken(3);
     int pos = atoi(rdr.getToken(8).c_str());
@@ -103,14 +104,14 @@ void readPerlegenSNPvsmgene(const char *fname)
       std::abort();
     }
 
-     //Insert a blank SNPEntry in the table with snpName
-     //std::pair<std::unordered_map<string, SNPInfo *>::iterator, bool> snpLookup =
-     snpMap.insert(std::pair<std::string, SNPInfo *>(snpName, pSNPInfo));
-     //The file has multiple entries when there are multiple genes.  Just insert
-     //the first, and don't check for duplicates.
-     //if (!snpLookup.second) {
-     //  cerr << "WARNING: Duplicate SNP names?" << snpName << endl;
-     //}
+    //Insert a blank SNPEntry in the table with snpName
+    //std::pair<std::unordered_map<string, SNPInfo *>::iterator, bool> snpLookup =
+    snpMap.insert(std::pair<std::string, SNPInfo *>(snpName, pSNPInfo));
+    //The file has multiple entries when there are multiple genes.  Just insert
+    //the first, and don't check for duplicates.
+    //if (!snpLookup.second) {
+    //  cerr << "WARNING: Duplicate SNP names?" << snpName << endl;
+    //}
   }
 }
 
@@ -301,7 +302,8 @@ void readSNPGeneNames(char *fname)
   int numtoks;
   while ((numtoks = rdr.getLine()) >= 0)
   {
-    if (rdr.getCurrentLineNum() < 1) continue; // skip header
+    if (rdr.getCurrentLineNum() < 1)
+      continue; // skip header
     std::string snpName = rdr.getToken(0);
     std::string geneName = rdr.getToken(1);
 
@@ -386,7 +388,7 @@ bool goodSNP(char *alleles, SNPInfo *SNPInfo)
     return false;
   }
   else if (numDefined >= minDefined)
-    {
+  {
     return true;
   }
   else
@@ -405,7 +407,8 @@ void readChromosomeInfo(char *fname)
   int numtoks;
   while ((numtoks = rdr.getLine()) >= 0)
   {
-    if (rdr.getCurrentLineNum() < 1) continue;
+    if (rdr.getCurrentLineNum() < 1)
+      continue;
     // file has "SNPname\t\tchr\t\tpos\n"
     // FIXME: some unnecessary string copies
     std::string snpName = rdr.getToken(0);
@@ -441,7 +444,8 @@ void readAlleleInfo(char *fname)
   int numtoks;
   while ((numtoks = rdr.getLine()) >= 0)
   {
-    if (rdr.getCurrentLineNum() < 1) continue;
+    if (rdr.getCurrentLineNum() < 1)
+      continue;
     if (numtoks != 5)
     {
       std::cerr << "Warning: numtoks = " << numtoks << std::endl;
@@ -714,7 +718,6 @@ int numHaplotypesFromAlleles(char *allelePattern)
   }
   return (Acount > 0) + (Ccount > 0) + (Gcount > 0) + (Tcount > 0);
 }
-
 
 int countHaplotypes(char *pattern)
 {
@@ -1151,7 +1154,7 @@ void ffbBinSearch(HaploBlock &bestBlock, int blockstart, int haploLimit, int min
   if (traceFBB)
   {
     std::cout << "  Binary search of power-of-2 block start = " << blockstart << ", size = " << minSize
-         << " with " << haploLimit << " haplotypes." << std::endl;
+              << " with " << haploLimit << " haplotypes." << std::endl;
     std::cout << "   Splitting at " << split << std::endl;
   }
 
@@ -1430,9 +1433,9 @@ bool fmbBinSearch(HaploBlock *pHaploBlock, int blockstart, int minSize, int bloc
   if (traceFBB)
   {
     std::cout << "fmbBinSearch:"
-         << " blockstart: " << blockstart
-         << ", minSize: " << minSize << ", blocksize: " << blocksize
-         << ", haploSize: " << haploSize << std::endl;
+              << " blockstart: " << blockstart
+              << ", minSize: " << minSize << ", blocksize: " << blocksize
+              << ", haploSize: " << haploSize << std::endl;
   }
 
   // check end of chromosome, too many base pairs,
@@ -1643,7 +1646,7 @@ void findCompoundBlocks(int haploLimit)
       else if (traceFBB)
       {
         std::cout << "Skipping block because of identical patterns, blockstart = " << blockstart
-             << ", pattern =";
+                  << ", pattern =";
         showPattern(snpVec[blockstart]->pattern);
         std::cout << std::endl;
       }
@@ -1760,7 +1763,7 @@ void chooseBlocks()
     if (phb->chosen)
     {
       std::cerr << "WARNING: chosen block on sortedCompoundHaploBlocks" << std::endl
-           << "Block: " << *phb << std::endl;
+                << "Block: " << *phb << std::endl;
     }
 
     // phb is a candidate for chosen block.
@@ -1790,7 +1793,7 @@ void chooseBlocks()
           if (traceChooseBlocks)
           {
             std::cout << "Truncating block to size " << j << ":" << std::endl
-                 << *phb << std::endl;
+                      << *phb << std::endl;
           }
           if (useFastFBB)
           {
@@ -1815,8 +1818,8 @@ void chooseBlocks()
           if (phb->score > oldscore)
           {
             std::cerr << "WARNING: Truncated block has higher score than original score of "
-                 << oldscore << std::endl
-                 << *phb << std::endl;
+                      << oldscore << std::endl
+                      << *phb << std::endl;
           }
         }
         else
@@ -1844,8 +1847,8 @@ void chooseBlocks()
         SNPInfo *pSNPInfo = snpVec[blockstart + j];
         if (pSNPInfo->used)
         {
-         std::cerr << "WARNING: About to mark use SNPInfo as used." << std::endl
-               << "SNPInfo: " << *pSNPInfo << std::endl;
+          std::cerr << "WARNING: About to mark use SNPInfo as used." << std::endl
+                    << "SNPInfo: " << *pSNPInfo << std::endl;
         }
         pSNPInfo->used = true;
         // cout << "Marked overlapped: " << *pSNPInfo << endl;
@@ -1886,7 +1889,6 @@ void showBlocksSNPs(std::vector<HaploBlock *> &hbs)
     showBlockSNPs(*hbs[i]);
   }
 }
-
 
 std::ostream &operator<<(std::ostream &os, const StrainDisp &sd)
 {
@@ -2171,7 +2173,7 @@ void writeBlockGeneNames(std::ofstream &os, HaploBlock *pHB)
       //   //debug_log << "The first time: " << gcit->first << " " << gcit->second << endl;
       //   if ((*gcit).second.find("NON_SYNONYMOUS_CODING") != std::string::npos) // indicate matches
       //   {
-      //     geneIsCodingMap[(*gcit).first] = "1"; 
+      //     geneIsCodingMap[(*gcit).first] = "1";
       //   }
       //   else if ((*gcit).second.find("<") != std::string::npos || (*gcit).second.find("SPLICE_SITE") != std::string::npos)
       //   {
@@ -2184,7 +2186,7 @@ void writeBlockGeneNames(std::ofstream &os, HaploBlock *pHB)
       //   else
       //   {
       //     // patch for SV input: 2,1,0,-1
-      //     geneIsCodingMap[(*gcit).first] = (*gcit).second; 
+      //     geneIsCodingMap[(*gcit).first] = (*gcit).second;
       //   }
       // }
       // else
@@ -2193,7 +2195,7 @@ void writeBlockGeneNames(std::ofstream &os, HaploBlock *pHB)
       //   if ((*gcit).second.find("NON_SYNONYMOUS_CODING") != std::string::npos)
       //   {
       //     if (geneIsCodingMap[(*gcit).first] == "0")
-      //       geneIsCodingMap[(*gcit).first] = "1"; 
+      //       geneIsCodingMap[(*gcit).first] = "1";
       //     //continue;
       //   }
 
@@ -2214,11 +2216,11 @@ void writeBlockGeneNames(std::ofstream &os, HaploBlock *pHB)
       //   else if ((*gcit).second.find("SYNONYMOUS_CODING") != std::string::npos)
       //   {
       //     geneIsCodingMap[(*gcit).first] = "0";
-      //   } 
-      //   else 
+      //   }
+      //   else
       //   {
       //     // patch for SV input
-      //      geneIsCodingMap[(*gcit).first] = (*gcit).second; 
+      //      geneIsCodingMap[(*gcit).first] = (*gcit).second;
       //   }
       // }
     }
@@ -2385,8 +2387,7 @@ void reportStats()
   std::cout << "total blocks:\t" << totalBlocks << std::endl;
   std::cout << "total SNPs:\t" << totalSNPs << std::endl;
   std::cout << "avg haplotypes/block:\t" << ((double)totalHaploTypes) / ((double)totalBlocks)
-       << std::endl;
+            << std::endl;
   std::cout << "number of small blocks (1, 2, or 3 SNPs):\t" << numSmallBlocks << std::endl;
   std::cout << "total SNPs in small blocks:\t" << totalSNPsInSmallBlocks << std::endl;
 }
-

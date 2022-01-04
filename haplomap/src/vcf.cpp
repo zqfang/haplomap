@@ -174,7 +174,7 @@ void VCF::parseHeader()
              
             if (!samples.empty()) 
             {
-                if (strains.size() < samples.size())
+                if (strains.size() < (int) samples.size())
                 {
                     std::cerr<<"Input (--samples) size larger than vcf sample size !!!"
                              <<std::endl;
@@ -244,7 +244,7 @@ bool VCF::parseSNP(std::vector<std::string> & alleles,
     if (AD < opts->alleleDepth || (AD / variant.maxDepth()) < opts->ratio)
         return false;
     // start parsing samples
-    for (size_t s=0; s < strains.size(); s++)
+    for (int s=0; s < strains.size(); s++)
     {
         std::string gt = variant.FORMATS["GT"][s];
         if (gt == "./." || gt == ".|.")
@@ -314,7 +314,7 @@ bool VCF::parseSNP(std::vector<std::string> & alleles,
 }
 bool VCF::parseStructralVariant(std::vector<std::string> & alleles, std::vector<std::string>& alts, std::vector<int>& hasAlt) 
 {
-    for (size_t s=0; s < strains.size(); s++)
+    for (int s=0; s < strains.size(); s++)
     {
         std::string gt = variant.FORMATS["GT"][s];
         if (gt == "./." || gt == ".|.")
@@ -426,7 +426,8 @@ void VCF::parseRecords()
             int numGoodAlt = std::accumulate(hasAlt.begin(), hasAlt.end(), 0);
             if (numGoodAlt == 1)
                 writeSNP(alleles);
-        } else if (!variant.isSNP && (std::strcmp(opts->variantType, "sv") == 0 || std::strcmp(opts->variantType, "indels") == 0 ))
+        } 
+        else if (!variant.isSNP && (std::strcmp(opts->variantType, "sv") == 0 || std::strcmp(opts->variantType, "indels") == 0 ))
         {
 
             bool ret = parseStructralVariant(alleles, alts, hasAlt);

@@ -68,28 +68,27 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
                         "    -p, --phenotypes_file  <phenotype file> strain order should match to (eblocks -b)\n"
                         "    -b, --blocks_file      <output file from (eblocks -o) >\n"
                         "    -o, --output_file      <output file name>\n"
+                        "                           output gene-summaried results by default.\n"
                         "\noptional arguments:\n"
-                        "    -r, --relation         <genetic relation file .rel>  n x n matrix\n"
                         "    -n, --name             name of phenotype dataset. \n"
                         "                           suffix with _INDEL or _SV to indicate indel/SV blocks\n"
+                        "    -c, --categorical      phenotype (-p) is categorical\n"
+                        "    -r, --relation         <genetic relation file .rel>  "
+                        "                           n x n matrix. For population structure analysis\n"
                         "    -e, --expression_file  <name of file>\n"
                         "    -q, --equal_file       <name of file>\n"
                         "    -t, --goterms_file     <name of file>\n"
-                        "    -i, --goterms_include_file <name of file>\n"
+                        "    -i, --goterms_include_file <name of file> \n"
                         "                           output only genes with these terms\n"
-                        "    -c, --categorical      phenotype (-p) is categorical\n"
                         "    -f, --filter_coding    filter out non-coding blocks\n"
-                        "    -g, --gene             output gene-oriented results for aggregated blocks that overlap a gene. Default.\n"
-                        "                           Aggregate the results for all blocks that overlap a gene, \n"
-                        "                           Only write the best block to represent all overlapped blocks. \n"
-                        "                           WARNING:: The best means the block with best pvalue/Fstat. \n"
-                        "                                     Its CodonFlag only indicates there exist coding changes in a gene. \n"
-                        "                                     The block itself might not contain any coding changes. \n "
-                        "                                     Please, run the ghmap with -a tag will give you all blocks with correct CodonFlag.\n"
-                        "    -a, --gene_all_blocks  output gene-oriented results for all blocks that overalp genes. \n"
-                        "                           recommended this option\n"
-                        "    -k, --haploblocks      output blocks-oriented results\n"
-                        "    -m, --gene_block       output gene and haplotype block by block\n"
+                        "    -g, --gene             output gene-summaried results. Default.\n"
+                        "                           NOTE:: Only wirte the overlapped halpoblock with best pvalue/Fstat, representing all overlapped blocks. \n"
+                        "                                  The CodonFlag is an aggregated indicator showing that a gene has blocks with coding change. \n"
+                        "                                  The best block itself might not contain any coding changes. \n"
+                        "                                  Run the ghmap with -a/k/m tag will give you all overlapped blocks with correct CodonFlag. \n"
+                        "    -a, --gene_all_blocks  output gene-oriented results of all blocks that overalp a gene. \n"
+                        "    -m, --gene_block       output gene-oriented results block by block. almost the same to -a\n"
+                        "    -k, --haploblocks      output block-oriented results.\n"
                         "    -l, --pvalue_cutoff    only write results with pvalue < cutoff\n"
                         "    -v, --verbose\n"
                         "    -h, --help\n";
@@ -147,8 +146,8 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
 
             case 'h':
             {
-                cout << usage << endl;
-                exit(0);
+                std::cout << usage << std::endl;
+                std::exit(0);
                 break;
             }
 
@@ -227,26 +226,26 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
                 break;
             }
             default:
-                abort();
+                std::abort();
         }
     }
     if (argc == 1)
     {
         std::cout<<usage<<std::endl;
-        exit(1);
+        std::exit(1);
     }
 
     if (NULL == opts->blocksFileName)
     {
         std::cout<<usage<<std::endl;
-        cout << "Required arg missing: blocks file name (-b)" << endl;
-        exit(1);
+        std::cout << "Required arg missing: blocks file name (-b)" << std::endl;
+        std::exit(1);
     }
     else if (NULL == opts->phenotypeFileName)
     {
         std::cout<<usage<<std::endl;
-        cout << "Required arg missing: phenotype file name (-p)" << endl;
-        exit(1);
+        std::cout << "Required arg missing: phenotype file name (-p)" << std::endl;
+        std::exit(1);
     }
 //    else if (NULL == opts->geneticRelationMatrix)
 //    {
@@ -258,14 +257,13 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
     // Print any remaining command line arguments (not options).
     if (optind < argc)
     {
-        cout << "Extraneous things on command line: ";
+        std::cout << "Extraneous things on command line: ";
         while (optind < argc)
         {
-            cout << argv[optind++] << endl;
+            std::cout << argv[optind++] << std::endl;
         }
         exit(1);
     }
-
 
     return opts;
 }
@@ -337,10 +335,12 @@ int main_ghmap(int argc, char **argv)
         // ANOVA analysis
         anova->stat(pBlock->pattern, pBlock->FStat, pBlock->pvalue, pBlock->effect);
         // population structure analysis
-        if (opts->geneticRelationMatrix != NULL) {
+        if (opts->geneticRelationMatrix != NULL) 
+        {
             bool ok = manova->setNonQMarkMat(pBlock->pattern, strainAbbrevs);
             if (ok)
                 manova->pillaiTrace(pBlock->relFStat, pBlock->relPvalue);
+            pBlock->relIgnore = false; // means final output will contain pop analysis results
         }
         if (pBlock->FStat == INFINITY && pBlock->effect < 0.0)
         {
@@ -384,48 +384,34 @@ int main_ghmap(int argc, char **argv)
     // results file, in the format of nhaplomap.pl, for display when someone clicks on a gene in the
     // gene-oriented html (or if * was specified for gene name)
     // Otherwise, it generates the gene-oriented html.
-    if (opts->geneName || opts->haploBlocks) // -k
+    float cutoff = opts->pvalueCutoff;
+    if (opts->isCategorical)
+    {
+        // Find FStat cutoff
+        int cutoffBlockIdx = (int)(opts->pvalueCutoff * blocks.size());
+        cutoff = blocks[cutoffBlockIdx]->FStat;
+    }
+
+    // if ( opts->geneName || opts->haploBlocks) // -k
+    if ( opts->haploBlocks) // -k , click on a gene in nhaplomap.pl will need to trigger -k now 
     {
         beginPhase("writing block-oriented results file for gene.");
-        if (opts->isCategorical)
-        {
-            // Find FStat cutoff
-            int cutoffBlockIdx = (int)(opts->pvalueCutoff * blocks.size());
-            float FCutoff = blocks[cutoffBlockIdx]->FStat;
-            //    cout << "pvalueCutoff = " << opts->pvalueCutoff << ", cutoffBlockIdx = " << cutoffBlockIdx
-            //	 << ", num blocks = " << blocks.size()
-            //	 << ", FCutoff = " << FCutoff << endl;
-            writeBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, FCutoff);
-        }
-        else
-        {
-            writeBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
-        }
-
+        writeBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, cutoff);
     }
     else if (opts->geneBlocks) // -m
     {
-        writeGeneBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
+        beginPhase("writing gene-oriented results file for gene.");
+        writeGeneBlockSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, cutoff);
     }
     else if (opts->geneAllBlocks)  // -a
     {
-        writeGeneBlockByBlocks(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, opts->pvalueCutoff);
-    }
-    else
-    {
         beginPhase("writing gene-oriented results file.");
-        if (opts->isCategorical)
-        {
-        // Find FStat cutoff
-            int cutoffBlockIdx = (int)(opts->pvalueCutoff * blocks.size());
-            float FCutoff = blocks[cutoffBlockIdx]->FStat;
-            writeGeneSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, FCutoff, opts->filterCoding);
-        }
-        else
-        {
-            writeGeneSums(opts->isCategorical, opts->outputFileName, opts->datasetName,
-                        phenvec, blocks, opts->pvalueCutoff, opts->filterCoding);
-        }
+        writeGeneBlockByBlocks(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, cutoff, opts->filterCoding);
+    }
+    else // if (opts->geneName)
+    {
+        beginPhase("writing gene-summaried results file.");
+        writeGeneSums(opts->isCategorical, opts->outputFileName, opts->datasetName, phenvec, blocks, cutoff, opts->filterCoding);
     }
 
     endPhase();

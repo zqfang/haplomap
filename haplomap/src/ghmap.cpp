@@ -22,8 +22,8 @@ BlockSummary::BlockSummary(const char *chrnm, int num, int start, int size,
           blockIdx(num), blockStart(start), blockSize(size),
           chrBegin(chrbeg), chrEnd(chrend), isIgnored(false),
           FStat(INFINITY), pvalue(1.0), FDR(1.0), effect(0.0),
-          relFStat(INFINITY), relPvalue(1.0), relFDR(1.0), relReject(false),
-          numHaplo(-1), numInteresting(-1)
+          relFStat(INFINITY), relPvalue(1.0), relFDR(1.0), relIgnore(true),
+          relReject(false), numHaplo(-1), numInteresting(-1)
 {
     this->chrName = strdup(chrnm);
     this->pattern = strdup(pat);
@@ -354,8 +354,8 @@ bool GenesComparator::operator()(const GeneSummary *pg1, const GeneSummary *pg2)
 }
 
 
-GhmapWriter::GhmapWriter(char *outputFileName, char *datasetName, bool categorical, float pvalCutoff):
-_dataset_name(datasetName), isCategorical(categorical), pvalueCutoff(pvalCutoff)
+GhmapWriter::GhmapWriter(char *outputFileName, char *datasetName, bool categorical, float pvalCutoff, const char* datasetFormat):
+_dataset_name(datasetName), _dataset_format(datasetFormat), isCategorical(categorical), pvalueCutoff(pvalCutoff)
 {
     os = std::ofstream(outputFileName);
     if (!os.is_open())
@@ -363,9 +363,9 @@ _dataset_name(datasetName), isCategorical(categorical), pvalueCutoff(pvalCutoff)
         std::cout << "Open of file \"" << outputFileName << "\" failed: ";
         std::exit(1);
     }
-    os << "##" << datasetName << std::endl;
+    os << "##" << _dataset_name <<"\t"<<"INFO="<< _dataset_format << std::endl;
     // use datasetname to specify the codon flag explicity
-    std::string dn(datasetName);
+    std::string dn(_dataset_name);
     upcase(dn);
     if  ((dn.find("INDEL") != std::string::npos) || (dn.find("_SV") != std::string::npos))
     {
@@ -394,6 +394,7 @@ void GhmapWriter::sortStrainsByPheno(std::vector<std::vector<float>> &phenvec, s
     IndexComparator<std::vector<float>, std::less<std::vector<float>>> idxCompare(&phenvec);
     std::stable_sort(strOrderVec.begin(), strOrderVec.end(), idxCompare);
 }
+
 
 // renumber eqclasses in pattern so the increase from left to right
 void GhmapWriter::writeSortedPattern(char *pattern, std::vector<int> &strOrderVec)
@@ -502,8 +503,8 @@ void GhmapWriter::writeHeaders(std::vector<std::string> &header)
     this->os << std::endl;
 }
 
-// print a line of the blocks file.
-// blockIdx	blockStart	blockSize	chromosome	begin	end	pattern	pval	effect	genename genehascoding ...
+/// -k
+/// print a line of the blocks file.
 void GhmapWriter::showBlockSum(BlockSummary *pb, std::vector<int> &strOrderVec)
 {
     os << pb->blockIdx;
@@ -521,7 +522,7 @@ void GhmapWriter::showBlockSum(BlockSummary *pb, std::vector<int> &strOrderVec)
     this->writeSortedPattern(pb->pattern, strOrderVec);
 
     os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) <<"\t" << pb->effect << "\t" <<pb->FDR;
-    os << "\t" <<pb->relPvalue<<"\t"<<pb->relFDR; 
+    if (!pb->relIgnore) os << "\t" <<pb->relPvalue<<"\t"<<pb->relFDR; 
 
     // gene names and coding bits
     std::map<std::string, std::string> &geneIsCodingMap = pb->geneIsCodingMap;
@@ -532,8 +533,9 @@ void GhmapWriter::showBlockSum(BlockSummary *pb, std::vector<int> &strOrderVec)
     os << std::endl;
 }
 
-// BY addition, output as such:
-// gene	codon_flag	pattern	pval	effect	chromosome	begin	end	blockIdx	blockStart	blockSize	expression
+/// -a
+/// BY addition, output as such:
+/// write all blocks that overlapped a gene
 void GhmapWriter::showGeneBlockByBlock(BlockSummary *pb, std::vector<int> &strOrderVec)
   {
     std::map<std::string, std::string> &geneIsCodingMap = pb->geneIsCodingMap;
@@ -542,8 +544,8 @@ void GhmapWriter::showGeneBlockByBlock(BlockSummary *pb, std::vector<int> &strOr
     { // no genes in this block
       os << "None\tNone\t";
       this->writeSortedPattern(pb->pattern, strOrderVec);
-      os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) <<"\t"<< pb->effect
-         << "\t" << pb->FDR << "\t" << pb->relPvalue<<"\t"<<pb->relFDR; 
+      os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) <<"\t"<< pb->effect << "\t" << pb->FDR;
+      if (!pb->relIgnore) os << "\t" << pb->relPvalue<<"\t"<<pb->relFDR; 
       os << "\t" << pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd << "\t"
          << pb->blockIdx << "\t"<< pb->blockStart << "\t" << pb->blockSize << "\t-------------" << std::endl;
     }
@@ -553,8 +555,8 @@ void GhmapWriter::showGeneBlockByBlock(BlockSummary *pb, std::vector<int> &strOr
       {
         os << (*giit).first << "\t" << pb->geneIsInteresting[(*giit).first] << "\t";
         this->writeSortedPattern(pb->pattern, strOrderVec);
-        os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) <<"\t"<< pb->effect
-           << "\t" <<pb->FDR << "\t" << pb->relPvalue<<"\t"<<pb->relFDR; 
+        os << "\t" << (isCategorical ? pb->FStat : pb->pvalue) <<"\t"<< pb->effect  << "\t" <<pb->FDR;
+        if (!pb->relIgnore)  os << "\t" << pb->relPvalue<<"\t"<<pb->relFDR; 
         os << "\t" <<pb->chrName << "\t" << pb->chrBegin << "\t" << pb->chrEnd
            << "\t" <<pb->blockIdx << "\t"<< pb->blockStart << "\t" << pb->blockSize;
         std::string gname = (*giit).first;
@@ -571,7 +573,7 @@ void GhmapWriter::showGeneBlockByBlock(BlockSummary *pb, std::vector<int> &strOr
     }
   }
 
-
+/// -k
 void GhmapWriter::showBlockSums(std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec)
 {
     for (unsigned i = 0; i < blocks.size(); i++)
@@ -583,22 +585,30 @@ void GhmapWriter::showBlockSums(std::vector<BlockSummary *> &blocks, float cutof
     }
 }
 
-void GhmapWriter::showGeneBlockByBlocks(std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec)
+void GhmapWriter::showGeneBlockByBlocks(std::vector<BlockSummary *> &blocks, float cutoff, std::vector<int> &strOrderVec, bool filterCoding)
 {
     for (unsigned i = 0; i < blocks.size(); i++)
     {
+        if (blocks[i]->isIgnored && filterCoding)
+        {
+            continue;
+        }
         if (!blocks[i]->isCutoff(isCategorical, cutoff))
         {
-        this->showGeneBlockByBlock(blocks[i], strOrderVec);
+            this->showGeneBlockByBlock(blocks[i], strOrderVec);
         }
     }
 }
 
-
+/// -m
+/// write all blocks that overlapped to a gene
+/// similar to -a
 void GhmapWriter::showGeneBlockSums(std::vector<BlockSummary *> &blocks,
                        float cutoff, std::vector<int> &strOrderVec, std::vector<GeneSummary *> genesList)
 {
     std::vector<std::string> genesOver; // all genes that have been already printed
+
+    /// iter all blocks
     for (unsigned i = 0; i < blocks.size(); i++)
     {
         if (!blocks[i]->isCutoff(isCategorical, cutoff))
@@ -616,18 +626,22 @@ void GhmapWriter::showGeneBlockSums(std::vector<BlockSummary *> &blocks,
             }
             else
             {
+                /// iter block's overlapped gene
                 for (; giit != geneIsCodingMap.end(); giit++)
                 {
+                    /// if already printed, skip
                     std::string gname = giit->first;
                     if (std::find(genesOver.begin(), genesOver.end(), gname) != genesOver.end())
                     {
-                        continue;
+                        continue; 
                     }
                     genesOver.push_back(gname);
+                    /// if not printed, find the gene in GeneSummary, write all blocks overlapped that gene
                     for (std::vector<GeneSummary *>::iterator git = genesList.begin(); git != genesList.end(); git++)
                     {
-                        if ((*git)->name == gname)
+                        if ((*git)->name == gname) // only write selected gene
                         {
+                            // write all blocks taht overlapped a gene
                             for (unsigned j = 0; j < ((*git)->blocks).size(); j++)
                             {
                                 BlockSummary *pb_t = (*git)->blocks[j];
@@ -635,7 +649,7 @@ void GhmapWriter::showGeneBlockSums(std::vector<BlockSummary *> &blocks,
                                 this->writeSortedPattern(pb_t->pattern, strOrderVec);
                                 os << "\t" << (isCategorical ? pb_t->FStat : pb_t->pvalue) <<"\t"<< pb_t->effect;
                                 os << "\t" << pb_t->FDR;
-                                os << "\t" << pb_t->relPvalue<<"\t"<<pb_t->relFDR <<"\t"; 
+                                if (!pb_t->relIgnore) os << "\t" << pb_t->relPvalue<<"\t"<<pb_t->relFDR <<"\t"; 
                                 os << pb_t->chrName << "\t" << pb_t->chrBegin << "\t" << pb_t->chrEnd << "\t";
                                 os << pb_t->blockIdx << "\t"<< pb_t->blockStart<< "\t" << pb_t->blockSize;
                                 std::string upname = gname;
@@ -658,9 +672,11 @@ void GhmapWriter::showGeneBlockSums(std::vector<BlockSummary *> &blocks,
     }
 }
 
-// only write the best pvalue block. which overlaps a gene.
-void GhmapWriter::showGeneBestBlockSums(std::vector<GeneSummary *> geneList,
-                                        std::vector<int> &strOrderVec, float cutoff, bool filterCoding)
+/// aggregate all overlapped blocks by finding the best pvalue block.
+/// codon_flag indicator is >= 1 if any interesting coding change exist
+/// only write the coordinate of the best block.
+void GhmapWriter::showGeneBestBlockSums(std::vector<GeneSummary *> geneList, float cutoff,
+                                        std::vector<int> &strOrderVec,  bool filterCoding)
 {
     for (std::vector<GeneSummary *>::iterator git = geneList.begin(); git != geneList.end(); git++)
     {
@@ -696,7 +712,7 @@ void GhmapWriter::showGeneBestBlockSums(std::vector<GeneSummary *> geneList,
         bool hasSpliceChange = false;
         //ofstream debug_log;
         //debug_log.open("debug.log",ios::app);
-        // iter all blocks that overlap a gene, find the interesting change
+        // iter all blocks that overlap a gene, find the interesting change, summaried gene blocks
         for (std::vector<BlockSummary *>::iterator blit = (*git)->blocks.begin(); blit != (*git)->blocks.end(); blit++)
         {
             if ((*blit)->isCutoff(isCategorical, cutoff))
@@ -708,8 +724,9 @@ void GhmapWriter::showGeneBestBlockSums(std::vector<GeneSummary *> geneList,
                 //if the gene had SNPs marked as NON_SYNONYMOUS_CODING, with <->, or as SPLICE_SITE, isCoding is true
                 isCoding |= ((*blit)->geneIsInteresting[gname] >=0 ); // synousmous or missene
                 hasInteresting |= ((*blit)->numInteresting > 0);   //has a major amino acid change, missense 
-                hasSpliceChange |= (((*blit)->geneIsCodingMap[gname]).find("SPLICE_SITE") != std::string::npos);
-                //if "SPLICE_SITE" was in there that means that the gene had a splice change
+                // hasSpliceChange |= (((*blit)->geneIsCodingMap[gname]).find("SPLICE_SITE") != std::string::npos);
+                // need to compatible with High impact or SPLITE_SITE 
+                hasSpliceChange |= ((*blit)->geneIsInteresting[gname] >=2 );
             }
         }
 
@@ -720,7 +737,7 @@ void GhmapWriter::showGeneBestBlockSums(std::vector<GeneSummary *> geneList,
         if(hasInteresting) codingCode = 1;
         if (hasSpliceChange) codingCode = 2;
 
-        if ((isCoding || !filterCoding)||hasSpliceChange) 
+        if ( (isCoding || !filterCoding) || hasSpliceChange) 
         {
             
             // os << gname << "\t" << pBestBlock->geneIsInteresting[(*git)->name] << "\t";
@@ -730,7 +747,7 @@ void GhmapWriter::showGeneBestBlockSums(std::vector<GeneSummary *> geneList,
             this->writeSortedPattern(pBestBlock->pattern, strOrderVec);
             os << "\t" << (isCategorical ? pBestBlock->FStat : pBestBlock->pvalue);
             os << "\t" << pBestBlock->effect <<"\t"<< pBestBlock->FDR;
-            os << "\t" << pBestBlock->relPvalue<<"\t"<< pBestBlock->relFDR; 
+            if (!pBestBlock->relIgnore) os << "\t" << pBestBlock->relPvalue<<"\t"<< pBestBlock->relFDR; 
             os << "\t" << pBestBlock->chrName << "\t" << pBestBlock->chrBegin << "\t" << pBestBlock->chrEnd;
             //os << "\t" << pBestBlock->blockIdx << "\t" << pBestBlock->blockStart << "\t" << pBestBlock->blockSize;
 
@@ -810,32 +827,36 @@ void writeBlockSums(bool isCategorical, char *outputFileName,
 {
     int numStrains = phenvec.size();
     std::vector<int> strOrderVec(numStrains);
-    GhmapWriter writer(outputFileName, datasetName, isCategorical, pvalueCutoff);
+    GhmapWriter writer(outputFileName, datasetName, isCategorical, pvalueCutoff, "block-oriented");
     writer.sortStrainsByPheno(phenvec, strOrderVec);
     writer.writeExpressionNames(geneExprHeader);
     writer.writeStrainNameAndValue(phenvec, strOrderVec);
     writer.os << "#BlockIdx\tIGNORED\tBlockStart\tBlockSize\tChr\tChrStart\tChrEnd\tHaplotype\t";
     writer.os << (isCategorical ? "FStat" : "Pvalue");
-    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tGeneName\tCodonFlag\n";
+    writer.os << "\tEffectSize\tFDR\t";
+    if (!blocks[0]->relIgnore) writer.os << "PopPvalue\tPopFDR\t";
+    writer.os <<"GeneName\tCodonFlag\n";
     writer.showBlockSums(blocks, pvalueCutoff, strOrderVec);
 }
 
 /// -a
 void writeGeneBlockByBlocks(bool isCategorical, char *outputFileName, char *datasetName,
-                            std::vector<std::vector<float>> &phenvec,std::vector<BlockSummary *> &blocks, float pvalueCutoff)
+                            std::vector<std::vector<float>> &phenvec,std::vector<BlockSummary *> &blocks, float cutoff, bool filterCoding)
 {
     int numStrains = phenvec.size();
     std::vector<int> strOrderVec(numStrains); // will contain strain indices.
-    GhmapWriter writer(outputFileName, datasetName, isCategorical, pvalueCutoff);
+    GhmapWriter writer(outputFileName, datasetName, isCategorical, cutoff, "gene-oriented");
     writer.sortStrainsByPheno(phenvec, strOrderVec);
     writer.writeExpressionNames(geneExprHeader);
     writer.writeStrainNameAndValue(phenvec, strOrderVec);
     //writer.writeHeaders(header);
     writer.os << "#GeneName\tCodonFlag\tHaplotype\t";
     writer.os << (isCategorical ? "FStat" : "Pvalue");
-    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tChr\tChrStart\tChrEnd\t";
+    writer.os << "\tEffectSize\tFDR\t";
+    if (!blocks[0]->relIgnore) writer.os << "PopPvalue\tPopFDR\t";
+    writer.os << "Chr\tChrStart\tChrEnd\t";
     writer.os << "BlockIdx\tBlockStart\tBlockSize\tGeneExprMap\n";
-    writer.showGeneBlockByBlocks(blocks, pvalueCutoff, strOrderVec);
+    writer.showGeneBlockByBlocks(blocks, cutoff, strOrderVec, filterCoding);
 }
 
 /// -m
@@ -844,13 +865,15 @@ void writeGeneBlockSums(bool isCategorical, char *outputFileName, char *datasetN
 {
     int numStrains = phenvec.size();
     std::vector<int> strOrderVec(numStrains); // will contain strain indices.
-    GhmapWriter writer(outputFileName, datasetName, isCategorical, pvalueCutoff);
+    GhmapWriter writer(outputFileName, datasetName, isCategorical, pvalueCutoff,"gene-oriented");
     writer.sortStrainsByPheno(phenvec, strOrderVec);
     writer.writeExpressionNames(geneExprHeader);
     writer.writeStrainNameAndValue(phenvec, strOrderVec);
     writer.os << "#GeneName\tCodonFlag\tHaplotype\t";
     writer.os << (isCategorical ? "FStat" : "Pvalue");
-    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tChr\tChrStart\tChrEnd\t";
+    writer.os << "\tEffectSize\tFDR\t";
+    if (!blocks[0]->relIgnore) writer.os << "PopPvalue\tPopFDR\t";
+    writer.os << "Chr\tChrStart\tChrEnd\t";
     writer.os << "BlockIdx\tBlockStart\tBlockSize\tGeneExprMap\n";
 
     GenesComparator gcomp(isCategorical);
@@ -871,14 +894,17 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
 {
     int numStrains = phenvec.size();
     std::vector<int> strOrderVec(numStrains);
-    GhmapWriter writer(outputFileName, datasetName, isCategorical, pvalueCutoff);
+    const char * fmt = "gene-summaried; To get exact CodonFlag coordinates, re-run ghmap with -k/m/a";
+    GhmapWriter writer(outputFileName, datasetName, isCategorical, pvalueCutoff, fmt);
     writer.sortStrainsByPheno(phenvec, strOrderVec);
     writer.writeExpressionNames(geneExprHeader);
     writer.writeStrainNameAndValue(phenvec, strOrderVec);
     // header
     writer.os << "#GeneName\tCodonFlag\tHaplotype\t";
     writer.os << (isCategorical ? "FStat" : "Pvalue");
-    writer.os << "\tEffectSize\tFDR\tPopPvalue\tPopFDR\tChr\tChrStart\tChrEnd\tGeneExprMap\n";
+    writer.os << "\tEffectSize\tFDR\t";
+    if (!blocks[0]->relIgnore) writer.os << "PopPvalue\tPopFDR\t";
+    writer.os << "Chr\tChrStart\tChrEnd\tGeneExprMap\n";
 
     GenesComparator gcomp(isCategorical);
     // Copy genesTable values into a vector and sort using GenesComparator
@@ -887,7 +913,7 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
     std::transform(geneTable.begin(), geneTable.end(), std::back_inserter(geneList),
               std::bind(&std::unordered_map<std::string, GeneSummary *>::value_type::second, std::placeholders::_1 ));
     std::sort(geneList.begin(), geneList.end(), gcomp); // Compare blocks
-    writer.showGeneBestBlockSums(geneList, strOrderVec, pvalueCutoff, filterCoding);
+    writer.showGeneBestBlockSums(geneList, pvalueCutoff, strOrderVec,  filterCoding);
 }
 
 

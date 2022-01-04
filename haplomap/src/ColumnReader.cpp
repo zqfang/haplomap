@@ -6,32 +6,29 @@
 
 #include "ColumnReader.h"
 
-
-ColumnReader::ColumnReader(const char *fname, char *delimiters):
-_delimiters(delimiters)
+ColumnReader::ColumnReader(const char *fname, char *delimiters) : _delimiters(delimiters)
 {
-    //_in.imbue(std::locale());
-    _in.open(fname, std::ios::in);
-    _delimiters = delimiters;
-    if (!_in.is_open())
-    {
-      std::cerr << "Open of file \"" << fname << "\" failed: " << std::endl;
-      std::exit(1);
-    }
-    _lineno = 0;
+  //_in.imbue(std::locale());
+  _in.open(fname, std::ios::in);
+  _delimiters = delimiters;
+  if (!_in.is_open())
+  {
+    std::cerr << "Open of file \"" << fname << "\" failed: " << std::endl;
+    std::exit(1);
+  }
+  _lineno = 0;
 
-    // if (std::getline(_in, _line).eof())
-    // {
-    //   // no lines remain.
-    //   std::cerr << "Empty Input file: "<<fname<<std::endl;
-    //   std::exit(1);
-    // }
-
+  // if (std::getline(_in, _line).eof())
+  // {
+  //   // no lines remain.
+  //   std::cerr << "Empty Input file: "<<fname<<std::endl;
+  //   std::exit(1);
+  // }
 }
 
 ColumnReader::~ColumnReader()
 {
-    _in.close();
+  _in.close();
 }
 
 // General function -- perhaps it should go in another class.
@@ -67,21 +64,19 @@ int ColumnReader::split(std::string s, char *delimiters, std::vector<std::string
   return token_vector.size();
 }
 
-
 /// trim lines
-std::string ColumnReader::strip(const std::string& str, const std::string delimiter)
+std::string ColumnReader::strip(const std::string &str, const std::string delimiter)
 {
-//    std::string s;
-//    s.erase(s.find_last_not_of(" \n\r\t")+1);
-   size_t first = str.find_first_not_of(delimiter);
-   if (std::string::npos == first)
-   {
-       return str;
-   }
-   size_t last = str.find_last_not_of(delimiter);
-   return str.substr(first, (last - first + 1));
+  //    std::string s;
+  //    s.erase(s.find_last_not_of(" \n\r\t")+1);
+  size_t first = str.find_first_not_of(delimiter);
+  if (std::string::npos == first)
+  {
+    return str;
+  }
+  size_t last = str.find_last_not_of(delimiter);
+  return str.substr(first, (last - first + 1));
 }
-
 
 std::vector<std::vector<std::string>> ColumnReader::getHeaderLines(void)
 {
@@ -106,27 +101,26 @@ int ColumnReader::getLine()
 
   if (_line.find("#") == 0)
   {
-      // comment/header line stats with #
-      size_t start = _line.find_first_not_of('#');
-      std::vector<std::string> __head;
-      int num = this->split(_line.substr(start), _delimiters, __head);
-      this->_header_vectors.push_back(__head);
-      return num;
-    }
+    // comment/header line stats with #
+    size_t start = _line.find_first_not_of('#');
+    std::vector<std::string> __head;
+    int num = this->split(_line.substr(start), _delimiters, __head);
+    this->_header_vectors.push_back(__head);
+    return num;
+  }
   _lineno++;
   // tokenize it
   return this->split(_line, _delimiters, _line_vector);
 }
 
-
-std::string ColumnReader::getToken(size_t i) 
+std::string ColumnReader::getToken(size_t i)
 {
   if (i < _line_vector.size())
   {
-  return _line_vector[i];
+    return _line_vector[i];
   }
   else
   {
-  return std::string("");
-}
+    return std::string("");
+  }
 }
