@@ -1,4 +1,4 @@
-import os
+import os, json
 import numpy as np
 import pandas as pd
 from functools import lru_cache
@@ -25,6 +25,28 @@ codon_color_dict = {str(i) : Category10[10][i+1] for i in range(-1, 8)}
 gene_expr_order = []
 mesh_terms = {}
 
+with open("/data/bases/fangzq/Pubmed/mouse_gene2entrezid.json", 'r') as j:
+    GENE2ENTREZ = json.load(j) 
+
+def get_pubmed_link(pmids):
+    if pmids in ["Indirect", "Unknown_Gene"]:
+        return pmids
+    html = []
+    for pid in pmids.split(","):
+        #s =  f'<a href="https://pubmed.ncbi.nlm.nih.gov/{pid}" target="_blank">{pid}</a>'
+        # s = f'https://www.ncbi.nlm.nih.gov/research/pubtator-api/publications/export/pubtator?pmids={pid}&concepts={gene}'
+        s = f'<a href="https://www.ncbi.nlm.nih.gov/research/pubtator/index.html?view=docsum&query={pid}" target="_blank">{pid}</a>'
+        html.append(s)
+    return ",".join(html)
+
+
+def get_html_links(genename):
+    if genename in GENE2ENTREZ:
+        entrzid = GENE2ENTREZ[genename] 
+        html_string = f'<a href="https://www.ncbi.nlm.nih.gov/gene/{entrzid}" target="_blank">{genename}</a>'
+        return html_string
+    return genename
+
 def get_html_string(pattern):    
     html_string = ""  
     for r in list(pattern):
@@ -33,7 +55,7 @@ def get_html_string(pattern):
         html_string += s     
     return html_string
 
-@lru_cache()
+@lru_cache(maxsize=32)
 def load_ghmap(dataset):
     fname = os.path.join(dataset)
     df = pd.read_table(fname, skiprows=6, dtype={'Haplotype': str, 'Chr': str})
@@ -46,14 +68,13 @@ def load_ghmap(dataset):
     df.columns = headers[-1]
     df['Pattern'] = df['Haplotype'].astype(str)
     df['Haplotype'] = df.Haplotype.apply(get_html_string)
+    df['GeneName'] = df.GeneName.apply(get_html_links)
     
     # dataset_name, codon_flag, gene_expr_order, strains, traits, mesh_terms = headers[:6]
-    gene_expr_order = headers[2][-1].split(";")
-    headers[2] = gene_expr_order
-    
+    headers[2] = headers[2][-1].split(";")
+ 
     cf = [s.split(":") for s in headers[1][1:]]
-    codon_flag = {k:v for k, v in cf}
-    headers[1] = codon_flag
+    headers[1] = {k:v for k, v in cf}
 
     mesh_terms = [s.split(":") for s in headers[5][1:]]
     mesh_terms = {v:k for k, v in mesh_terms}
@@ -85,16 +106,16 @@ def get_expr(pattern, gene_expr_order):
     ep, ep2 = "", ""
     for r, g in zip(list(pattern), gene_expr_order):
         c = expr_color.get(r)
-        s = f'<span style="color:{c};font-size:12pt;text-shadow: 1px 1px 2px #000000;">&#9612;</span>'
-        s2 = f'<span style="color:{c};font-size:12pt;">&#9632; {g}</span><br>'
+        s = f'<span style="color:{c};font-size:10pt;text-shadow: 1px 1px 2px #000000;">&#9612;</span>'
+        s2 = f'<span style="color:{c};font-size:10pt;">&#9632; {g}</span><br>'
         ep += s 
-        ep2 += s2
+        if r == 'P': ep2 += s2 # only show expressed tissues
     return ep, ep2
 
 
 def get_datasets(data_dir):
     data = []
-    path = Path(data_dir).glob("*.results.mesh.txt")
+    path = Path(data_dir).glob("*.results.mesh.pmids.txt")
     for p in path:
         d = p.stem.split(".")[0]
         data.append(d)
