@@ -259,10 +259,10 @@ def strain2trait(trait, strain, measnum, outdir, use_rawdata=False):
             catout = os.path.join(outdir,f"MPD_{tid}/trait.{tid}.categorical")
             os.system(f"touch {catout}")
             temp[field] = temp[field].astype('category')
-            temp.loc[:,['strain_abbr','strain', field]].to_csv(os.path.join(outdir,f"MPD_{tid}/trait.{tid}.txt"),
+            temp.loc[:,['strain_abbr', 'strain', field]].to_csv(os.path.join(outdir,f"MPD_{tid}/trait.{tid}.txt"),
                                                       index=False, header=None, sep="\t")
         else:
-            temp.loc[:,['strain_abbr','strain', field]].to_csv(os.path.join(outdir,f"MPD_{tid}/trait.{tid}.txt"), 
+            temp.loc[:,['strain_abbr', 'strain', field]].to_csv(os.path.join(outdir,f"MPD_{tid}/trait.{tid}.txt"), 
                                                       index=False, header=None, sep="\t", float_format='%.7f')       
     data = 'value' if use_rawdata else 'mean'
     tid = IDS_ORIG

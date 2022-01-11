@@ -16,9 +16,14 @@ from bokeh.transform import factor_cmap, linear_cmap, factor_mark
 from bokeh.core.enums import MarkerType
 from .helpers import gene_expr_order, codon_flag, mesh_terms
 from .helpers import load_ghmap, get_color, get_expr, get_datasets, get_pubmed_link
+
+### mousephoeotpe.org datasets
+## https://www.mousephenotype.org/help/programmatic-data-access/
+## https://www.mousephenotype.org/help/non-programmatic-data-access
+## https://www.mousephenotype.org/phenodcc/
 ######### global variable
-#DATA_DIR = "/data/bases/shared/haplomap/MPD_MeSH_Indel" #"/data/bases/shared/haplomap/MPD_MeSH"
-DATA_DIR = "/home/fangzq/github/HBCGM/example/PeltzData"
+DATA_DIR = "/data/bases/shared/haplomap/MPD_MeSH_Indel" #"/data/bases/shared/haplomap/MPD_MeSH"
+#DATA_DIR = "/home/fangzq/github/HBCGM/example/PeltzData"
 
 fcmap = factor_cmap('impact', palette=Category10[6], factors=['0','1','2','3','-1'])#['Synonymous','Non-Synonymous','Splicing', 'Stop', 'Non-Coding'])
 #fmark = factor_mark('impact', list(MarkerType), ['Synonymous','Non-Synonymous','Splicing', 'Stop', 'Non-Coding'])
@@ -57,7 +62,7 @@ columns = ['GeneName', 'CodonFlag','Haplotype','EffectSize', 'Pvalue', 'FDR',
            'PopPvalue', 'PopFDR', 'Chr', 'ChrStart', 'ChrEnd', 'LitScore','PubMed'] 
 columns = [ TableColumn(field=c, title=c, formatter=HTMLTemplateFormatter() 
                         if c in ['Haplotype','GeneName', 'PubMed'] else CellFormatter()) for c in columns ] # skip index                       
-myTable = DataTable(source=source, columns=columns, width =1000, height = 600, index_position=0,
+myTable = DataTable(source=source, columns=columns, width =1100, height = 600, index_position=0,
                     editable = False, view=view, name="DataTable") # autosize_mode="fit_viewport",
 
 # download
