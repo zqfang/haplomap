@@ -985,12 +985,12 @@ void readQPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec, Dynu
         // test whether it's 2 columns or 3 columns format
         try 
         { 
-            std::stof(rdr.getToken(1), &sz); 
+            std::stof(rdr.getToken(qtok), &sz); 
             //qtok = 1;
         } 
         catch(std::exception& ia) 
         { 
-            qtok = 2;
+            qtok ++;
         } 
 
         // now parse the floating point values
@@ -1027,12 +1027,12 @@ void readCPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec, Dynu
         // test whether it's 2 columns or 3 columns format
         try 
         { 
-            std::stof(rdr.getToken(1), &sz); 
+            std::stof(rdr.getToken(qtok), &sz); 
             //qtok = 1;
         } 
         catch(std::exception& ia) 
         { 
-            qtok = 2;
+            qtok ++;
         } 
 
         // FIXME: some unnecessary string copies
