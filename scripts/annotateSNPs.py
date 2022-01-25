@@ -23,8 +23,8 @@ def unique(seq):
 
 def get_annotation(strains, snpdb, annodb, kgxref, knowngene, ofile1, ofile2, *args, **kwargs):
 
-    trans_dir = {x.split('\t')[0]:x.split('\t')[2] for x in open(knowngene)}
-    gene2trans = {x.split('\t')[4]:x.split('\t')[0] for x in open(kgxref)}
+    # trans_dir = {x.split('\t')[0]:x.split('\t')[2] for x in open(knowngene)}
+    # gene2trans = {x.split('\t')[4]:x.split('\t')[0] for x in open(kgxref)}
     trans2gene = {x.split('\t')[0]:x.split('\t')[4] for x in open(kgxref)}    
  
     with open(annodb, 'rb') as apkl: 
@@ -34,36 +34,41 @@ def get_annotation(strains, snpdb, annodb, kgxref, knowngene, ofile1, ofile2, *a
     with open(snpdb, 'r') as snp:
         real_order = snp.readline().rstrip().split('\t') # only read fist header line to save time
 
-   # strain file name
+    # strain file name
+    new_order = []
     with open (strains, 'r') as sf:
-        new_order = [x.rstrip().split('\t')[0] for x in sf.read()]
-    new_order = unique(new_order)
-    
-    # If input C57/6J, A/J, need to handle this 
-    if 'C57/6J' in new_order:
-        idx = new_order.index('C57/6J')
-        new_order[idx] = 'C57BL/6J'
-    elif 'A/J' in new_order:
-        idx = new_order.index('A/J')
-        new_order[idx] = 'A_J'
+        new_order = unique([x.strip().split('\t')[0] for x in sf.readlines()]) 
+    # Convert input strain name to STRAIN_SNPdb names
+    for idx, s in enumerate(new_order):
+        if s == 'C57/6J':
+            new_order[idx] = 'C57BL/6J'
+        elif s == 'A/J':
+            new_order[idx] = 'A_J'
+        elif s == 'B_C':
+            new_order[idx] = 'BALB'
 
+    # get reference
     ref_index = real_order.index('C57BL/6J')
     by_case = {}
-
+    # AA_by_strains Dict[ chr: snp_pos: ensembl_transcript_id: ['snp_annotation'] ]
+    # annotation include ['intergenic'], ['INTRONIC'], [['Condon1','Condon2',...]]
     for chrome in AA_by_strains:
         by_case[chrome] = {}
         for snp in AA_by_strains[chrome]:
             by_case[chrome][snp] = {}
             for trans in AA_by_strains[chrome][snp]:
-                sym = AA_by_strains[chrome][snp][trans][0]
-                if len(sym) == len(real_order): #AA change
+                sym = AA_by_strains[chrome][snp][trans][0] # extract Codon list
+                if isinstance(sym, list) and (len(sym) == len(real_order)): ## 
+                    #AA change
                     ref = sym[ref_index]
-                    change = set(sym[new_order.index(x)] for x in new_order if sym[new_order.index(x)] != "?")
+                    ## extract annotation only from selected straints from the queried strains and remove duplicates
+                    change = unique([sym[real_order.index(x)] for x in new_order if sym[real_order.index(x)] != "?"])
                     updated_sym = ""
                     for c in change:
                         updated_sym += "%s/%s<->%s/%s!" %(ref, codons[ref], c, codons[c])
                     by_case[chrome][snp][trans] = updated_sym[:-1]
                 else:
+                    # write annotate directly
                     by_case[chrome][snp][trans] = sym
 
     out = open(ofile1, 'w') # write ensemble id anno
