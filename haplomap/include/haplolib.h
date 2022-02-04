@@ -25,7 +25,6 @@
 
 //using namespace std;
 
-
 // Copy a pattern string.
 char *dupPattern(char *pattern);
 

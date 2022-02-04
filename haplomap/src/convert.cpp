@@ -38,13 +38,13 @@ std::shared_ptr<VCFOptions> parseNIEHSOptions(int argc, char **argv)
             {nullptr,          no_argument, nullptr,        0}};
 
     const char *usage = "Convert VCF to NIEHS compact format\n"
-                        "\nusage: vcf2niehs [options] <in.vcf> \n"
+                        "\nusage: convert [options] <in.vcf> \n"
                         "\nrequired arguments:\n"
                         "    in.vcf                Input sorted VCF file or stdin\n"
                         "    -o, --output          Output file name\n"
                         "\noptional arguments:\n"
                         "    -s,  --samples         New sample order. One name per line.\n"
-                        "    -t,  --type            Select variant type: snps,indels,sv. Default: snps\n"
+                        "    -t,  --type            Select variant type: [snp|indel|sv]. Default: snp\n"
                         "    -q,  --qual            QUAL field of VCF file. Only keep variant > qual. Default 50. \n"
                         "\nSNP only arguments:\n"
                         "    -p,  --pl-diff         Phred-scaled genotype likelihood (PL) difference. Default 20.\n"
@@ -175,10 +175,29 @@ std::shared_ptr<VCFOptions> parseNIEHSOptions(int argc, char **argv)
 
 
 // Parsing VCF
-int main_niehs(int argc, char **argv)
+int main_convert(int argc, char **argv)
 {
     std::shared_ptr<VCFOptions> opts = parseNIEHSOptions(argc, argv);
-
+    // 
+    // to lower case
+    char* name = opts->variantType;
+    while (*name) 
+    {
+        *name = tolower(*name);
+        name++;
+    }
+    if (std::strcmp(opts->variantType, "snp") == 0)
+    {
+        opts->variantType = (char*)"snv";
+    }
+    std::vector<std::string> v = {"snp","snv", "indel", "sv"};
+    if ((opts->variantType != nullptr ) && 
+        (std::find(v.begin(), v.end(), std::string(opts->variantType)) == v.end()))
+    {
+        std::cerr<<"Variant type error. Input one of these: snp, indel, sv"<<std::endl;
+        std::exit(1);
+    }
+    ///
     std::string line;
     //Dynum<std::string> strains;
     std::vector<std::string> samples;

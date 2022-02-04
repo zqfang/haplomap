@@ -73,7 +73,7 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
                         "    -n, --name             name of phenotype dataset. \n"
                         "                           suffix with _INDEL or _SV to indicate indel/SV blocks\n"
                         "    -c, --categorical      phenotype (-p) is categorical\n"
-                        "    -r, --relation         <genetic relation file .rel>  "
+                        "    -r, --relation         <genetic relation file .rel> \n"
                         "                           n x n matrix. For population structure analysis\n"
                         "    -e, --expression_file  <name of file>\n"
                         "    -q, --equal_file       <name of file>\n"

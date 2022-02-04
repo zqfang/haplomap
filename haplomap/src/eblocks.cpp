@@ -631,10 +631,10 @@ int allelesToPattern(char *astr, char *pattern)
   map[(int)'G'] = '?';
   map[(int)'T'] = '?';
   map[(int)'?'] = '?';
-  // map[(int)'D'] = '?'; // deletion
-  // map[(int)'U'] = '?'; // duplication
-  // map[(int)'I'] = '?'; // insertion
-  // map[(int)'V'] = '?'; // inversion
+  map[(int)'D'] = '?'; // deletion
+  map[(int)'U'] = '?'; // duplication
+  map[(int)'I'] = '?'; // insertion
+  map[(int)'V'] = '?'; // inversion
 
   for (int strIdx = 0; strIdx < numStrains; strIdx++)
   {

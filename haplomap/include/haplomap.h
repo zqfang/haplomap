@@ -12,8 +12,10 @@
 using namespace std;
 /// main entry point for subcommmands
 
-/// convert vcf to NIEHS Format as eblocks input
-int main_niehs(int argc, char **argv);
+/// convert vcf to NIEHS Format for eblocks input
+int main_convert(int argc, char **argv);
+/// convert ensembl-vep annotation for eblock input
+int main_annot(int argc, char **argv);
 /// finding haploblocks, see ehaploblocks.cpp
 int main_eblocks(int argc, char **argv);
 /// anova test, see quantTraitMap.cpp

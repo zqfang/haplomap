@@ -20,7 +20,7 @@ struct VCFOptions
     char *inputFileName;
     char *outputFileName;
     char *sampleFileName;
-    const char *variantType; 
+    char *variantType; 
     float phredLikelihoodDifference; // PL_other - PL_homo > 20
     float qual;  // QUAL field
     float mappingQuality; // MQ
@@ -41,7 +41,7 @@ struct VCFOptions
 
     // constructor
     VCFOptions() : inputFileName(nullptr), outputFileName(nullptr), 
-                     sampleFileName(nullptr), variantType("snps"),
+                     sampleFileName(nullptr), variantType((char*)"snv"),
                      phredLikelihoodDifference(20.0), 
                      qual(50.0), mappingQuality(20.0), strandBiasPhredPval(50.0), 
                      readPositionBias(0.0001), baseQualityBias(0),variantDistanceBias(0), 

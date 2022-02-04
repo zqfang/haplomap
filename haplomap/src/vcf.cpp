@@ -375,7 +375,7 @@ void VCF::writeStructralVariant(std::vector<std::string> &alleles, const char* v
 {                
     std::unordered_map<std::string, std::string> INFO = variant.getINFO();
     output << vartype <<"_"<<variant.CHROM<<"_"<<variant.POS;
-    output <<"_"<<INFO["END"]<<"_"<<INFO["SVTYPE"];                
+    if (std::strcmp(vartype, "sv") == 0) output <<"_"<<INFO["END"]<<"_"<<INFO["SVTYPE"];                
     output <<"\t"<<variant.CHROM<<"\t"<<variant.POS<<"\t";
     output << "A"; // write REF
     // write allele pattern
@@ -418,7 +418,7 @@ void VCF::parseRecords()
         // string find not found, skip
         // std::unordered_map<std::string, std::string> INFO = variant.getINFO();
         std::vector<std::string> alleles(strains.size(),"?");  
-        if (variant.isSNP && std::strcmp(opts->variantType, "snps") == 0)
+        if (variant.isSNP && std::strcmp(opts->variantType, "snv") == 0)
         {
             bool ret = parseSNP(alleles, alts, hasAlt);
             if (!ret)
@@ -427,7 +427,7 @@ void VCF::parseRecords()
             if (numGoodAlt == 1)
                 writeSNP(alleles);
         } 
-        else if (!variant.isSNP && (std::strcmp(opts->variantType, "sv") == 0 || std::strcmp(opts->variantType, "indels") == 0 ))
+        else if (!variant.isSNP && (std::strcmp(opts->variantType, "sv") == 0 || std::strcmp(opts->variantType, "indel") == 0 ))
         {
 
             bool ret = parseStructralVariant(alleles, alts, hasAlt);

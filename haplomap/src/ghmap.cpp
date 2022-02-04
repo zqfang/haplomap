@@ -14,6 +14,45 @@ std::vector<BlockSummary *> blocks; // global vector of all blocks.
 std::vector<std::string> geneExprHeader;
 int traceFStat = false;
 
+// std::unordered_map<std::string, int> PRIOR = {{"HIGH", 2}, {"MODERATE", 1}, {"LOW", 0}, {"MODIFIER", -1}};
+std::unordered_map<std::string, int> CSQs = { 
+    {"transcript_ablation", 2},
+    {"splice_acceptor_variant",2},
+    {"splice_donor_variant", 2},
+    {"stop_gained",2},
+    {"frameshift_variant", 2},
+    {"stop_lost", 2},
+    {"start_lost", 2},
+    {"transcript_amplification", 2},
+    {"inframe_insertion", 1},
+    {"inframe_deletion", 1},
+    {"missense_variant", 1},
+    {"protein_altering_variant", 1},
+    {"splice_region_variant", 0},
+    {"incomplete_terminal_codon_variant", 0},
+    {"start_retained_variant", 0},
+    {"stop_retained_variant", 0},
+    {"synonymous_variant", 0},
+    {"coding_sequence_variant", -1},
+    {"mature_miRNA_variant", -1},
+    {"5_prime_UTR_variant", -1},
+    {"3_prime_UTR_variant",-1},
+    {"non_coding_transcript_exon_variant",-1},
+    {"intron_variant", -1},
+    {"NMD_transcript_variant", -1},
+    {"non_coding_transcript_variant", -1},
+    {"upstream_gene_variant", -1},
+    {"downstream_gene_variant", -1},
+    {"TFBS_ablation", -1},
+    {"TFBS_amplification", -1},
+    {"TF_binding_site_variant", -1},
+    {"regulatory_region_ablation", -1},
+    {"regulatory_region_amplification", -1},
+    {"feature_elongation", -1},
+    {"regulatory_region_variant", -1},
+    {"feature_truncation", -1},
+    {"intergenic_variant", -1},
+};
 
 
 // constructor
@@ -30,6 +69,7 @@ BlockSummary::BlockSummary(const char *chrnm, int num, int start, int size,
     this->numStrains = strlen(pat);
     this->numHaplo = this->numHaplotypes();
     this->makePatternUnprintable(); // this is usefull for downstream ANOVA analysis, once called, strlen(pat) will fail
+
 }
 
 BlockSummary::~BlockSummary()
@@ -121,13 +161,15 @@ bool BlockSummary::isNumber(const std::string & str) {
 // summary of a block, read for the file.
 int BlockSummary::updateCodonScore(std::string str)
   {
-    // if input strings from ANNOVAR (INTRONIC, intergenic, SPLITE_SITE, 5PRIME_UTR, 3PRIME_UTR ...)
-    // NON_SYNONYMOUS_CODING(1), SYNONYMOUS_CODING (0), but these two have been reformat to <->
+    /// if input strings from ANNOVAR or Ensembl-vep (INTRONIC, intergenic, SPLITE_SITE, 5PRIME_UTR, 3PRIME_UTR ...)
+    /// NON_SYNONYMOUS_CODING(1), SYNONYMOUS_CODING (0), STOP have been reformat to <->
+    /// Make the codon flag compatible with the old, annovar and vep annotation system
     int count = 0;
     int synonymous_count = 0;
     size_t pos = 0;
     size_t endpos = 0;
-    /// iter throught a string like: TCT/S<->CCT/P!TCT/S<->TCT/S!GAC/D<->GAC/D!GAC/D<->GAT/D
+    /// missense, synonymous, stop
+    /// iter through a string like: TCT/S<->CCT/P!TCT/S<->TCT/S!GAC/D<->GAC/D!GAC/D<->GAT/D
     while (true)
     {
       pos = str.find("<", pos + 1);
@@ -155,12 +197,13 @@ int BlockSummary::updateCodonScore(std::string str)
       /// FIXED: iterative find < >
       pos = endpos; // find 
     }
+    /// splice_donor, or splice_acceptor
     this->numInteresting = count;
     if (str.find("SPLICE_SITE") != std::string::npos)
     {
       return 2; //splicing";
     }
-
+    
     if (count > 0)
     {
       return 1; //codon_change";
@@ -171,8 +214,9 @@ int BlockSummary::updateCodonScore(std::string str)
         return 0; // synonymous
     }
 
-    /// if input string from Ensemble VEP Impact (HIGH, MODERATE, LOW, MODIFIER)
+    /// if input string from Ensemble VEP Impact (HIGH, MODERATE, LOW, MODIFIER) or consequence string
     /// see details here: https://uswest.ensembl.org/info/genome/variation/prediction/predicted_data.html
+
     if (str.find("HIGH") != std::string::npos)
     {
         return 2; // Frameshift, stop gain, stop lost ...
@@ -188,6 +232,11 @@ int BlockSummary::updateCodonScore(std::string str)
     else if (str.find("MODIFIER") != std::string::npos)
     {
         return -1; // 5 prime UTR, TF binding site varian, Intergenic ...
+    } 
+    else if (CSQs.find(str) != CSQs.end())
+    {
+        // if str is a consequence string, return the correspo
+        return CSQs[str]; 
     }
 
     return -1; //no_codon_change"; include INTRONIC, intergenic, 5PRIME_UTR, 3PRIME_UTR
@@ -363,7 +412,7 @@ _dataset_name(datasetName), _dataset_format(datasetFormat), isCategorical(catego
         std::cout << "Open of file \"" << outputFileName << "\" failed: ";
         std::exit(1);
     }
-    os << "##" << _dataset_name <<"\t"<<"INFO="<< _dataset_format << std::endl;
+    os << "##" << _dataset_name <<"\t"<<"FORMAT="<< _dataset_format << std::endl;
     // use datasetname to specify the codon flag explicity
     std::string dn(_dataset_name);
     upcase(dn);
@@ -379,7 +428,10 @@ _dataset_name(datasetName), _dataset_format(datasetFormat), isCategorical(catego
 }
 
 
-GhmapWriter::~GhmapWriter() {}
+GhmapWriter::~GhmapWriter() 
+{
+    this->os.close();
+}
 
 void GhmapWriter::sortStrainsByPheno(std::vector<std::vector<float>> &phenvec, std::vector<int> &strOrderVec)
 {

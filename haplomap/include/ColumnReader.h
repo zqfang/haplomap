@@ -37,6 +37,7 @@ public:
     // General function -- perhaps it should go in another class.
     static int split(std::string s, char *delimiters, std::vector<std::string> &token_vector);
     std::string strip(const std::string& str, const std::string delimiter = " \n\r\t");
+    std::string join(std::vector<std::string> &, char * delimiter);
     std::string getToken(size_t i);
     std::vector<std::string>::iterator begin() { return _line_vector.begin(); }; // return iterator to beginning of _line_vector
     std::vector<std::string>::iterator end() { return _line_vector.end(); } // return iterator to end of _line_vector

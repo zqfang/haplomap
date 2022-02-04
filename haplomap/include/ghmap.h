@@ -205,6 +205,8 @@ void readFileToVec(char *fname, std::vector<std::string> &vec);
  */
 extern int numCategories; // default for non-categorical data.
 extern const int AACLASSES[];
+// extern std::unordered_map<std::string, int> PRIOR;
+extern std::unordered_map<std::string, int> CSQs;
 extern std::vector<std::string> catNames; // maps strIdx -> category name.
 // Maps gene names to a string of A's, M's, and P's
 extern std::unordered_map<std::string, std::string> geneExprMap;

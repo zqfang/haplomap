@@ -28,11 +28,6 @@ typedef struct
 
 static cmd_t cmds [] = {
         {
-            .func = main_niehs,
-            .alias = "niehs",
-            .help = "Conver VCF to NIEHS compact format (eblocks input file)"
-        },
-        {
             .func = main_eblocks,
             .alias = "eblocks",
             .help = "Find maximal haplotype blocks."
@@ -40,7 +35,17 @@ static cmd_t cmds [] = {
         {
             .func = main_ghmap,
             .alias = "ghmap",
-            .help = "Haplotype association test (ANOVA)."
+            .help = "Haplotype association testing (ANOVA)."
+        },
+        {
+            .func = main_convert,
+            .alias = "convert",
+            .help = "Convert VCF to NIEHS compact format with filtering (eblocks input file)"
+        },
+        {
+            .func = main_annot,
+            .alias = "annotate",
+            .help = "Generate annotation file for variants from ensemble-VEP output file."
         },
         {
             .func = main_eigen,
@@ -70,8 +75,9 @@ static void usage()
     std::cout << "Program: haplomap (haplotype-based computational genetic mapping, a.k.a HBCGM)\n"
     <<"Version: "<<__HAPLOMAP_VER__<<"\n\n"<<
     "Usage:   haplomap <subcommand> [options]\n\n"
-    "Subcommands:\n"
-    "    niehs          convert vcf to niehs for eblocks input\n"
+    "Subcommands:\n\n"
+    "    convert        convert and filter vcf (for eblocks -a)\n"
+    "    annotate       annotate variant with ensembl-VEP result for (eblocks -g)\n"
     "    eblocks        find all maximal haploblocks\n"
     "    ghmap          haplotype association test (ANOVA)\n"
     "    pca            principal component analysis\n\n"

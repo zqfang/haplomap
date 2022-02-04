@@ -77,6 +77,17 @@ std::string ColumnReader::strip(const std::string &str, const std::string delimi
   size_t last = str.find_last_not_of(delimiter);
   return str.substr(first, (last - first + 1));
 }
+std::string ColumnReader::join(std::vector<std::string>& string_vector, char * delimiter)
+{
+  if (string_vector.empty())
+      return "";
+  std::string out(string_vector[0]);
+  for (size_t i = 1; i< string_vector.size(); i++ )
+  {
+        out.append(delimiter + string_vector[i]);
+  }
+  return out;
+}
 
 std::vector<std::vector<std::string>> ColumnReader::getHeaderLines(void)
 {
