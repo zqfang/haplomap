@@ -18,7 +18,10 @@ bokeh serve --show app --allow-websocket-origin=peltz-app-03:5006
 view at: peltz-app-03:5006
 
 **Note**:
-HBCGM results must be prioritzation by MeSH terms (GNN model) first, then run this app
+HBCGM results must be prioritzation by MeSH terms (GNNHap) first, then run this app
+
+
+![GNNHap](static/images/GNNHap.png)
 
 
 ## Dev
