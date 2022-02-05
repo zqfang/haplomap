@@ -4,7 +4,7 @@ Haplotype-based computational genetic mapping
 
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 
-
+![HBCGM](docs/HBCGM.png)
 ## Usage
 
 ### 1. convert vcf to niehs format for eblocks
@@ -26,16 +26,16 @@ build/bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.sv.txt --type sv input.sv.vc
 build/bin/haplomap annotate -o ${HOME}/data/SNPS/chr18.annotation.txt --type snp input.vep.txt
 ```
 
-If you'd like to use `ANNOVAR` results, see this
+(Optional) If you'd like to use `ANNOVAR` results, see this
 
-1. generate strain level gene annotation database (only run once), see here: 
+- 1. generate strain level gene annotation database (only run once), see here: 
 [scripts/gene_annotation](../scripts/gene_annotation/README.md)
     - this step generates 3 files for next step.
       - AA_by_strains_chr*.pkl 
       - mm10_kgXref.txt 
       - mm10_knownGene.txt
 
-2. run `annotateSNPs.py` for each case (test_strains.txt) to get strain specific SNP annotation.
+- 2. run `annotateSNPs.py` for each case (test_strains.txt) to get strain specific SNP annotation.
 ```shell
 python scripts/annotateSNPs.py test_strains.txt chr18.txt \
                     AA_by_strains_chr18.pkl mm10_kgXref.txt mm10_knownGene.txt
