@@ -82,17 +82,12 @@ HBCGM:
     # ghmap input
     # MPD trait ids 
     TRAIT_IDS: "/data/bases/fangzq/MPD/drug-diet.ids.txt"
-
     # set to true if input individual animal data. Default: use strain means.   
     USE_RAWDATA: false 
-
     # given file path, use input data instead of using MPD API to get data.
     TRAIT_DATA:  "" #"/data/bases/shared/haplomap/AHresponse_strainmeans2.txt"
-
     # genetic relation file from PLink output
     GENETIC_REL: "/data/bases/shared/haplomap/PELTZ_20200429/mouse54_grm.rel"
-    GENETIC_REL_ID: "/data/bases/shared/haplomap/PELTZ_20200429/mouse54_grm.rel.id"
-
     # gene expression file 
     GENE_EXPRS: "/data/bases/shared/haplomap/PELTZ_20200429/mus.compact.exprs.txt"
 
@@ -102,9 +97,7 @@ HBCGM:
     # path to SNP database
     SNPS_DIR: "/data/bases/shared/haplomap/PELTZ_20200429/SNPs"
     # SNP annotations for all genes
-    ANNOVAR: "/data/bases/shared/haplomap/PELTZ_20200429/AA_by_strains.pkl" 
-    KNOWNGENE_META: "/data/bases/shared/haplomap/PELTZ_20200429/mm10_kgXref.txt" 
-    KNOWNGENE: "/data/bases/shared/haplomap/PELTZ_20200429/mm10_knownGene.txt" 
+    VEP_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/VEP"
 ```
 
 #### (3). run haplomap pipeline
