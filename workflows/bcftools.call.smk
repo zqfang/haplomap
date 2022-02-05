@@ -101,7 +101,6 @@ rule bcftools_norm:
     shell:
         "bcftools norm -d none -s -m+indels -Oz -o {output} {input} "
 
-
 rule tabix:
     input: "VCFs/{chr}.normed.vcf.gz"
     output: 
@@ -181,7 +180,7 @@ rule snp2NIEHS:
     log: "logs/chr{i}.snp2niehs.log"
     shell:
         "bcftools view -f .,PASS -v snps {input.vcf} | "
-        "{params.BIN}/haplomap niehs -o {output} -a {params.ad} -r {params.ratio} "
+        "{params.BIN}/haplomap convert -o {output} -a {params.ad} -r {params.ratio} "
         "-q {params.qual} -p {params.het} -m {params.mq} -b {params.sb} "
         "-s {input.strain} -v > {log}"
 
@@ -204,7 +203,7 @@ rule Indel2NIEHS:
     log: "logs/chr{i}.snp2niehs.log"
     shell:
         "bcftools view -f .,PASS -v indels {input.vcf} | "
-        "{params.BIN}/haplomap niehs -o {output} -a {params.ad} -r {params.ratio} "
+        "{params.BIN}/haplomap convert -o {output} -a {params.ad} -r {params.ratio} "
         "-q {params.qual} -p {params.het} -m {params.mq} -b {params.sb} -t INDEL "
         "-s {input.strain} -v > {log}"
 

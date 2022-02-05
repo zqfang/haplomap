@@ -20,7 +20,7 @@ MPD2MeSH = config['HBCGM']['MPD2MeSH']
 # eblock input
 STRAIN_ANNO = config['HBCGM']['STRAIN_ANNO']
 SNPDB = config['HBCGM']['SNPS_DIR']
-ANNOVAR = config['HBCGM']['ANNOVAR']
+VEP_DIR = config['HBCGM']['VEP_DIR']
 GENE_EXPRS = config['HBCGM']['GENE_EXPRS']
 # open chromatin regions input
 ATAC_PEAKS = glob.glob(config['HBCGM']['ATAC_PEAKS'])
@@ -43,11 +43,10 @@ IDS = [mnum for mnum in IDS if not os.path.exists(pat.format(ids = mnum))]
 CHROMOSOMES = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
 # output files
 # SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOMES)
-HBCGM =  expand("MPD_{ids}_Indel/chr{i}.results.txt", ids=IDS, i=CHROMOSOMES)
-HBLOCKS = expand("MPD_{ids}_Indel/chr{i}.hblocks.txt", ids=IDS, i=CHROMOSOMES)
+HBCGM =  expand("MPD_{ids}/chr{i}.results.txt", ids=IDS, i=CHROMOSOMES)
+# HBLOCKS = expand("MPD_{ids}/hblocks/chr{i}.hblocks.txt", ids=IDS, i=CHROMOSOMES)
 MESH = expand("MPD_{ids}_Indel.results.mesh.txt", ids=IDS)
 #HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.open_region.bed", ids=IDS, i=CHROMOSOMES)
-
 # rules that not work in a new node
 # localrules: target, traits, strain2trait  
 
@@ -82,18 +81,31 @@ rule target:
 #     script:
 #         "scripts/strain2traits.py"
 
-
+rule unGZip:
+    input: os.path.join(VEP_DIR, "chr{i}.pass.vep.txt.gz"),
+    output: temp(os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"))
+    shell:
+        "zcat {input} > {output}"
+        
+rule annotateSNPs:
+    input: 
+        vep = os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"),
+        strains = "MPD_{ids}/trait.{ids}.txt",
+    output: "MPD_{ids}/chr{i}.indel.anot.txt"
+    params:
+        bin = HBCGM_BIN,
+    shell:
+        "{params.bin}/haplomap annotate -t indel -s {input.strains} -o {output} {input.vep} "
 
 # # find haplotypes
 rule eblocks:
     input: 
         snps = os.path.join(SNPDB, "chr{i}.txt"),
-        #gene_anno = "MPD_{ids}/chr{i}.genename.txt",
-        gene_anno = os.path.join(ANNOVAR, "chr{i}.annotation.eblocks.txt"),
-        strains = "strain.{ids}.txt",
+        gene_anno = "MPD_{ids}/chr{i}.indel.anot.txt",
+        strains = "MPD_{ids}/trait.{ids}.txt",
     output: 
-        hb = protected("MPD_{ids}_Indel/chr{i}.hblocks.txt"),
-        snphb = protected("MPD_{ids}_Indel/chr{i}.snp.hblocks.txt")
+        hb = protected("MPD_{ids}/chr{i}.hblocks.txt"),
+        snphb = protected("MPD_{ids}/chr{i}.indel.hblocks.txt")
     params:
         bin = HBCGM_BIN,
     log: "logs/MPD_{ids}.chr{i}.eblocks.log"
@@ -105,11 +117,11 @@ rule eblocks:
 # statistical testing with trait data       
 rule ghmap:
     input: 
-        hb = "MPD_{ids}_Indel/chr{i}.hblocks.txt",
-        trait = "trait.{ids}.txt",
+        hb = "MPD_{ids}/chr{i}.hblocks.txt",
+        trait = "MPD_{ids}/trait.{ids}.txt",
         gene_exprs = GENE_EXPRS,
         rel = GENETIC_REL,
-    output: "MPD_{ids}_Indel/chr{i}.results.txt"
+    output: "MPD_{ids}/chr{i}.results.txt"
     params:
         bin = HBCGM_BIN,
         cat = "MPD_{ids}/trait.{ids}.categorical"
@@ -151,7 +163,7 @@ rule ghmap:
 
 
 rule ghmap_aggregate:
-    input: ["MPD_{ids}_Indel/chr%s.results.txt"%c for c in CHROMOSOMES]
+    input: ["MPD_{ids}/chr%s.results.txt"%c for c in CHROMOSOMES]
     output: temp("MPD_{ids}_Indel.results.txt")
     run:
         # read input
@@ -183,10 +195,10 @@ rule mesh:
     params: 
         # mesh = lambda wildcards: MESH_DICT[wildcards.ids]
         res_dir = config['HBCGM']['WORKSPACE'],
-    threads: 6
+    threads: 24
     shell:
         "/home/fangzq/miniconda/envs/fastai/bin/python "
-        "/home/fangzq/github/InpherGNN/GNNphrank/predict.py "
+        "/home/fangzq/github/InpherGNN/GNNHap/predict.py "
         "--bundle /data/bases/fangzq/Pubmed/bundle " 
         "--hbcgm_result_dir {params.res_dir} "
         "--mesh_terms {input.json} --num_cpus {threads} "

@@ -1,20 +1,26 @@
 import os, sys, json
+import pandas as pd
 
-
-WKDIR = "/home/fangzq/github/HBCGM/example/PeltzData"
+WKDIR = "/data/bases/fangzq/Pubmed/test_cases/TEST"
 
 workdir: WKDIR
 # INPUT_FILES
-MESH_DICT = {'10806':'D003337',
- '10807':'D020712',
- '10813':'D020712',
- '26721': 'D017948',
- '50243':'D002331',
- '9904': 'D008076',
- 'Haloperidol': "D064420",
- 'irinotecan': 'D000077146',
- 'Cocaine':'D007858',
+MESH_DICT = {
+#  '10806':'D003337',
+#  '10807':'D020712',
+#  '10813':'D020712',
+#  '26721': 'D017948',
+#  '50243':'D002331',
+#  '9904': 'D008076',
+#  'Haloperidol': "D064420",
+#  'irinotecan': 'D000077146',
+#  'Cocaine':'D007858',
+ 'D018919':'Neovascularization, Physiologic',
+ 'D009389' :'Neovascularization, Pathologic',
+  'D043924' : 'Angiogenesis Modulating Agents',
+  'D003315': 'Cornea',
 }
+MPD2MeSH = 'D018919,D009389,D043924,D003315'
 
 # genetic relation file from PLink output
 GENETIC_REL =  "/data/bases/shared/haplomap/PELTZ_20210609/mouse54_grm.rel"
@@ -26,11 +32,8 @@ HBCGM_BIN = "/home/fangzq/github/HBCGM/build/bin"
 STRAIN_ANNO = "/data/bases/shared/haplomap/PELTZ_20210609/strains.metadata.csv"
 # path to SNP database
 SNPDB_DIR =  "/data/bases/shared/haplomap/PELTZ_20210609/SNPs"
-# PATH to SNP annotations for all genes
-ANNOVAR = "/data/bases/shared/haplomap/PELTZ_20210609/SNP_Annotation" 
-# snp, geneid,genename mapping
-KNOWNGENE_META = "/data/bases/shared/haplomap/PELTZ_20210609/SNP_Annotation/mm10_kgXref.txt" 
-KNOWNGENE = "/data/bases/shared/haplomap/PELTZ_20210609/SNP_Annotation/mm10_knownGene.txt" 
+# PATH to VEP annotations for all genes
+VEP_DIR = "/data/bases/shared/haplomap/PELTZ_20210609/VEP"
 MPD2MeSH = "/data/bases/shared/haplomap/PELTZ_20210609/mpd2mesh.json"
 # with open(MPD2MeSH, 'r') j:
 #     mpd2mesh = json.load(j)
@@ -40,37 +43,39 @@ MPD2MeSH = "/data/bases/shared/haplomap/PELTZ_20210609/mpd2mesh.json"
 CHROMOSOMES = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
 # output files
 # SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOMES)
-HBCGM =  expand("MPD_{ids}/chr{i}.results.txt", ids = list(MESH_DICT.keys()), i=CHROMOSOMES)
-MESH = expand("MPD_{ids}.results.mesh.txt", ids=list(MESH_DICT.keys()))
+
+MESH = "MPD_000.results.mesh.txt"
 
 rule target:
-    input: HBCGM, MESH
+    input: MESH
 
+
+rule unGZip:
+    input: os.path.join(VEP_DIR, "chr{i}.pass.vep.txt.gz"),
+    output: temp(os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"))
+    shell:
+        "zcat {input} > {output}"
 
 rule annotateSNPs:
-    input:
-        strains = "Peltz_{ids}.trait.txt",
-        snps = os.path.join(SNPDB_DIR, "chr{i}.txt"), 
-        annodb = os.path.join(ANNOVAR, "chr{i}.AA_by_strains.pkl"),
-        kgxref = KNOWNGENE_META, 
-        knowngene= KNOWNGENE,
-    output:
-        hgnc = temp("MPD_{ids}/hblocks/chr{i}.genename.txt"),
-        ensemble = temp("MPD_{ids}/hblocks/chr{i}.geneid.txt"),
-    script:
-        "../scripts/annotateSNPs.py"
-
+    input: 
+        vep = os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"),
+        strains = "MPD_{ids}/trait.{ids}.txt",
+    output: "MPD_{ids}/chr{i}.genename.txt"
+    params:
+        bin = HBCGM_BIN,
+    shell:
+        "{params.bin}/haplomap annotate -t snp -s {input.strains} -o {output} {input.vep} "
 
 
 # find haplotypes
 rule eblocks:
     input: 
         snps = os.path.join(SNPDB_DIR, "chr{i}.txt"),
-        gene_anno = "MPD_{ids}/hblocks/chr{i}.genename.txt",# "MPD_{ids}/gene_coding.txt",#
-        strains = "Peltz_{ids}.trait.txt",
+        gene_anno = "MPD_{ids}/chr{i}.genename.txt",
+        strains = "MPD_{ids}/trait.{ids}.txt",
     output: 
-        hb = "MPD_{ids}/hblocks/chr{i}.hblocks.txt",
-        snphb ="MPD_{ids}/hblocks/chr{i}.snp.hblocks.txt"
+        hb = "MPD_{ids}/chr{i}.hblocks.txt",
+        snphb ="MPD_{ids}/chr{i}.snp.hblocks.txt"
     params:
         bin = HBCGM_BIN,
     log: "logs/MPD_{ids}.chr{i}.eblocks.log"
@@ -82,8 +87,8 @@ rule eblocks:
 # statistical testing with trait data       
 rule ghmap:
     input: 
-        hb = "MPD_{ids}/hblocks/chr{i}.hblocks.txt",
-        trait = "Peltz_{ids}.trait.txt",
+        hb = "MPD_{ids}/chr{i}.hblocks.txt",
+        trait = "MPD_{ids}/trait.{ids}.txt",
         gene_exprs = GENE_EXPRS,
         rel = GENETIC_REL,
     output: "MPD_{ids}/chr{i}.results.txt"
@@ -100,15 +105,46 @@ rule ghmap:
               "-n MPD_{wildcards.ids}%s -a -v > {log}"%cats
         shell(cmd)
 
+
+rule ghmap_aggregate:
+    input: 
+        res = ["MPD_{ids}/chr%s.results.txt"%c for c in CHROMOSOMES]
+    output: temp("MPD_{ids}.results.txt")
+    run:
+        # read input
+        dfs = []
+        for p in input.res:
+            case = pd.read_table(p, skiprows=5, dtype=str)
+            dfs.append(case)
+        result = pd.concat(dfs)
+        # read header, first 5 row
+        headers = []
+        with open(p, 'r') as r:
+            for i, line in enumerate(r):
+                headers.append(line)
+                if i >= 4: break 
+
+        if os.path.exists(output[0]): os.remove(output[0])
+        # write output
+        with open(output[0], 'a') as out:
+            for line in headers:
+                out.write(line)
+            ## Table
+            result.to_csv(out, sep="\t", index=False)
+
+
 rule mesh:
-    input: ["MPD_{ids}/chr%s.results.txt"%c for c in CHROMOSOMES]
+    input: 
+        res = "MPD_{ids}.results.txt",
+        json = MPD2MeSH,
     output: "MPD_{ids}.results.mesh.txt"
     params: 
-        mesh = lambda wildcards: MESH_DICT[wildcards.ids]
-    threads: 1
+        # mesh = lambda wildcards: MESH_DICT[wildcards.ids]
+        res_dir = WKDIR,
+    threads: 24
     shell:
         "/home/fangzq/miniconda/envs/fastai/bin/python "
-        "/home/fangzq/github/InpherGNN/GNNphrank/predict.py "
+        "/home/fangzq/github/InpherGNN/GNNHap/predict.py "
         "--bundle /data/bases/fangzq/Pubmed/bundle " 
-        "--hbcgm_result_dir MPD_{wildcards.ids} "
-        "--mesh_terms {params.mesh} --num_cpus {threads} "
+        "--hbcgm_result_dir {params.res_dir} "
+        "--mesh_terms {input.json} --num_cpus {threads} "

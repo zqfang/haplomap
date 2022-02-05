@@ -31,7 +31,7 @@ HBCGM:
     
     ######### ghmap input ######### 
     # MPD trait ids 
-    TRAIT_IDS: "/home/fangzq/github/HBCGM/MPD_MeSH_suffixed.txt"
+    TRAIT_IDS: "/home/fangzq/github/HBCGM/example/MPD_MeSH_suffixed.txt"
     # set to true if input individual animal data. Default: use strain means.   
     USE_RAWDATA: false 
     # use custom database instead of using MPD API to get data.
@@ -50,7 +50,7 @@ HBCGM:
     # path to SNP database
     SNPS_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/INDELs"
     # PATH to SNP annotations for all genes
-    ANNOVAR: "/data/bases/shared/haplomap/PELTZ_20210609/INDELs_Annotation" 
+    VEP_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/VEP"
     ######### others #########
     # open chromatin regions to annotate haploblocks.
     ATAC_PEAKS: "/scratch/users/fangzq/MouseEpigenomeAtlas/beds/*.blacklist_removed.broadPeak"

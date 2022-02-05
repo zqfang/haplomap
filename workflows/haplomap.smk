@@ -18,9 +18,10 @@ MPD2MeSH = config['HBCGM']['MPD2MeSH'] # json file
 # eblock input
 STRAIN_ANNO = config['HBCGM']['STRAIN_ANNO']
 SNPDB = config['HBCGM']['SNPS_DIR']
-ANNOVAR = config['HBCGM']['ANNOVAR'] 
-KNOWNGENE_META = config['HBCGM']['KNOWNGENE_META']
-KNOWNGENE = config['HBCGM']['KNOWNGENE']
+VEP_DIR = config['HBCGM']['VEP_DIR']
+# ANNOVAR = config['HBCGM']['ANNOVAR'] 
+# KNOWNGENE_META = config['HBCGM']['KNOWNGENE_META']
+# KNOWNGENE = config['HBCGM']['KNOWNGENE']
 GENE_EXPRS = config['HBCGM']['GENE_EXPRS']
 # open chromatin regions input
 ATAC_PEAKS = glob.glob(config['HBCGM']['ATAC_PEAKS'])
@@ -37,7 +38,7 @@ with open(MPD2MeSH, 'r') as j:
     MESH_DICT = json.load(j)
 IDS = [i for i in IDS_ if i.split("-")[0] in MESH_DICT ]
 # filter id that already run
-pat = config['HBCGM']['WORKSPACE'] + "MPD_{ids}_Indel.results.mesh.txt"
+pat = config['HBCGM']['WORKSPACE'] + "MPD_{ids}_Indel.results.txt"
 IDS = [mnum for mnum in IDS if not os.path.exists(pat.format(ids = mnum))]
 
 # ## skip run if already done
@@ -81,7 +82,6 @@ rule target:
 #         strain = STRAIN_ANNO,
 #         ids = "MPD_{ids}/strain.{ids}.temp"
 #     output: 
-#         "MPD_{ids}/strain.{ids}.txt",
 #         "MPD_{ids}/trait.{ids}.txt",
 #     params:
 #         trait = TRAIT_DATA,
@@ -90,26 +90,28 @@ rule target:
 #         rawdata = config['HBCGM']['USE_RAWDATA']
 #     script:
 #         "../scripts/strain2traits.py"
-
-# rule annotateSNPs:
-#     input:
-#         strains = "MPD_{ids}/strain.{ids}.txt",
-#         snps = os.path.join(SNPDB, "chr{i}.txt"), 
-#         annodb = os.path.join(ANNOVAR, "chr{i}.AA_by_strains.pkl"),
-#         kgxref = KNOWNGENE_META, 
-#         knowngene= KNOWNGENE,
-#     output:
-#         hgnc = "MPD_{ids}/hblocks/chr{i}.genename.txt",
-#         ensemble = temp("MPD_{ids}/hblocks/chr{i}.geneid.txt"),
-#     script:
-#         "../scripts/annotateSNPs.py"
+rule unGZip:
+    input: os.path.join(VEP_DIR, "chr{i}.pass.vep.txt.gz"),
+    output: temp(os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"))
+    shell:
+        "zcat {input} > {output}"
+        
+rule annotateSNPs:
+    input: 
+        vep = os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"),
+        strains = "MPD_{ids}/trait.{ids}.txt",
+    output: "MPD_{ids}/hblocks/chr{i}.genename.txt"
+    params:
+        bin = HBCGM_BIN,
+    shell:
+        "{params.bin}/haplomap annotate -t snp -s {input.strains} -o {output} {input.vep} "
 
 # find haplotypes
 rule eblocks:
     input: 
         snps = os.path.join(SNPDB, "chr{i}.txt"),
         gene_anno = "MPD_{ids}/hblocks/chr{i}.genename.txt",
-        strains = "MPD_{ids}/strain.{ids}.txt",
+        strains = "MPD_{ids}/trait.{ids}.txt",
     output: 
         hb = protected("MPD_{ids}/hblocks/chr{i}.hblocks.txt"),
         snphb = protected("MPD_{ids}/hblocks/chr{i}.snp.hblocks.txt")
@@ -158,7 +160,7 @@ rule ghmap_aggregate:
         with open(p, 'r') as r:
             for i, line in enumerate(r):
                 headers.append(line)
-                if i >= 5: break 
+                if i >= 4: break 
 
         if os.path.exists(output[0]): os.remove(output[0])
         # write output
@@ -176,10 +178,10 @@ rule mesh:
     params: 
         # mesh = lambda wildcards: MESH_DICT[wildcards.ids]
         res_dir = config['HBCGM']['WORKSPACE'],
-    threads: 6
+    threads: 24
     shell:
         "/home/fangzq/miniconda/envs/fastai/bin/python "
-        "/home/fangzq/github/InpherGNN/GNNphrank/predict.py "
+        "/home/fangzq/github/InpherGNN/GNNHap/predict.py "
         "--bundle /data/bases/fangzq/Pubmed/bundle " 
         "--hbcgm_result_dir {params.res_dir} "
         "--mesh_terms {input.json} --num_cpus {threads} "
