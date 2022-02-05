@@ -1,10 +1,12 @@
 
-# HBCGM
+# Haplomap (a.k.a HBCGM )
 Haplotype-based computational genetic mapping  
-
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 
 ![HBCGM](docs/HBCGM.png)
+
+## Introduction
+This is a brand-new version of HBCGM, named Haplomap. 
 ## Dependency 
 Works both on `Linux`and `MacOS`
 
@@ -15,7 +17,7 @@ Haplomap:
 * C++11
 * GSL
 
-Germline Variant Calling
+For Variant Calling, you need:
 * GATK 4.x
 * SAMtools
 * BCFtools
@@ -58,15 +60,15 @@ make
 ### 1. Run haplomap standalone
 See more detail in ``haplomap`` subfolder: [Run haplomap standalone](haplomap/README.md)
 
-### 2. Use `snakemake` workflow to run
+### 2. Use `snakemake` workflow to run Mouse Phenome Database (MPD) datasets
+
+[Mouse Phenome Database](https://phenome.jax.org/) have > 10K datasets. Try to configure the files below to run
 #### (1). Prepare MPD `measnum` id file. One id per row, suffixed with "-m" or "-f"(f: female, m: male)
 ```
 26720-m
 26720-f
 9940-f
 ...
-
-
 ```
 
 #### (2). Edit the `config.yaml` file path in `workflows` folder:
@@ -82,27 +84,26 @@ HBCGM:
     # ghmap input
     # MPD trait ids 
     TRAIT_IDS: "/data/bases/fangzq/MPD/drug-diet.ids.txt"
-    # set to true if input individual animal data. Default: use strain means.   
+    # set to true select individual animal data. Default: use strain means.   
     USE_RAWDATA: false 
-    # given file path, use input data instead of using MPD API to get data.
-    TRAIT_DATA:  "" #"/data/bases/shared/haplomap/AHresponse_strainmeans2.txt"
-    # genetic relation file from PLink output
-    GENETIC_REL: "/data/bases/shared/haplomap/PELTZ_20200429/mouse54_grm.rel"
-    # gene expression file 
-    GENE_EXPRS: "/data/bases/shared/haplomap/PELTZ_20200429/mus.compact.exprs.txt"
+    # strains metadata: map strain abbrev to full name, jax ids, ect. 
+    # see docs folder to view example
+    STRAIN_ANNO: "/data/bases/shared/haplomap/PELTZ_20210609/strains.metadata.csv"
 
     # eblock input
-    # strains metadata. 
-    STRAIN_ANNO: "/data/bases/shared/haplomap/PELTZ_20200429/strains.metadata.csv"
-    # path to SNP database
-    SNPS_DIR: "/data/bases/shared/haplomap/PELTZ_20200429/SNPs"
-    # SNP annotations for all genes
+    # `haplomap convert` output after variant calling step 
+    SNPS_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/SNPs"
+    # Ensembl-vep output after variant calling step
     VEP_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/VEP"
+
+    ## Optional files
+    # genetic relation file from PLink output
+    GENETIC_REL: "/data/bases/shared/haplomap/PELTZ_20210609/mouse54_grm.rel"
+    # gene expression file 
+    GENE_EXPRS: "/data/bases/shared/haplomap/PELTZ_20210609/mus.compact.exprs.txt"
 ```
 
 #### (3). run haplomap pipeline
-
-Install `snakemake` first. You need `Miniconda` if conda is not installed
 
 #### (3.1) create conda envs
 ```shell
@@ -132,11 +133,15 @@ sbatch slurm.submit.sh
 ## Output
 output explanation, see here: [Run haplomap standalone](haplomap/README.md)
 
-
-
 ## Contact
 
 Email: 
 - Zhuoqing Fang: fangzq@stanford.edu
 - Gary Peltz: gpeltz@stanford.edu
 
+## Copyright and License Information
+Copyright (C) 2019-2022 Stanford University, Zhuoqing Fang and Gary Peltz.
+
+Authors: Zhuoqing Fang and Gary Peltz
+
+This program is licensed with commercial restriction use license. Please see the attached LICENSE file for details.
