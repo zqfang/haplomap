@@ -11,7 +11,7 @@ Haplotype-based computational genetic mapping
 
 SNPs
 ```shell
-build/bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.txt ${HOME}/data/VCFs/chr18.vcf
+build/bin/haplomap convert -o ${HOME}/data/SNPS/chr18.txt ${HOME}/data/VCFs/chr18.vcf
 
 # support stdin, but much slower
 zcat ${HOME}/data/VCFs/chr18.vcf.gz | bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.txt
@@ -21,10 +21,12 @@ Structural variants
 build/bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.sv.txt --type sv input.sv.vcf
 ```
 
+### 2. convert ensemble-vep results to eblocks input format
+```shell
+build/bin/haplomap annotate -o ${HOME}/data/SNPS/chr18.annotation.txt --type snp input.vep.txt
+```
 
-### 2. find haploblocks
-
-prepared SNP annotation file 
+If you'd like to use `ANNOVAR` results, see this
 
 1. generate strain level gene annotation database (only run once), see here: 
 [scripts/gene_annotation](../scripts/gene_annotation/README.md)
@@ -39,59 +41,54 @@ python scripts/annotateSNPs.py test_strains.txt chr18.txt \
                     AA_by_strains_chr18.pkl mm10_kgXref.txt mm10_knownGene.txt
                     genes_coding.txt genes_coding_transcript.txt
 ```
+NOTE: Structural variants only support ensemble-vep inputs now !
 
-3. find haploblocks
+### 3. find haploblocks
+
+Find haploblocks
+
 ```shell
 build/bin/haplomap eblocks -a ${HOME}/data/SNPS/chr18.txt \
-                     -g ${HOME}/data/gene_coding.txt \
+                     -g ${HOME}/data/chr18.annotation.txt \
                      -s ${HOME}/TMPDATA/test_strains.txt \
                      -o ${HOME}/TMPDATA/test.SNPs.hb.txt
 ```
 
-prepared SV ananotation file
-  - run `structral variant calling pipeline` and annotate with VEP
-  - run `annotateSV.py`, the output file (*_eblocks.txt) is used for eblocks input.
-
-### 3. statistical testing with trait data
+### 4. statistical testing with trait data
 
 Statistical testing  
-  - SNP
-    ```shell
-    build/bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
-                      -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
-                      -o ${HOME}/TMPDATA/test.final.output.txt
-    ```
-  - Structural variant  
-    ```shell
-    # NOTE: -a is needed for sv, indel
-    build/bin/haplomap ghmap -a -p ${HOME}/data/test_traits.txt \
-                      -b ${HOME}/TMPDATA/test.sv.hb.txt \
-                      -o ${HOME}/TMPDATA/test.sv.output.txt
-    ```
 
+```shell
+build/bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
+                  -b ${HOME}/TMPDATA/test.SNPs.hb.txt \
+                  -o ${HOME}/TMPDATA/test.final.output.txt
+```
+**NOTE 1**: 
+By default. Output result are gene-summrized (see `haplomap ghmap --help`).   
+Recommend adding `-a` flag, which will output gene-oriented format results.
 
-**Note:** strain order in (-p) should keep the same to the (-b). That's, eblocks (-s)
+**NOTE 2:** strain order in (-p) should keep the same to the (-b). That's, eblocks (-s)
 
 ## Input
 1. eblocks:
     - Strain file (-s): 
-      - Tree column txt file: "#Abbrev \t Fullname \t Values "
+      - Tree column txt file: "#Abbrev \t (Optional) \t Values "
       - see `test.strain.txt` in the example folder
-    - Allele file (-a): NIEHS compact format (use subcmd `niehs` to convert vcf to niehs)
+    - Allele file (-a): NIEHS compact format (use subcmd `convert` to convert vcf to niehs)
     - Gene Annotation (-g): 
-      - format: " <SNP_{chr}_{postion}>  <gene_name>  < SNP_cateogry> "
+      - format: " <SNP_{chr}_{postion}>  <gene_name>  < consequence> "
       - see above to prepare this file
 
 2. ghmap:
     - Trait file (-p):  
-        - Tree column txt file, same as eblocks -s:  "#Abbrev \t Fullname \t Values "
-        - If multiple aninmal values for same strain, seperate them by comma . Example:
+        - same as eblocks -s:  "#Abbrev \t (Optional) \t Values "
+        - If multiple aninmal values for same strain, seperate them by comma. Example:
         ```$xslt
            129S1	18.2,19.1,14.3
            A_J	19.3,18.2
         ```
     - haploblocks (-b): eblocks output file
-    - genetic relation (-r): optional file, could obtain from plink pca
+    - genetic relation (-r): optional file, could obtain from plink.
 
 ## Output
 
@@ -155,15 +152,15 @@ BlockIdx | BlockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat
 i. SNPs
   * -1: Non-codon change
   * 0: Synonymous (not important)
-  * 1: missense/nonsense...
+  * 1: missense/nonsense
   * 2: Splicing site change
   * 3: Stop codon
 
-ii. Indels and structral variants (ghmap -a ): 
+ii. Indels and structral variants: 
   * 2: HIGH
   * 1: MODERATE
   * 0: LOW
   * -1: MODIFIER
 
-See more details from [here](https://uswest.ensembl.org/info/genome/variation/prediction/predicted_data.html) 
+See explanation [here](https://uswest.ensembl.org/info/genome/variation/prediction/predicted_data.html) 
 

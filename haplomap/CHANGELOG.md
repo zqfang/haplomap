@@ -35,10 +35,12 @@ v0.1
 * pca: 
   - add a new sub-command 
   - could be used for getting genetic relationship 
-* niehs:
+* covnert:
   - For historical reasons, eblocks use NIEHS compact format as input. 
   - To use haplomap more friendly, we now do this for you. 
   - support structral variant input. 
+* annotate:
+  - convert ensemble-vep result for variant annotation input for eblocks.
  
 
 v0.0
