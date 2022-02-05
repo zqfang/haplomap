@@ -1,7 +1,7 @@
 // -*-c++-*-
 
 // (c) 2008, David L. Dill.  All rights reserved.
-
+// Modified by Zhuoqing
 // General-purpose function to read a file consisting of single-character-delimited columns.
 
 #ifndef COLUMNREADER_H

@@ -2,9 +2,8 @@
 
 // (c) 2008, 2009, 2010 Board of Trustees of Leland Stanford Jr. University.  All rights reserved.
 // Author: David L. Dill
-
 // Fast algorithm to find haplotype blocks ala Peltz.
-
+// Modified by Zhuoqing Fang
 // ISSUES:
 //    SNPs are in somewhat random order w/in chromosome
 //    Gene names are repeated for a single snp (Oprm1)
