@@ -50,7 +50,7 @@ option(ENABLE_HAPLOMAP_BUILD
        ON
 )
 
-option(ENABLE_UNITEST_BUILD
+option(ENABLE_UNITEST_BUILD 
        "Build the UNITEST"
        OFF
 )
