@@ -82,6 +82,8 @@ def load_ghmap(dataset):
 
     df['Impact'] = df['CodonFlag'].astype(str).map(headers[1])
     df['logPvalue'] = -np.log10(df['Pvalue'])
+    df['logPvalue'].replace([np.inf, -np.inf], np.nan, inplace=True)
+    df['logPvalue'].fillna(df['logPvalue'].max(), inplace=True)
     df['CodonColor'] = df['CodonFlag'].astype(str).map(codon_color_dict)
      
     #mesh_columns = [m for m in headers[-1] if m.startswith("MeSH") ]
@@ -115,7 +117,7 @@ def get_expr(pattern, gene_expr_order):
 
 def get_datasets(data_dir):
     data = []
-    path = Path(data_dir).glob("*.results.mesh.pmids.txt")
+    path = Path(data_dir).glob("*.results.mesh.txt")
     for p in path:
         d = p.stem.split(".")[0]
         data.append(d)

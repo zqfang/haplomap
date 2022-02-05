@@ -62,8 +62,8 @@ columns = ['GeneName', 'CodonFlag','Haplotype','EffectSize', 'Pvalue', 'FDR',
            'PopPvalue', 'PopFDR', 'Chr', 'ChrStart', 'ChrEnd', 'LitScore','PubMed'] 
 columns = [ TableColumn(field=c, title=c, formatter=HTMLTemplateFormatter() 
                         if c in ['Haplotype','GeneName', 'PubMed'] else CellFormatter()) for c in columns ] # skip index                       
-myTable = DataTable(source=source, columns=columns, width =1100, height = 600, index_position=0,
-                    editable = False, view=view, name="DataTable") # autosize_mode="fit_viewport",
+myTable = DataTable(source=source, columns=columns, width =1200, height = 600, index_position=0,
+                    editable = False, view=view, name="DataTable",sizing_mode="stretch_width") # autosize_mode="fit_viewport"
 
 # download
 button = Button(label="Download Table", button_type="success")
@@ -73,13 +73,13 @@ button = Button(label="Download Table", button_type="success")
 
 bar = figure(plot_width=550, plot_height=500, # x_range=strains, 
            title="Dataset", 
-           #toolbar_location="right",
+           toolbar_location="below",
            tools='pan,reset,lasso_select,save', output_backend="svg", name="Bar")
 bar.toolbar.logo = None
 bar.vbar(x='strains', top='traits', source=source_bar, line_width=0, fill_color='colors', width=0.7)
 bar.xgrid.grid_line_color = None
 #p.y_range.start = 0
-bar.xaxis.axis_label = "Strains"
+#bar.xaxis.axis_label = ""#"Strains"
 bar.yaxis.axis_label = "Values"
 bar.xaxis.major_label_orientation = np.pi/4
 # or alternatively:
@@ -104,7 +104,7 @@ sca = figure(plot_width=550, plot_height=500,
             tools="pan,box_zoom,reset,lasso_select,save",
             output_backend="svg",  
             #active_drag="lasso_select",
-            #toolbar_location="right",
+            toolbar_location="below",
             tooltips=TOOLTIPS, name='Scatter')
 
 sca.add_layout(Legend(), 'above') # put legend outside
@@ -169,7 +169,7 @@ def data_update(attr, old, new):
     global codon_flag
 
     ds = dataset.value
-    DATASET = os.path.join(DATA_DIR, '%s.results.mesh.pmids.txt' % ds)
+    DATASET = os.path.join(DATA_DIR, '%s.results.mesh.txt' % ds)
     if not os.path.exists(DATASET):
         message.text = f"<p> Error: <br> Dataset {ds} not found <br> Please Input a new dataset name.</p>"
         return
@@ -181,8 +181,8 @@ def data_update(attr, old, new):
         return  
 
     if df.columns.str.startswith("Pop").sum() == 0: 
-        # kick out 'PopPvalue', 'PopFDR',
-        myTable.columns = [ columns[i] for i in range(len(columns)) if  i not in [6,7] ]   
+        # kick out 'FDR', PopPvalue', 'PopFDR',
+        myTable.columns = [ columns[i] for i in range(len(columns)) if  i not in [5, 6,7] ]   
     else:
         myTable.columns = columns
 
@@ -204,6 +204,7 @@ def data_update(attr, old, new):
     source.data = df
     mesh_update(None, None, None)
     impact_update(None, None, None)
+    impact.value = list(codon_flag.values())[0]
     #source.data.update(LitScore=df.loc[:, mesh_columns[0]].to_list())
     # need to reset filters again
     myTable.disabled = True 
