@@ -38,14 +38,14 @@ std::shared_ptr<VEPOptions> parseVEPOptions(int argc, char **argv)
                         "    in.vep.txt             Input sorted ensembl-VEP file or stdin\n"
                         "    -o, --output           Output file name, for (eblocks -g)\n"
                         "\nOptional arguments:\n"
-                        "    -c,  --csq             Output a VEP consequence annotation file.\n"
-                        "    -s,  --samples         Only get annotation from these samples, same to (eblocks -s).\n"
+                        "    -c,  --csq             Output a annotation with impact and sample names.\n"
+                        "    -s,  --samples         Only get annotation for the input samples, use same strains to (eblocks -s).\n"
                         "    -t,  --type            Select variant type: [snp|indel|sv|all]. Default: all\n"
                         "    -v,  --verbose\n"
                         "    -h,  --help\n"
                         "\nImportant message:\n"
                         "Please run ensemble-vep containing following flags: \n"
-                        "    vep --fasta --format vcf --individual all --gencode_basic --everything\n";
+                        "    vep --fasta --individual all --gencode_basic --everything\n";
 
     if (argc == 1)
     {

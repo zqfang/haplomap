@@ -35,8 +35,8 @@ struct VEPSummary
     Dynum<std::string> amino_acids; //10 -
     Dynum<std::string> codons; //11 -
     Dynum<std::string> dbsnpid; //12 -
-    //Dynum<std::string> samples; // sample name 13
-    std::string samples;
+    Dynum<std::string> samples; // sample name 13
+    //std::string samples;
     std::string zygosity; // zygosity 14 HOM, HET
     Dynum<std::string> impact; //15
     std::string variant_class; //19 SO variant class: "SNV", "indel", deletion, duplication, inversion, ect

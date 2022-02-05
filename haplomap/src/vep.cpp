@@ -36,7 +36,7 @@ VEPSummary::VEPSummary(
     std::string codon, std::string existing_variation, std::string ind, std::string zyg, std::string imp,
     std::string var_class, std::string gene_name, std::string bt, std::string hgvsp, std::string hgvsc) : 
     idx(uploaded_variant), location(loc), allel(seq), geneid(gene), transxid(transcript),
-    transtype(feature_type), protein_position(aa_pos), samples(ind),
+    transtype(feature_type), protein_position(aa_pos),
     zygosity(zyg), variant_class(var_class), symbol(gene_name), biotype(bt)
 {
     size_t tokstart = 0;
@@ -82,6 +82,7 @@ VEPSummary::VEPSummary(
     amino_acids.addElementIfNew(aa);
     codons.addElementIfNew(codon);
     dbsnpid.addElementIfNew(existing_variation);
+    samples.addElementIfNew(ind);
     impact.addElementIfNew(imp);
     HGVSc.addElementIfNew(hgvsc);
     HGVSp.addElementIfNew(hgvsp);
@@ -235,7 +236,7 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
             VEPSummary *pVEP = geneCodingMap[key][transcript_id];
 
             // aggreate individual sample results onto transcript level
-            pVEP->samples.append(","+rdr.getToken(columns["IND"]));
+            pVEP->samples.addElementIfNew(rdr.getToken(columns["IND"]));
             //pVEP->zygosity.append(","+rdr.getToken(14)); // only "HOM"
             pVEP->impact.addElementIfNew(rdr.getToken(columns["IMPACT"]));
             // if (pVEP->HGVS != rdr.getToken(32))
@@ -403,7 +404,13 @@ void VarirantEeffectPredictor::writeVEPImpact(char* outFileName)
                 std::string s = pRecord->symbol +"\t" + pRecord->impact.eltOf(i);
                 if (csq.hasIndex(s) < 0)
                 { // remove duplicate entries
-                    csqos<< "\t" << s <<"\t"<<pRecord->samples;
+                    csqos<< "\t" << s <<"\t";
+                    for (int j=0; j < pRecord->samples.size(); j ++)
+                    {
+                        csqos<<pRecord->samples.eltOf(j);
+                        if ((j +1 ) < pRecord->samples.size()) 
+                            csqos <<",";
+                    }
                     csq.addElementIfNew(s);
                 }
             } 
