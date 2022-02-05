@@ -6,7 +6,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "utils.h"
-#include "glob.h"
+#include "vep.h"
 
 
 
@@ -23,17 +23,25 @@ TEST(SPLIT_TRIM, DISABLED_split_and_trim) {
     EXPECT_EQ(trim(alleles, " \n\r\t"), "split\ta\tb\tc");
 }
 
-TEST(GET_CWD_GLOB, DISABLED_getcwd_glob_function) {
+TEST(VEP_CWD, getcwd_glob_function) {
     std::string dir = GetCurrentWorkingDir();
     std::cout<<"MyFunction: __file__: "<< dir <<std::endl;
     //std::cout << "CPP17: Current path is " << std::__fs::filesystem::current_path() << '\n';
-    //EXPECT_EQ(dir, std::__fs::filesystem::current_path());
+    //EXPECT_EQ(dir, std::__fs::filesystem::current_path());  
 
-    glob::glob globs(dir);
-    while (globs) {
-        std::cout << globs.current_match() << std::endl;
-        globs.next();
-    }
+}
+
+TEST(VEP_SUM, vep_fuction) {
+    std::string dir = GetCurrentWorkingDir();
+    std::cout<<"MyFunction: __file__: "<< dir <<std::endl;
+    VarirantEeffectPredictor vep((char*)"../../data/chrX.pass.vep.txt", 
+                                  (char*)"../../data/trait.000.txt");
+    vep.writeVEPCsq((char*)"../../data/test.csq.txt");
+    //vep.writeVEPSummay((char*)"../../data/test.impact.txt");
+    // VarirantEeffectPredictor vep((char*)"../../data/chrX.indel.pass.vep.txt", 
+    //                             NULL,
+    //                             (char*)"../../data/test.vep.txt");
+
 
 }
 
