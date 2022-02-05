@@ -2,6 +2,7 @@
 // Created by Zhuoqing Fang on 6/15/20.
 //
 #include <string>
+#include <string.h>
 //#include <filesystem>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -31,7 +32,7 @@ TEST(VEP_CWD, getcwd_glob_function) {
 
 }
 
-TEST(VEP_SUM, vep_fuction) {
+TEST(VEP_SUM, DISABLED_vep_fuction) {
     std::string dir = GetCurrentWorkingDir();
     std::cout<<"MyFunction: __file__: "<< dir <<std::endl;
     VarirantEeffectPredictor vep((char*)"../../data/chrX.pass.vep.txt", 
@@ -43,6 +44,22 @@ TEST(VEP_SUM, vep_fuction) {
     //                             (char*)"../../data/test.vep.txt");
 
 
+}
+
+TEST(TOLOWER, tolower_function) {
+    char *p1 = (char*)"All";
+    char *p2 = strdup(p1);
+    char*p = p2;
+    for ( ; *p; ++p) *p = std::tolower(*p);
+    std::cout<<(const char*)p1<<std::endl;
+    std::cout<<(const char*)p2<<std::endl;
+    // while (name) 
+    // {
+    //     *name = std::tolower(*name);
+    //     name++;
+    // }
+    // std::cout<<*p<<std::endl;
+    free(p2);
 }
 
 

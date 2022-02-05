@@ -27,26 +27,26 @@ std::shared_ptr<VCFOptions> parseNIEHSOptions(int argc, char **argv)
             {"verbose",        no_argument, nullptr,       'v'},
             {"input",          required_argument, nullptr, 'i'},
             {"output",         required_argument, nullptr, 'o'},
-            {"samples",        optional_argument, nullptr, 's'},
-            {"type",           optional_argument, nullptr, 't'},
-            {"pl-diff",        optional_argument, nullptr, 'p'},
-            {"qual",           optional_argument, nullptr, 'q'},
-            {"allelic-depth",  optional_argument, nullptr, 'a'},
-            {"mapping-quality",optional_argument, nullptr, 'M'},
-            {"strand-bias",    optional_argument, nullptr, 'S'},
-            {"ratio",          optional_argument, nullptr, 'r'},
+            {"samples",        required_argument, nullptr, 's'},
+            {"type",           required_argument, nullptr, 't'},
+            {"pl-diff",        required_argument, nullptr, 'p'},
+            {"qual",           required_argument, nullptr, 'q'},
+            {"allelic-depth",  required_argument, nullptr, 'a'},
+            {"mapping-quality",required_argument, nullptr, 'm'},
+            {"strand-bias",    required_argument, nullptr, 'b'},
+            {"ratio",          required_argument, nullptr, 'r'},
             {nullptr,          no_argument, nullptr,        0}};
 
     const char *usage = "Convert VCF to NIEHS compact format\n"
                         "\nusage: convert [options] <in.vcf> \n"
-                        "\nrequired arguments:\n"
+                        "\nRequired arguments:\n"
                         "    in.vcf                Input sorted VCF file or stdin\n"
                         "    -o, --output          Output file name\n"
-                        "\noptional arguments:\n"
+                        "\nOptional arguments:\n"
                         "    -s,  --samples         New sample order. One name per line.\n"
                         "    -t,  --type            Select variant type: [snp|indel|sv]. Default: snp\n"
                         "    -q,  --qual            QUAL field of VCF file. Only keep variant > qual. Default 50. \n"
-                        "\nSNP only arguments:\n"
+                        "\nSNP only arguments (INDEL and SV have not effects!):\n"
                         "    -p,  --pl-diff         Phred-scaled genotype likelihood (PL) difference. Default 20.\n"
                         "                           GT's PL must at least pl-diff unit lower than any other PL value. \n"
                         "                           The greater, the more '?' in the output. \n" 
@@ -180,23 +180,16 @@ int main_convert(int argc, char **argv)
     std::shared_ptr<VCFOptions> opts = parseNIEHSOptions(argc, argv);
     // 
     // to lower case
-    char* name = opts->variantType;
-    while (*name) 
-    {
-        *name = tolower(*name);
-        name++;
-    }
-    if (std::strcmp(opts->variantType, "snp") == 0)
-    {
-        opts->variantType = (char*)"snv";
-    }
+    std::string varType(opts->variantType);
+    std::transform(varType.begin(), varType.end(), varType.begin(), ::tolower);
     std::vector<std::string> v = {"snp","snv", "indel", "sv"};
-    if ((opts->variantType != nullptr ) && 
-        (std::find(v.begin(), v.end(), std::string(opts->variantType)) == v.end()))
+    if (std::find(v.begin(), v.end(), varType) == v.end())
     {
-        std::cerr<<"Variant type error. Input one of these: snp, indel, sv"<<std::endl;
+        std::cerr<<"Variant type (-t) error. Input one of these: snp, indel, sv"<<std::endl;
         std::exit(1);
     }
+    if (varType == "snp") varType = "snv";
+    opts->variantType = (char*)varType.c_str();
     ///
     std::string line;
     //Dynum<std::string> strains;

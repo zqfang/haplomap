@@ -77,11 +77,11 @@ static void usage()
     "Usage:   haplomap <subcommand> [options]\n\n"
     "Subcommands:\n\n"
     "    convert        convert and filter vcf (for eblocks -a)\n"
-    "    annotate       annotate variant with ensembl-VEP result for (eblocks -g)\n"
+    "    annotate       annotate variants with ensembl-VEP result for (eblocks -g)\n"
     "    eblocks        find all maximal haploblocks\n"
     "    ghmap          haplotype association test (ANOVA)\n"
     "    pca            principal component analysis\n\n"
-    "Optional arguments:\n"
+    "\nOptional arguments:\n"
     "    -v, --version  show program's version number and exit\n"
     "    -h, --help     show help message and exit."<< std::endl;
 }

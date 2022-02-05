@@ -9,7 +9,6 @@
 #include <cstring>
 #include <vector>
 #include <unordered_map>
-#include <map>
 #include <algorithm>
 #include <numeric>
 #include "dynum.h"
@@ -68,7 +67,7 @@ private:
     Dynum<std::string> strainAbbrevs;
     std::string _line;
     // variant loc -> transxid -> record, orded by variant loc
-    std::map<std::string, std::unordered_map<std::string, VEPSummary* >> geneCodingMap; 
+    std::unordered_map<std::string, std::unordered_map<std::string, VEPSummary* >> geneCodingMap; 
     std::vector<VEPSummary*> data;
     std::unordered_map<std::string, unsigned> columns; // header colum name to index
     std::vector<std::string> keys; // output order sorted by key

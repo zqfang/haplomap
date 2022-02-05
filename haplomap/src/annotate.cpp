@@ -22,14 +22,15 @@ struct VEPOptions {
 std::shared_ptr<VEPOptions> parseVEPOptions(int argc, char **argv) 
 {
     std::shared_ptr<VEPOptions> opts = std::make_shared<VEPOptions>();
-    static struct option long_options_niehs[] = {
+    // see summary section of how to set the parameter: https://azrael.digipen.edu/~mmead/www/Courses/CS180/getopt.html
+    static struct option long_options_vep[] = {
             {"help",           no_argument, nullptr,       'h'},
             {"verbose",        no_argument, nullptr,       'v'},
-            {"input",          required_argument, nullptr, 'i'},
+            //{"input",          optional_argument, nullptr, 'i'}, // 
             {"output",         required_argument, nullptr, 'o'},
-            {"csq",            optional_argument, nullptr, 'c'},
-            {"samples",        optional_argument, nullptr, 's'},
-            {"type",           optional_argument, nullptr, 't'},
+            {"csq",            required_argument, nullptr, 'c'},
+            {"samples",        required_argument, nullptr, 's'},
+            {"type",           required_argument, nullptr, 't'},
             {nullptr,          no_argument, nullptr,        0}};
 
     const char *usage = "Convert ensembl-VEP to eblocks (-g) input\n"
@@ -59,7 +60,8 @@ std::shared_ptr<VEPOptions> parseVEPOptions(int argc, char **argv)
     {
 
        int option_index = 0;
-       c = getopt_long(argc, argv, "hvc:s:o:t:", long_options_niehs, &option_index);
+       // : -> expect an associated value
+       c = getopt_long(argc, argv, "hvc:s:o:t:", long_options_vep, &option_index);
 
         /* Detect the end of the options. */
         if (c == -1)
@@ -145,26 +147,28 @@ int main_annot(int argc, char **argv)
     
     // handle input variant type
     // to lower case
-    char* name = opts->variantType;
-    while (*name) 
-    {
-        *name = tolower(*name);
-        name++;
-    }
+    std::string varType(opts->variantType);
+    std::transform(varType.begin(), varType.end(), varType.begin(), ::tolower);
+    // C-style
+    // char* varType = strdup(opts->variantType);
+    // char* name = varType;
+    // while (*name) 
+    // {
+    //     *name = std::tolower(*name);
+    //     name++;
+    // }
+    // ...
+    // free(varType)
     std::vector<std::string> v = {"snp","snv", "indel", "sv", "all"};
-    if ((opts->variantType != nullptr ) && 
-        (std::find(v.begin(), v.end(), std::string(opts->variantType)) == v.end()))
+    if (std::find(v.begin(), v.end(), varType) == v.end())
     {
         std::cerr<<"Variant type (-t) error. Input one of these: snp, indel, sv"<<std::endl;
         std::exit(1);
     }
-
-    if (std::strcmp(opts->variantType, "snp") == 0)
-    {
-        opts->variantType = (char*)"snv";
-    }
+    if (varType == "snp") varType = "snv";
+    opts->variantType = (char*)varType.c_str();
     // read data
-    vep.readVEP(opts->inputVEPName, (char*)"\t", opts->variantType);
+    vep.readVEP(opts->inputVEPName, (char*)"\t", (char*)varType.c_str());
     // write
     if (opts->verbose) std::cout<<"Write detail Annotation"<<std::endl;
     vep.writeVEPCsq(opts->outputCSQName);

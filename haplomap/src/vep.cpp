@@ -228,19 +228,16 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
         /// if a heterozyote is annotated, treat them as the same to the reference genome, skip here
         if (rdr.getToken(columns["ZYG"]) == "HET")
             continue;
-        // concat result by location and transcript
-        // that's each entry is defined by a unique location plus transcript
-        // this->geneCodingMap[key][transcript_id]
+        
+        /// aggregate results groupby location and transcript
         transcript_id = rdr.getToken(columns["Feature"]);
         if ((geneCodingMap.find(key) != geneCodingMap.end()) && (geneCodingMap[key].find(transcript_id) != geneCodingMap[key].end()))
-        // if ((rdr.getToken(columns["Location"]) == location) && (transcript_id == rdr.getToken(columns["Feature"])))
         {
             /// now add annotations
-            // VEPSummary *pVEP = data.back();
             VEPSummary *pVEP = geneCodingMap[key][transcript_id];
 
             // aggreate individual sample results onto transcript level
-            pVEP->samples.addElementIfNew(rdr.getToken(columns["IND"]));
+            if (hasIND) pVEP->samples.addElementIfNew(rdr.getToken(columns["IND"]));
             //pVEP->zygosity.append(","+rdr.getToken(14)); // only "HOM"
             pVEP->impact.addElementIfNew(rdr.getToken(columns["IMPACT"]));
             // if (pVEP->HGVS != rdr.getToken(32))
@@ -312,26 +309,26 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
             this->geneCodingMap[key][transcript_id] = pRecord;
         }
     }
-    std::map<std::string, std::unordered_map<std::string, VEPSummary *>>::iterator giit = geneCodingMap.begin();
+    std::unordered_map<std::string, std::unordered_map<std::string, VEPSummary *>>::iterator giit = geneCodingMap.begin();
     for (; giit != geneCodingMap.end(); giit++)
         this->keys.push_back(giit->first);
     std::sort(this->keys.begin(), this->keys.end(), [&](std::string a, std::string b ){return compareKey(Key(a), Key(b));});
 }
 std::string VarirantEeffectPredictor::codonChange(VEPSummary * pRecord)
-{
+{   // aggregate all condon changes groupby (location, transcript)
     std::string _expr;
     for (int j = 0; j < pRecord->codons.size(); j++)
     {
         std::string codon = pRecord->codons.eltOf(j);
         if (codon == "-") continue;
-        std::string _codon(codon);
-        upcase(_codon);
+        // std::string _codon(codon);
+        upcase(codon);
         int pos = codon.find_first_of("/", 0);
         std::string ref = codon.substr(0, pos); // keep original case sensitive strings for expr
         std::string alt = codon.substr(pos+1, codon.size() - pos);
-        std::string _ref = _codon.substr(0, pos);
-        std::string _alt = _codon.substr(pos+1, codon.size() - pos);
-        std::string expr = ref+"/"+CODONs[_ref]+"<->"+alt+"/"+CODONs[_alt];
+        //std::string _ref = _codon.substr(0, pos);
+        //std::string _alt = _codon.substr(pos+1, codon.size() - pos);
+        std::string expr = ref+"/"+CODONs[ref]+"<->"+alt+"/"+CODONs[alt];
         if (_expr.size() > 0 )
             _expr.append("!"+expr);
         else
@@ -341,7 +338,7 @@ std::string VarirantEeffectPredictor::codonChange(VEPSummary * pRecord)
 
 }
 bool VarirantEeffectPredictor::compareKey(Key key1, Key key2)
-{ 
+{   // sort first by chrom, next by start, then by end 
     if (key1.chrom != key2.chrom)
     {
         // deal with complexities of comparing chr names.
@@ -396,7 +393,7 @@ void VarirantEeffectPredictor::writeVEPImpact(char* outFileName)
     for (auto & k: this->keys)
     { // iter variant
         csqos << k;
-        //if (giit->second.empty()) this->os <<std::endl;
+        // aggregate impact to variant level
         std::unordered_map<std::string, VEPSummary *>::iterator transxit = geneCodingMap[k].begin();
         Dynum<std::string> csq;
         for (; transxit != geneCodingMap[k].end(); transxit++)
@@ -430,7 +427,7 @@ void VarirantEeffectPredictor::writeVEPCsq(char* outFileName)
     for (auto & k: this->keys)
     { // iter variant
         csqos << k;
-        //if (giit->second.empty()) this->os <<std::endl;
+        // aggregate consequences to variant level
         std::unordered_map<std::string, VEPSummary *>::iterator transxit = geneCodingMap[k].begin();
         Dynum<std::string> csq; // aggreate transcript results to snp level
         for (; transxit != geneCodingMap[k].end(); transxit++)

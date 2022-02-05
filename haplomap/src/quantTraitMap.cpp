@@ -48,37 +48,37 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
             {"filter_coding", no_argument, 0, 'f'},
             {"haploblocks", no_argument, 0, 'k'},
             {"gene_block", no_argument, 0, 'm'},
-            {"gene_all", no_argument, 0, 'a'},
-            {"pvalue_cutoff", no_argument, 0, 'l'},
-            {"name", required_argument, 0, 'n'},
-            {"phenotypes_file", required_argument, 0, 'p'},
-            {"blocks_file", required_argument, 0, 'b'},
-            {"output_file", required_argument, 0, 'o'},
+            {"gene_all_blocks", no_argument, 0, 'a'},
+            {"pvalue_cutoff", no_argument, 0, 'l'},// optional_argument means without a value is OK.
+            {"name", required_argument, 0, 'n'}, // required_argument means an associated value must given
+            {"phenotypes", required_argument, 0, 'p'},
+            {"blocks", required_argument, 0, 'b'},
+            {"output", required_argument, 0, 'o'},
             {"gene", required_argument, 0, 'g'},
-            {"expression_file", required_argument, 0, 'e'},
-            {"equal_file", required_argument, 0, 'q'},
-            {"goterms_file", required_argument, 0, 't'},
-            {"goterms_include_file", required_argument, 0, 'i'},
+            {"expression", required_argument, 0, 'e'},
+            {"equal", required_argument, 0, 'q'},
+            {"goterms", required_argument, 0, 't'},
+            {"goterms_include", required_argument, 0, 'i'},
             {"relation", required_argument, 0, 'r'},
             /*{"version", no_argument, 0, 0},*/
             {0, 0, 0, 0}};
 
     const char *usage = "usage: ghmap [options]\n"
-                        "\nrequired arguments:\n"
-                        "    -p, --phenotypes_file  <phenotype file> strain order should match to (eblocks -b)\n"
-                        "    -b, --blocks_file      <output file from (eblocks -o) >\n"
-                        "    -o, --output_file      <output file name>\n"
+                        "\nRequired arguments:\n"
+                        "    -p, --phenotypes       <phenotype file> strain order should match to (eblocks -b)\n"
+                        "    -b, --blocks           <output file from (eblocks -o) >\n"
+                        "    -o, --output           <output file name>\n"
                         "                           output gene-summaried results by default.\n"
-                        "\noptional arguments:\n"
+                        "\nOptional arguments:\n"
                         "    -n, --name             name of phenotype dataset. \n"
                         "                           suffix with _INDEL or _SV to indicate indel/SV blocks\n"
                         "    -c, --categorical      phenotype (-p) is categorical\n"
-                        "    -r, --relation         <genetic relation file .rel> \n"
-                        "                           n x n matrix. For population structure analysis\n"
-                        "    -e, --expression_file  <name of file>\n"
-                        "    -q, --equal_file       <name of file>\n"
-                        "    -t, --goterms_file     <name of file>\n"
-                        "    -i, --goterms_include_file <name of file> \n"
+                        "    -r, --relation         genetic relation file <.rel> for population structure analysis.\n"
+                        "                           n x n matrix with header line (startswith '#') contain sample names.\n"
+                        "    -e, --expression       <name of file>\n"
+                        "    -q, --equal            <name of file>\n"
+                        "    -t, --goterms          <name of file>\n"
+                        "    -i, --goterms_include  <name of file> \n"
                         "                           output only genes with these terms\n"
                         "    -f, --filter_coding    filter out non-coding blocks\n"
                         "    -g, --gene             output gene-summaried results. Default.\n"

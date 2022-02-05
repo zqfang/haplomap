@@ -48,30 +48,29 @@ EblockOptions *parseEblockOptions(int argc, char **argv)
             // I wanted to use the flag feature, but it wouldn't work.
             {"help", no_argument, 0, 'h'},
             {"verbose", no_argument, 0, 'v'},
-            {"non_overlapping", no_argument, 0, 'n'},
-            {"strains_file", required_argument, 0, 's'},
-            {"alleles_file", required_argument, 0, 'a'},
-            {"genes_file", required_argument, 0, 'g'},
-            {"blocks_file", required_argument, 0, 'o'},
-            {"blockSNPs_file", required_argument, 0, 'p'},
-            {"min_block_SNPs", required_argument, 0, 'm'},
+            {"non-overlapping", no_argument, 0, 'n'},
+            {"strains", required_argument, 0, 's'},
+            {"alleles", required_argument, 0, 'a'},
+            {"genes", required_argument, 0, 'g'},
+            {"output", required_argument, 0, 'o'},
+            {"block-variant", required_argument, 0, 'p'},
+            {"minblock-variant", required_argument, 0, 'm'},
             /*{"version", no_argument, 0, 0},*/
             {0, 0, 0, 0}};
 
     // default values
     opts->minBlockSNPs = 4;
 
-    const char *usage = "usage: eblocks [options]\n"
-                        "\nrequired arguments:\n" 
-                        "    -s, --strains_file     <name of strains file>\n"
-                        "    -a, --alleles_file     <name of alleles file>\n"
-                        "    -g, --genes_file       <name of SNPs-to-genes file>\n"
-                        "    -o, --blocks_file      <output file with haplotype blocks>\n"
-
-                        "\noptional arguments:\n"                       
-                        "    -p, --blockSNPs_file   <output file with SNPs for blocks>\n"
-                        "    -m, --min_block_SNPs\n"
-                        "    -n, --non_overlapping\n" 
+    const char *usage = "Usage: eblocks [options]\n"
+                        "\nRequired arguments:\n" 
+                        "    -s, --strains                 <name of strains file>\n"
+                        "    -a, --alleles                 <name of alleles file>\n"
+                        "    -g, --genes                   <name of SNPs-to-genes annotation file>\n"
+                        "    -o, --output                  <output file with haplotype blocks>\n"
+                        "\nOptional arguments:\n"                       
+                        "    -p, --block-variant           <output file with variants for blocks>\n"
+                        "    -m, --minblock-variant\n"
+                        "    -n, --non-overlapping\n" 
                         "    -v, --verbose\n"
                         "    -h, --help\n";
 
