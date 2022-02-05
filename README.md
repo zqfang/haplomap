@@ -4,7 +4,7 @@ Haplotype-based computational genetic mapping
 
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 
-
+![HBCGM](docs/HBCGM.png)
 ## Dependency 
 Works both on `Linux`and `MacOS`
 

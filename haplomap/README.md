@@ -4,7 +4,7 @@ Haplotype-based computational genetic mapping
 
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 
-![HBCGM](docs/HBCGM.png)
+![HBCGM](../docs/HBCGM.png)
 ## Usage
 
 ### 1. convert vcf to niehs format for eblocks
