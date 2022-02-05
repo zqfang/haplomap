@@ -3,10 +3,8 @@
 Haplotype-based computational genetic mapping  
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 
-![HBCGM](docs/HBCGM.png)
-
-## Introduction
 This is a brand-new version of HBCGM, named Haplomap. 
+
 ## Dependency 
 Works both on `Linux`and `MacOS`
 
