@@ -8,7 +8,8 @@ Haplotype-based computational genetic mapping
 ## Changelog
 v0.1
 * A brand new cmdline interface `haplomap`, including sub-commands.
-  - niehs: convert VCF to NIEHS compact format.
+  - convert: convert VCF to NIEHS compact format.
+  - annotate: convert Ensemble-VEP result to annotation file.
   - eblocks: find maximal haploblocks.
   - ghmap: haplotype statistical testing
   - pca: principal component analysis
@@ -22,6 +23,7 @@ v0.1
   - add unitest support, much easier for debugging and development 
 
 * ghmap:
+  - totally re-written with objected-oriented design style.
   - cmdline usage improvement
   - add population structure testing (Pillai’s Trace)
   - add multiple hypothesis testing correction for annova and pillai's trace (Benjamini Hochberg procedure)
@@ -31,9 +33,8 @@ v0.1
   - cmdline usage improvement
   - fixed memory leak
   - make cmdline option (-p) become optional. 
-  - minor patches for structural variant input.
+  - patches for structural variant input.
 * pca: 
-  - add a new sub-command 
   - could be used for getting genetic relationship 
 * covnert:
   - For historical reasons, eblocks use NIEHS compact format as input. 

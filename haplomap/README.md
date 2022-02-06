@@ -1,29 +1,36 @@
 
-# haplomap
+# Haplomap
 Haplotype-based computational genetic mapping  
 
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 
 ![HBCGM](../docs/HBCGM.png)
 ## Usage
+### 0. Variant calling
+See [variant calling](../workflows/README.md) using GATK, BCFtools, svtools.
 
-### 1. convert vcf to niehs format for eblocks
+
+### 1. Construct variant panel
+
+**WARNING**: If you use GATK pipeline, you have to subset SNP or Indel first, and then do the filtering by yourself. Haplomap `convert` only filter variants from BCFtools output. 
 
 SNPs
 ```shell
 build/bin/haplomap convert -o ${HOME}/data/SNPS/chr18.txt ${HOME}/data/VCFs/chr18.vcf
 
 # support stdin, but much slower
-zcat ${HOME}/data/VCFs/chr18.vcf.gz | bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.txt
+zcat ${HOME}/data/VCFs/chr18.vcf.gz | bin/haplomap convert -o ${HOME}/data/SNPS/chr18.txt
 ```
-Structural variants
+Structural variants (You need to filter SVs first)
 ```shell
-build/bin/haplomap niehs -o ${HOME}/data/SNPS/chr18.sv.txt --type sv input.sv.vcf
+build/bin/haplomap convert -o ${HOME}/data/SNPS/chr18.sv.txt \
+                           --type sv input.sv.vcf
 ```
 
-### 2. convert ensemble-vep results to eblocks input format
+### 2. Construct annotation file from ensemble-vep results
 ```shell
-build/bin/haplomap annotate -o ${HOME}/data/SNPS/chr18.annotation.txt --type snp input.vep.txt
+build/bin/haplomap annotate -o ${HOME}/data/SNPS/chr18.annotation.txt \
+                            --type snp input.vep.txt
 ```
 
 (Optional) If you'd like to use `ANNOVAR` results, see this
@@ -43,9 +50,7 @@ python scripts/annotateSNPs.py test_strains.txt chr18.txt \
 ```
 NOTE: Structural variants only support ensemble-vep inputs now !
 
-### 3. find haploblocks
-
-Find haploblocks
+### 3. Find haploblocks
 
 ```shell
 build/bin/haplomap eblocks -a ${HOME}/data/SNPS/chr18.txt \
@@ -54,9 +59,7 @@ build/bin/haplomap eblocks -a ${HOME}/data/SNPS/chr18.txt \
                      -o ${HOME}/TMPDATA/test.SNPs.hb.txt
 ```
 
-### 4. statistical testing with trait data
-
-Statistical testing  
+### 4. Statistical testing with trait data
 
 ```shell
 build/bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
