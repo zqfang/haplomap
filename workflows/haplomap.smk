@@ -77,19 +77,42 @@ rule target:
 #         for out in output:
 #             shell("touch %s"%out)
 
-# rule strain2trait:
-#     input: 
-#         strain = STRAIN_ANNO,
-#         ids = "MPD_{ids}/strain.{ids}.temp"
-#     output: 
-#         "MPD_{ids}/trait.{ids}.txt",
-#     params:
-#         trait = TRAIT_DATA,
-#         outdir = config['HBCGM']['WORKSPACE'],
-#         traitid = "{ids}",
-#         rawdata = config['HBCGM']['USE_RAWDATA']
-#     script:
-#         "../scripts/strain2traits.py"
+rule strain2trait:
+    input: 
+        strain = STRAIN_ANNO,
+        ids = "MPD_{ids}/strain.{ids}.temp"
+    output: 
+        "MPD_{ids}/trait.{ids}.txt",
+    params:
+        trait = TRAIT_DATA,
+        outdir = config['HBCGM']['WORKSPACE'],
+        traitid = "{ids}",
+        rawdata = config['HBCGM']['USE_RAWDATA']
+    script:
+        "../scripts/strain2traits.py"
+
+rule snp2NIEHS:
+    input:  
+        strain = "strain.order.snpdb.txt",
+        vcf = os.path.join(VCF_DIR, "chr{i}.vcf.gz"),
+    output: 
+        protected("SNPs/chr{i}.txt")
+    params:
+        qual = config['BCFTOOLS']['qual'], 
+        het = config['BCFTOOLS']['phred_likelihood_diff'],
+        ad = config['BCFTOOLS']['allele_depth'],
+        ratio = config['BCFTOOLS']['allele_mindepth_ratio'],
+        mq = config['BCFTOOLS']['mapping_quality'],
+        sb = config['BCFTOOLS']['strand_bias_pvalue'], 
+        BIN = config['HBCGM']['BIN']# path to haplomap binary
+    log: "logs/chr{i}.snp2niehs.log"
+    shell:
+        "bcftools view -f .,PASS -v snps {input.vcf} | "
+        "{params.BIN}/haplomap convert -o {output} -a {params.ad} -r {params.ratio} "
+        "-q {params.qual} -p {params.het} -m {params.mq} -b {params.sb} "
+        "-s {input.strain} -v > {log}"
+
+
 rule unGZip:
     input: os.path.join(VEP_DIR, "chr{i}.pass.vep.txt.gz"),
     output: temp(os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"))

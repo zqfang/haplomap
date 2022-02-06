@@ -1,4 +1,4 @@
-# Snakemake pipeline for SNV calling
+# Snakemake pipelines for Variant calling
 
 ## Usage
 ### 1. Edit the `config.yaml` file for required files:

@@ -5,6 +5,7 @@ import pandas as pd
 #configfile: "config.yaml"
 workdir: config['HBCGM']['WORKSPACE']
 HBCGM_BIN = config['HBCGM']['BIN']
+STRAINS = sorted(config['STRAINS'])
 # MPD trait ids
 if 'TRAIT_IDS' in config:
     TRAIT_IDS = config['TRAIT_IDS'] # input by --config TRAIT_IDS="ids.txt"
@@ -81,6 +82,33 @@ rule target:
 #     script:
 #         "scripts/strain2traits.py"
 
+rule strainOrder:
+    output: "strain.order.snpdb.txt"
+    run:
+        with open(output[0], 'w') as s:
+            s.write("\n".join(STRAINS) +"\n")
+
+rule Indel2NIEHS:
+    input:  
+        strain = "strain.order.snpdb.txt",
+        vcf = os.path.join(VCF_DIR, ,"{chr}.indel.vcf.gz"),
+    output: 
+        protected(os.path.join(SNPDB, "chr{i}.indel.txt"))
+    params:
+        qual = config['BCFTOOLS']['qual'], 
+        het = config['BCFTOOLS']['phred_likelihood_diff'],
+        ad = config['BCFTOOLS']['allele_depth'],
+        ratio = config['BCFTOOLS']['allele_mindepth_ratio'],
+        mq = config['BCFTOOLS']['mapping_quality'],
+        sb = config['BCFTOOLS']['strand_bias_pvalue'], 
+        BIN = config['HBCGM']['BIN']# path to haplomap binary
+    log: "logs/chr{i}.snp2niehs.log"
+    shell:
+        "bcftools view -f .,PASS -v indels {input.vcf} | "
+        "{params.BIN}/haplomap convert -o {output} -a {params.ad} -r {params.ratio} "
+        "-q {params.qual} -p {params.het} -m {params.mq} -b {params.sb} -t INDEL "
+        "-s {input.strain} -v > {log}"
+
 rule unGZip:
     input: os.path.join(VEP_DIR, "chr{i}.pass.vep.txt.gz"),
     output: temp(os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"))
@@ -100,11 +128,11 @@ rule annotateSNPs:
 # # find haplotypes
 rule eblocks:
     input: 
-        snps = os.path.join(SNPDB, "chr{i}.txt"),
+        snps = os.path.join(SNPDB, "chr{i}.indel.txt"),
         gene_anno = "MPD_{ids}/chr{i}.indel.anot.txt",
         strains = "MPD_{ids}/trait.{ids}.txt",
     output: 
-        hb = protected("MPD_{ids}/chr{i}.hblocks.txt"),
+        hb = protected("MPD_{ids}/chr{i}.indel.hblocks.txt"),
         snphb = protected("MPD_{ids}/chr{i}.indel.hblocks.txt")
     params:
         bin = HBCGM_BIN,
@@ -117,11 +145,11 @@ rule eblocks:
 # statistical testing with trait data       
 rule ghmap:
     input: 
-        hb = "MPD_{ids}/chr{i}.hblocks.txt",
+        hb = "MPD_{ids}/chr{i}.indel.hblocks.txt",
         trait = "MPD_{ids}/trait.{ids}.txt",
         gene_exprs = GENE_EXPRS,
         rel = GENETIC_REL,
-    output: "MPD_{ids}/chr{i}.results.txt"
+    output: "MPD_{ids}/chr{i}.indel.results.txt"
     params:
         bin = HBCGM_BIN,
         cat = "MPD_{ids}/trait.{ids}.categorical"
@@ -163,7 +191,7 @@ rule ghmap:
 
 
 rule ghmap_aggregate:
-    input: ["MPD_{ids}/chr%s.results.txt"%c for c in CHROMOSOMES]
+    input: ["MPD_{ids}/chr%s.indel.results.txt"%c for c in CHROMOSOMES]
     output: temp("MPD_{ids}_Indel.results.txt")
     run:
         # read input

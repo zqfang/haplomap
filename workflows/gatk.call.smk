@@ -270,35 +270,6 @@ rule mergeHardVCFs:
         "-O {output.vcf} 2>/dev/null "
 
 
-rule strainOrder:
-    output: "strain.order.snpdb.txt"
-    run:
-        with open(output[0], 'w') as s:
-            s.write("\n".join(STRAINS) +"\n")
-        
-rule snp2NIEHS:
-    input:  
-        strain = "strain.order.snpdb.txt",
-        vcf = "VCFs/chr{i}.hardfilter.vcf.gz",
-    output: 
-        protected("SNPs/chr{i}.txt")
-    params:
-        qual=config['GATK']['qual'], 
-        het = config['GATK']['phred_likelihood_diff'],
-        ad = config['GATK']['allele_depth'],
-        ratio = config['GATK']['allele_mindepth_ratio'],
-        mq = config['GATK']['mapping_quality'],
-        sb = config['GATK']['strand_bias_pvalue'], 
-        BIN = config['HBCGM']['BIN']# path to haplomap binary
-    log: "logs/chr{i}.snp2niehs.log"
-    shell:
-        # MARK: bcftools view -v snps won't work for GATK VCFs, 
-        # haplomap niehs will handle indels
-        "bcftools view -v snps {input.vcf} | "
-        "{params.BIN}/haplomap niehs -o {output} -a {params.ad} -r {params.ratio} "
-        "-q {params.qual} -p {params.het} -m {params.mq} -b {params.sb} "
-        "-s {input.strain} -v > {log}"
-
 
 ## only do this for VEP input
 # rule selectPASS:

@@ -36,21 +36,24 @@ HBCGM:
     USE_RAWDATA: false 
     # use custom database instead of using MPD API to get data.
     TRAIT_DATA:  "" # default: MPD database
+  
+    ######### eblock input ######### 
+    # strains metadata. 
+    STRAIN_ANNO: "/data/bases/shared/haplomap/PELTZ_20210609/strains.metadata.csv"
+    # path to SNP database
+    SNPS_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/INDELs"
+    # PATH to SNP annotations for all genes
+    # filtered VCF files after variant calling step 
+    VCF_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/VCFs"
+    # Ensembl-vep output after variant calling step
+    VEP_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/VEP"
 
     # genetic relation file from PLink output
     GENETIC_REL: "/data/bases/shared/haplomap/PELTZ_20210609/mouse54_grm.rel"
     # gene expression file
     GENE_EXPRS: "/data/bases/shared/haplomap/PELTZ_20210609/mus.compact.exprs.txt"
     # MeSH mapping
-    MPD2MeSH: "/data/bases/shared/haplomap/PELTZ_20210609/mpd2mesh.json"    
-    ######### eblock input ######### 
-    STRAIN48: "/data/bases/shared/haplomap/PELTZ_20210609/strain.54.txt"
-    # strains metadata. 
-    STRAIN_ANNO: "/data/bases/shared/haplomap/PELTZ_20210609/strains.metadata.csv"
-    # path to SNP database
-    SNPS_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/INDELs"
-    # PATH to SNP annotations for all genes
-    VEP_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/VEP"
+    MPD2MeSH: "/data/bases/shared/haplomap/PELTZ_20210609/mpd2mesh.json"  
     ######### others #########
     # open chromatin regions to annotate haploblocks.
     ATAC_PEAKS: "/scratch/users/fangzq/MouseEpigenomeAtlas/beds/*.blacklist_removed.broadPeak"

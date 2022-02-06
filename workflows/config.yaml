@@ -37,15 +37,15 @@ HBCGM:
     # use custom database instead of using MPD API to get data.
     TRAIT_DATA: "" # "/data/bases/shared/haplomap/PELTZ_20210609/strainmeans.csv" # default: MPD database
 
-    # genetic relation file from PLink output
-    GENETIC_REL: "/data/bases/shared/haplomap/PELTZ_20210609/mouse54_grm.rel"
-    # gene expression file
-    GENE_EXPRS: "/data/bases/shared/haplomap/PELTZ_20210609/mus.compact.exprs.txt"
-    # MeSH mapping
-    MPD2MeSH: "/data/bases/shared/haplomap/PELTZ_20210609/mpd2mesh.json"
     ######### eblock input ######### 
     # strains metadata. 
     STRAIN_ANNO: "/data/bases/shared/haplomap/PELTZ_20210609/strains.metadata.csv"
+    
+    # filtered VCF files after variant calling step 
+    VCF_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/VCFs"
+    # Ensembl-vep output after variant calling step
+    VEP_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/VEP"
+
     # path to SNP database
     SNPS_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/SNPs"
     # PATH to SNP annotations for all genes
@@ -53,7 +53,14 @@ HBCGM:
     # # snp, geneid,genename mapping
     # KNOWNGENE_META: "/data/bases/shared/haplomap/PELTZ_20210609/SNP_Annotation/mm10_kgXref.txt" 
     # KNOWNGENE: "/data/bases/shared/haplomap/PELTZ_20210609/SNP_Annotation/mm10_knownGene.txt" 
-    VEP_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/VEP"
+
+    # genetic relation file from PLink output
+    GENETIC_REL: "/data/bases/shared/haplomap/PELTZ_20210609/mouse54_grm.rel"
+    # gene expression file
+    GENE_EXPRS: "/data/bases/shared/haplomap/PELTZ_20210609/mus.compact.exprs.txt"
+    # MeSH mapping
+    MPD2MeSH: "/data/bases/shared/haplomap/PELTZ_20210609/mpd2mesh.json"
+
     ######### others #########
     # open chromatin regions to annotate haploblocks.
     ATAC_PEAKS: "Path/to/beds/*.blacklist_removed.broadPeak"

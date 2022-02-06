@@ -1,9 +1,11 @@
 import os, sys, json
 import pandas as pd
 
-WKDIR = "/data/bases/fangzq/Pubmed/test_cases/TEST"
 
-workdir: WKDIR
+workdir: config['HBCGM']['WORKSPACE']
+HBCGM_BIN = config['HBCGM']['BIN']
+WKDIR = config['HBCGM']['WORKSPACE']
+STRAINS = sorted(config['STRAINS'])
 # INPUT_FILES
 MESH_DICT = {
 #  '10806':'D003337',
@@ -31,7 +33,7 @@ HBCGM_BIN = "/home/fangzq/github/HBCGM/build/bin"
 # strains metadata. 
 STRAIN_ANNO = "/data/bases/shared/haplomap/PELTZ_20210609/strains.metadata.csv"
 # path to SNP database
-SNPDB_DIR =  "/data/bases/shared/haplomap/PELTZ_20210609/SNPs"
+VCF_DIR = "/data/bases/shared/haplomap/PELTZ_20210609/VCFs"
 # PATH to VEP annotations for all genes
 VEP_DIR = "/data/bases/shared/haplomap/PELTZ_20210609/VEP"
 MPD2MeSH = "/data/bases/shared/haplomap/PELTZ_20210609/mpd2mesh.json"
@@ -50,6 +52,56 @@ rule target:
     input: MESH
 
 
+rule strainOrder:
+    output: "strain.order.snpdb.txt"
+    run:
+        with open(output[0], 'w') as s:
+            s.write("\n".join(STRAINS) +"\n")
+        
+rule snp2NIEHS:
+    input:  
+        strain = "strain.order.snpdb.txt",
+        vcf = os.path.join(VCF_DIR, "chr{i}.vcf.gz"),
+    output: 
+        protected("SNPs/chr{i}.txt")
+    params:
+        qual = config['BCFTOOLS']['qual'], 
+        het = config['BCFTOOLS']['phred_likelihood_diff'],
+        ad = config['BCFTOOLS']['allele_depth'],
+        ratio = config['BCFTOOLS']['allele_mindepth_ratio'],
+        mq = config['BCFTOOLS']['mapping_quality'],
+        sb = config['BCFTOOLS']['strand_bias_pvalue'], 
+        BIN = config['HBCGM']['BIN']# path to haplomap binary
+    log: "logs/chr{i}.snp2niehs.log"
+    shell:
+        "bcftools view -f .,PASS -v snps {input.vcf} | "
+        "{params.BIN}/haplomap convert -o {output} -a {params.ad} -r {params.ratio} "
+        "-q {params.qual} -p {params.het} -m {params.mq} -b {params.sb} "
+        "-s {input.strain} -v > {log}"
+
+
+
+rule Indel2NIEHS:
+    input:  
+        strain = "strain.order.snpdb.txt",
+        vcf = os.path.join(VCF_DIR, ,"VCFs/{chr}.indel.vcf.gz"),
+    output: 
+        protected("INDELs/chr{i}.txt")
+    params:
+        qual = config['BCFTOOLS']['qual'], 
+        het = config['BCFTOOLS']['phred_likelihood_diff'],
+        ad = config['BCFTOOLS']['allele_depth'],
+        ratio = config['BCFTOOLS']['allele_mindepth_ratio'],
+        mq = config['BCFTOOLS']['mapping_quality'],
+        sb = config['BCFTOOLS']['strand_bias_pvalue'], 
+        BIN = config['HBCGM']['BIN']# path to haplomap binary
+    log: "logs/chr{i}.snp2niehs.log"
+    shell:
+        "bcftools view -f .,PASS -v indels {input.vcf} | "
+        "{params.BIN}/haplomap convert -o {output} -a {params.ad} -r {params.ratio} "
+        "-q {params.qual} -p {params.het} -m {params.mq} -b {params.sb} -t INDEL "
+        "-s {input.strain} -v > {log}"
+
 rule unGZip:
     input: os.path.join(VEP_DIR, "chr{i}.pass.vep.txt.gz"),
     output: temp(os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"))
@@ -66,6 +118,15 @@ rule annotateSNPs:
     shell:
         "{params.bin}/haplomap annotate -t snp -s {input.strains} -o {output} {input.vep} "
 
+rule annotateSNPs:
+    input: 
+        vep = os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"),
+        strains = "MPD_{ids}/trait.{ids}.txt",
+    output: "MPD_{ids}/chr{i}.indel.genename.txt"
+    params:
+        bin = HBCGM_BIN,
+    shell:
+        "{params.bin}/haplomap annotate -t indel -s {input.strains} -o {output} {input.vep} "
 
 # find haplotypes
 rule eblocks:
