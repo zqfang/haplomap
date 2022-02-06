@@ -22,7 +22,7 @@ SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOME)
 
 ############## Rules ##########################
 rule all:
-    input: VCF_HFILTER_PASS, SNPDB, #VEP_ANNO#VCF_VQSR
+    input: VCF_HFILTER_PASS, #VEP_ANNO#VCF_VQSR
 
 # include: "rules/align.recal.smk"
 

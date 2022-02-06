@@ -96,7 +96,7 @@ rule snp2NIEHS:
         strain = "strain.order.snpdb.txt",
         vcf = os.path.join(VCF_DIR, "chr{i}.vcf.gz"),
     output: 
-        protected("SNPs/chr{i}.txt")
+        protected(os.path.join(SNPDB, "chr{i}.txt"))
     params:
         qual = config['BCFTOOLS']['qual'], 
         het = config['BCFTOOLS']['phred_likelihood_diff'],

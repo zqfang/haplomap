@@ -1,9 +1,11 @@
 
-# Haplomap (a.k.a HBCGM )
-Haplotype-based computational genetic mapping  
+# Haplomap 
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
+Haplotype-based computational genetic mapping 
 
-This is a brand-new version of HBCGM, named Haplomap. 
+Haplomap is a successor project of HBCGM, as development on the latter was last continued in 2010. Haplomap has been adopted as a replacement for the original HBCGM.
+
+see the [CHANGELOG](./haplomap/CHANGELOG.md) to see what's new.
 
 ## Dependency 
 Works both on `Linux`and `MacOS`
@@ -28,7 +30,7 @@ Running pipeline
 
 ## Installation
 
-1. Install GSL and export the lib path  
+1. Download and compile [GSL](https://www.gnu.org/software/software.html), then export the lib path  
 e.g.
 ```bash
 ./configure --prefix=${HOME}/program/gsl
@@ -79,18 +81,16 @@ HBCGM:
     # path to haplomap
     BIN: "/home/fangzq/github/HBCGM/build/bin"
     
-    # ghmap input
-    # MPD trait ids 
+    # MPD id file, one id per line 
     TRAIT_IDS: "/data/bases/fangzq/MPD/drug-diet.ids.txt"
-    # set to true select individual animal data. Default: use strain means.   
+    # set to true will select individual animal data. Default: use strain means.   
     USE_RAWDATA: false 
-    # strains metadata: map strain abbrev to full name, jax ids, ect. 
-    # see docs folder to view example
+    # strains metadata: map strain abbrev to full name, jax ids, etc. 
+    # see docs folder to view examples
     STRAIN_ANNO: "/data/bases/shared/haplomap/PELTZ_20210609/strains.metadata.csv"
-
-    # eblock input
-    # `haplomap convert` output after variant calling step 
-    SNPS_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/SNPs"
+    
+    # filtered VCF files after variant calling step 
+    VCF_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/VCFs"
     # Ensembl-vep output after variant calling step
     VEP_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/VEP"
 

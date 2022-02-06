@@ -23,7 +23,7 @@ SNPDB = expand("SNPs/chr{i}.txt", i=CHROMSOME)
 INDELDB = expand("INDELs/chr{i}.txt", i=CHROMSOME)
 ###########################################################################################
 rule target:
-    input: VCF_RAW, VCF_PASS, VEP_SNP, VEP_INDEL, SNPDB, INDELDB #VEP_ANNO, #VCF_STATS
+    input: VCF_RAW, VCF_PASS, VEP_SNP, VEP_INDEL #VEP_ANNO, #VCF_STATS
 
 # samtools-bcftools-calling
 rule faidx: 
