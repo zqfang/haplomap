@@ -20,6 +20,7 @@ MPD2MeSH = config['HBCGM']['MPD2MeSH']
 
 # eblock input
 STRAIN_ANNO = config['HBCGM']['STRAIN_ANNO']
+VCF_DIR = config['HBCGM']['VCF_DIR']
 SNPDB = config['HBCGM']['SNPS_DIR']
 VEP_DIR = config['HBCGM']['VEP_DIR']
 GENE_EXPRS = config['HBCGM']['GENE_EXPRS']
@@ -44,7 +45,7 @@ IDS = [mnum for mnum in IDS if not os.path.exists(pat.format(ids = mnum))]
 CHROMOSOMES = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
 # output files
 # SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOMES)
-HBCGM =  expand("MPD_{ids}/chr{i}.results.txt", ids=IDS, i=CHROMOSOMES)
+HBCGM =  expand("MPD_{ids}/chr{i}.indel.results.txt", ids=IDS, i=CHROMOSOMES)
 # HBLOCKS = expand("MPD_{ids}/hblocks/chr{i}.hblocks.txt", ids=IDS, i=CHROMOSOMES)
 MESH = expand("MPD_{ids}_Indel.results.mesh.txt", ids=IDS)
 #HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.open_region.bed", ids=IDS, i=CHROMOSOMES)
@@ -53,7 +54,7 @@ MESH = expand("MPD_{ids}_Indel.results.mesh.txt", ids=IDS)
 
 
 rule target:
-    input: HBCGM, MESH#HBCGM_NONCODING
+    input: HBCGM #, MESH#HBCGM_NONCODING
 
 
 # rule pheno:
@@ -61,26 +62,26 @@ rule target:
 #     ouput: os.path.join(OUTPUT_DIR, "mpd.ids.txt")
 #     shell: 
 #         "cut -d, -f1 {input} | uniq | sed '1d' > {output.txt}"
-# rule traits: 
-#     output: temp(expand("MPD_{ids}/strain.{ids}.temp", ids=IDS))
-#     run:
-#         for out in output:
-#             shell("touch %s"%out)
+rule traits: 
+    output: temp(expand("MPD_{ids}/strain.{ids}.temp", ids=IDS))
+    run:
+        for out in output:
+            shell("touch %s"%out)
 
-# rule strain2trait:
-#     input: 
-#         strain = STRAIN_ANNO,
-#         ids = "MPD_{ids}/strain.{ids}.temp"
-#     output: 
-#         "MPD_{ids}/strain.{ids}.txt",
-#         "MPD_{ids}/trait.{ids}.txt",
-#     params:
-#         trait = TRAIT_DATA,
-#         outdir = config['HBCGM']['WORKSPACE'],
-#         traitid = "{ids}",
-#         rawdata = config['HBCGM']['USE_RAWDATA']
-#     script:
-#         "scripts/strain2traits.py"
+rule strain2trait:
+    input: 
+        strain = STRAIN_ANNO,
+        ids = "MPD_{ids}/strain.{ids}.temp"
+    output: 
+        "MPD_{ids}/strain.{ids}.txt",
+        "MPD_{ids}/trait.{ids}.txt",
+    params:
+        trait = TRAIT_DATA,
+        outdir = config['HBCGM']['WORKSPACE'],
+        traitid = "{ids}",
+        rawdata = config['HBCGM']['USE_RAWDATA']
+    script:
+        "../scripts/strain2traits.py"
 
 rule strainOrder:
     output: "strain.order.snpdb.txt"
@@ -91,7 +92,7 @@ rule strainOrder:
 rule Indel2NIEHS:
     input:  
         strain = "strain.order.snpdb.txt",
-        vcf = os.path.join(VCF_DIR, ,"{chr}.indel.vcf.gz"),
+        vcf = os.path.join(VCF_DIR, "chr{i}.vcf.gz"),
     output: 
         protected(os.path.join(SNPDB, "chr{i}.indel.txt"))
     params:
@@ -133,7 +134,7 @@ rule eblocks:
         strains = "MPD_{ids}/trait.{ids}.txt",
     output: 
         hb = protected("MPD_{ids}/chr{i}.indel.hblocks.txt"),
-        snphb = protected("MPD_{ids}/chr{i}.indel.hblocks.txt")
+        snphb = protected("MPD_{ids}/chr{i}.indel.snp.hblocks.txt")
     params:
         bin = HBCGM_BIN,
     log: "logs/MPD_{ids}.chr{i}.eblocks.log"
@@ -222,11 +223,12 @@ rule mesh:
     output: expand("MPD_{ids}_Indel.results.mesh.txt", ids=IDS)
     params: 
         # mesh = lambda wildcards: MESH_DICT[wildcards.ids]
+        gnnhap = config['HBCGM']['GNNHAP'],
         res_dir = config['HBCGM']['WORKSPACE'],
+        bundle = config['HBCGM']['GNNHAP_BUNDLE'],
     threads: 24
     shell:
-        "/home/fangzq/miniconda/envs/fastai/bin/python "
-        "/home/fangzq/github/InpherGNN/GNNHap/predict.py "
-        "--bundle /data/bases/fangzq/Pubmed/bundle " 
+        "python {params.gnnhap}/GNNHap/predict.py "
+        "--bundle {params.bundle} " 
         "--hbcgm_result_dir {params.res_dir} "
         "--mesh_terms {input.json} --num_cpus {threads} "

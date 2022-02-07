@@ -18,6 +18,7 @@ MPD2MeSH = config['HBCGM']['MPD2MeSH'] # json file
 # eblock input
 STRAIN_ANNO = config['HBCGM']['STRAIN_ANNO']
 SNPDB = config['HBCGM']['SNPS_DIR']
+VCF_DIR = config['HBCGM']['VCF_DIR']
 VEP_DIR = config['HBCGM']['VEP_DIR']
 # ANNOVAR = config['HBCGM']['ANNOVAR'] 
 # KNOWNGENE_META = config['HBCGM']['KNOWNGENE_META']
@@ -41,16 +42,6 @@ IDS = [i for i in IDS_ if i.split("-")[0] in MESH_DICT ]
 pat = config['HBCGM']['WORKSPACE'] + "MPD_{ids}_Indel.results.txt"
 IDS = [mnum for mnum in IDS if not os.path.exists(pat.format(ids = mnum))]
 
-# ## skip run if already done
-# pat1 = config['HBCGM']['WORKSPACE'] + "MPD_{ids}/chrX.results.txt"
-# pat2 = config['HBCGM']['WORKSPACE'] + "MPD_{ids}/chr1.results.txt"
-# pat3 = config['HBCGM']['WORKSPACE'] + "MPD_{ids}/chr9.results.txt"
-# IDS = []
-# for mnum in IDS_:
-#     if os.path.exists(pat1.format(ids = mnum)) and os.path.exists(pat2.format(ids = mnum)) and os.path.exists(pat3.format(ids = mnum)):
-#         continue
-#     IDS.append(mnum)
-
 CHROMOSOMES = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
 # output files
 # SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOMES)
@@ -63,7 +54,7 @@ HBCGM_MESH = expand("MPD_{ids}.results.mesh.txt", ids=IDS)
 
 
 rule target:
-    input: HBCGM_MESH, #HBCGM_NONCODING
+    input: HBCGM, #HBCGM_MESH, #HBCGM_NONCODING
 
 
 # rule pheno:
@@ -71,11 +62,11 @@ rule target:
 #     ouput: os.path.join(OUTPUT_DIR, "mpd.ids.txt")
 #     shell: 
 #         "cut -d, -f1 {input} | uniq | sed '1d' > {output.txt}"
-# rule traits: 
-#     output: temp(expand("MPD_{ids}/strain.{ids}.temp", ids=IDS))
-#     run:
-#         for out in output:
-#             shell("touch %s"%out)
+rule traits: 
+    output: temp(expand("MPD_{ids}/strain.{ids}.temp", ids=IDS))
+    run:
+        for out in output:
+            shell("touch %s"%out)
 
 rule strain2trait:
     input: 
@@ -123,7 +114,7 @@ rule annotateSNPs:
     input: 
         vep = os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"),
         strains = "MPD_{ids}/trait.{ids}.txt",
-    output: "MPD_{ids}/hblocks/chr{i}.genename.txt"
+    output: "MPD_{ids}/chr{i}.genename.txt"
     params:
         bin = HBCGM_BIN,
     shell:
@@ -133,11 +124,11 @@ rule annotateSNPs:
 rule eblocks:
     input: 
         snps = os.path.join(SNPDB, "chr{i}.txt"),
-        gene_anno = "MPD_{ids}/hblocks/chr{i}.genename.txt",
+        gene_anno = "MPD_{ids}/chr{i}.genename.txt",
         strains = "MPD_{ids}/trait.{ids}.txt",
     output: 
-        hb = protected("MPD_{ids}/hblocks/chr{i}.hblocks.txt"),
-        snphb = protected("MPD_{ids}/hblocks/chr{i}.snp.hblocks.txt")
+        hb = protected("MPD_{ids}/chr{i}.hblocks.txt"),
+        snphb = protected("MPD_{ids}/chr{i}.snp.hblocks.txt")
     params:
         bin = HBCGM_BIN,
     log: "logs/MPD_{ids}.chr{i}.eblocks.log"
@@ -149,7 +140,7 @@ rule eblocks:
 # statistical testing with trait data       
 rule ghmap:
     input: 
-        hb = "MPD_{ids}/hblocks/chr{i}.hblocks.txt",
+        hb = "MPD_{ids}/chr{i}.hblocks.txt",
         trait = "MPD_{ids}/trait.{ids}.txt",
         gene_exprs = GENE_EXPRS,
         rel = GENETIC_REL
@@ -200,12 +191,13 @@ rule mesh:
     output: expand("MPD_{ids}.results.mesh.txt", ids=IDS)
     params: 
         # mesh = lambda wildcards: MESH_DICT[wildcards.ids]
+        gnnhap = config['HBCGM']['GNNHAP'],
         res_dir = config['HBCGM']['WORKSPACE'],
+        bundle = config['HBCGM']['GNNHAP_BUNDLE'],
     threads: 24
     shell:
-        "/home/fangzq/miniconda/envs/fastai/bin/python "
-        "/home/fangzq/github/InpherGNN/GNNHap/predict.py "
-        "--bundle /data/bases/fangzq/Pubmed/bundle " 
+        "python {params.gnnhap}/GNNHap/predict.py "
+        "--bundle {params.bundle} " 
         "--hbcgm_result_dir {params.res_dir} "
         "--mesh_terms {input.json} --num_cpus {threads} "
 
