@@ -3,9 +3,9 @@
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 Haplotype-based computational genetic mapping 
 
-Haplomap is a successor project of HBCGM, as development on the latter was last continued in 2010. Haplomap has been adopted as a replacement for the original HBCGM (The maximal haplotype construction method developed by David Dill at Stanford).
+Haplomap is a successor project of HBCGM, as development on the latter was last continued in 2010. Haplomap has been adopted as a replacement for the original HBCGM 
 
-see the [CHANGELOG](./haplomap/CHANGELOG.md) to see what's new.
+see what's new  in the [CHANGELOG](./haplomap/CHANGELOG.md).
 
 ## Dependency 
 Works both on `Linux`and `MacOS`
@@ -140,6 +140,9 @@ Email:
 ## Copyright and License Information
 Copyright (C) 2019-2022 Stanford University, Zhuoqing Fang and Gary Peltz.
 
-Authors: Zhuoqing Fang and Gary Peltz
+Authors: Zhuoqing Fang and Gary Peltz.
+
+The original HBCGM (the maximal haplotype construction method) was developed by David Dill at Stanford.
+
 
 This program is licensed with commercial restriction use license. Please see the attached LICENSE file for details.
