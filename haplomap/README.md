@@ -12,7 +12,7 @@ See [variant calling](../workflows/README.md) using GATK, BCFtools, svtools.
 
 ### 1. Construct variant panel
 
-**WARNING**: If you use GATK pipeline, you have to subset SNP or Indel first, and then do the filtering by yourself. Haplomap `convert` only filter variants from BCFtools output. 
+**WARNING**: If you use GATK pipeline, you have to filter and subset SNP or Indel first. Haplomap `convert` work best with variants from BCFtools output. 
 
 SNPs
 ```shell
@@ -30,7 +30,9 @@ build/bin/haplomap convert -o ${HOME}/data/SNPS/chr18.sv.txt \
 ### 2. Construct annotation file from ensemble-vep results
 ```shell
 build/bin/haplomap annotate -o ${HOME}/data/SNPS/chr18.annotation.txt \
-                            --type snp input.vep.txt
+                            --type snp \
+                            --samples test_strains.txt \ # only annotate the selected strains
+                            input.vep.txt
 ```
 
 (Optional) If you'd like to use `ANNOVAR` results, see this
@@ -73,6 +75,8 @@ Recommend adding `-a` flag, which will output gene-oriented format results.
 **NOTE 2:** strain order in (-p) should keep the same to the (-b). That's, eblocks (-s)
 
 ## Input
+see `example` folder for test cases.
+
 1. eblocks:
     - Strain file (-s): 
       - Tree column txt file: "#Abbrev \t (Optional) \t Values "

@@ -45,4 +45,4 @@ v0.1
  
 
 v0.0
-* The original version of haplomap
+* The original version of haplomap developed by David Dill at Stanford

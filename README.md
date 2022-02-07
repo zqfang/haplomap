@@ -3,7 +3,7 @@
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 Haplotype-based computational genetic mapping 
 
-Haplomap is a successor project of HBCGM, as development on the latter was last continued in 2010. Haplomap has been adopted as a replacement for the original HBCGM.
+Haplomap is a successor project of HBCGM, as development on the latter was last continued in 2010. Haplomap has been adopted as a replacement for the original HBCGM (The maximal haplotype construction method developed by David Dill at Stanford).
 
 see the [CHANGELOG](./haplomap/CHANGELOG.md) to see what's new.
 
