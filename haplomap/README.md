@@ -35,7 +35,7 @@ build/bin/haplomap annotate -o ${HOME}/data/SNPS/chr18.annotation.txt \
                             input.vep.txt
 ```
 
-(Optional) If you'd like to use `ANNOVAR` results, see this
+(Optional) If you'd like to use `ANNOVAR` (contributed by Boyoung Yoo @byoo1), see this
 
 - 1. generate strain level gene annotation database (only run once), see here: 
 [scripts/gene_annotation](../scripts/gene_annotation/README.md)
