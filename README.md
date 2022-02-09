@@ -142,7 +142,7 @@ Copyright (C) 2019-2022 Stanford University, Zhuoqing Fang and Gary Peltz.
 
 Authors: Zhuoqing Fang and Gary Peltz.
 
-The original HBCGM (the maximal haplotype construction method) was developed by David Dill at Stanford.
+The original HBCGM (the maximal haplotype construction method) was developed by Dr. David Dill and Dr. Gary Peltz at Stanford.
 
 
 This program is licensed with commercial restriction use license. Please see the attached LICENSE file for details.
