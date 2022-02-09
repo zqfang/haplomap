@@ -73,4 +73,4 @@ One of my colleague who studies mouse genetics, said,
 > In addition, in one of their mouse genomic paper that we reviewed, they even skipped the second recalibration step. We asked them why and they said it was because of the same reason: good for human but not that good for the homogeneous inbred mouse.
 
 
-However, my experiences with GATK (>v4.0) are as good as bcftools.
+However, my experiences with GATK (>v4.0) is as good as bcftools.
