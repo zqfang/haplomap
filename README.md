@@ -62,6 +62,17 @@ See more detail in ``haplomap`` subfolder: [Run haplomap standalone](haplomap/RE
 
 ### Use `snakemake` workflow to run Mouse Phenome Database (MPD) datasets
 
+#### 0. Variant calling
+
+See [variant calling](../workflows/README.md) using GATK, BCFtools, svtools.
+
+e.g.
+```shell
+# modify the file path in haplomap and run with 12 cores
+snakemake -s workflows/bcftools.call.smk  --configfile config.yaml \
+          -k -p -j 12   
+```
+
 [Mouse Phenome Database](https://phenome.jax.org/) have > 10K datasets. Try to configure the files below to run
 #### 1. Prepare MPD `measnum` id file. One id per row, suffixed with "-m" or "-f"(f: female, m: male)
 ```
