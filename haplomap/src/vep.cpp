@@ -281,7 +281,7 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
                                                  rdr.getToken(columns["BIOTYPE"]),
                                                  rdr.getToken(columns["HGVSc"]),
                                                  rdr.getToken(columns["HGVSp"]));
-            this->data.push_back(pRecord);
+            this->data.push_back(pRecord); // for deconstuctor
             /// FIXME: indel annotation vep input also have entries indel, insertion, deletion. How to handel these?
             int var_len = pRecord->end - pRecord->start;
             if (pRecord->variant_class == "SNV")
@@ -289,12 +289,13 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
                 key = "SNP_" + pRecord->chrom + "_" + std::to_string(pRecord->start);
             }
             else if ((pRecord->variant_class == "indel") ||
-                     ((pRecord->variant_class == "insertion") && var_len < 30) || 
-                     ((pRecord->variant_class ==  "deletion") && var_len < 30) )
+                     ((pRecord->variant_class == "insertion") && var_len < 50) ||  
+                     ((pRecord->variant_class ==  "deletion") && var_len < 50) )
             {
                 /// NOTE: VEP indels are > 2bp, else it will annotate as deletions and insertions. 
                 /// So, defined 1 bp del or ins as Indels for downstream analysis
                 /// see docs: https://m.ensembl.org/info/genome/variation/prediction/classification.html  
+                /// we force var_len < 50 bp to be indels
                 key = "INDEL_" + pRecord->chrom + "_" + std::to_string(pRecord->start);
             }
             else
