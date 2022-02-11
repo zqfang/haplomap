@@ -188,14 +188,14 @@ int main_convert(int argc, char **argv)
     // 
     // to lower case
     std::string varType(opts->variantType);
-    std::transform(varType.begin(), varType.end(), varType.begin(), ::tolower);
-    std::vector<std::string> v = {"snp","snv", "indel", "sv"};
+    std::transform(varType.begin(), varType.end(), varType.begin(), ::toupper);
+    std::vector<std::string> v = {"SNP","SNV", "INDEL", "SV"};
     if (std::find(v.begin(), v.end(), varType) == v.end())
     {
         std::cerr<<"Variant type (-t) error. Input one of these: snp, indel, sv"<<std::endl;
         std::exit(1);
     }
-    if (varType == "snp") varType = "snv";
+    if (varType == "SNP") varType = "SNV";
     opts->variantType = (char*)varType.c_str();
     ///
     std::string line;

@@ -42,7 +42,7 @@ struct VCFOptions
 
     // constructor
     VCFOptions() : inputFileName(nullptr), outputFileName(nullptr), 
-                     sampleFileName(nullptr), variantType((char*)"snv"),
+                     sampleFileName(nullptr), variantType((char*)"SNV"),
                      plink(false), phredLikelihoodDifference(20.0), 
                      qual(50.0), mappingQuality(20.0), strandBiasPhredPval(50.0), 
                      readPositionBias(0.0001), baseQualityBias(0),variantDistanceBias(0), 

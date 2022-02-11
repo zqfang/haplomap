@@ -266,10 +266,10 @@ bool VCF::parseSNP(std::vector<std::string> & alleles,
     } 
     else 
     {
-    std::cerr<<"Variant position "<<variant.CHROM<<":"<<variant.POS
-                <<"INFO Tag (SB or FS) is not Found ! Skip strand bias filtering"
-                <<std::endl;
-    strandBiasPhredPval = 0;
+        std::cerr<<"Variant position "<<variant.CHROM<<":"<<variant.POS
+                    <<"INFO Tag (SB or FS) is not Found ! Skip strand bias filtering"
+                    <<std::endl;
+        strandBiasPhredPval = 0;
     } 
     if (strandBiasPhredPval >  opts->strandBiasPhredPval)
         return false; // filter strand bias variant 
@@ -497,7 +497,7 @@ void VCF::parseRecords()
         // string find not found, skip
         // std::unordered_map<std::string, std::string> INFO = variant.getINFO();
         std::vector<std::string> alleles(strains.size(),"?");  
-        if (variant.isSNP && std::strcmp(opts->variantType, "snv") == 0)
+        if (variant.isSNP && std::strcmp(opts->variantType, "SNV") == 0)
         {
             bool ret = parseSNP(alleles, alts, hasAlt);
             if (!ret)
@@ -510,7 +510,7 @@ void VCF::parseRecords()
 
             }
         } 
-        else if (!variant.isSNP && (std::strcmp(opts->variantType, "sv") == 0 || std::strcmp(opts->variantType, "indel") == 0 ))
+        else if (!variant.isSNP && (std::strcmp(opts->variantType, "SV") == 0 || std::strcmp(opts->variantType, "INDEL") == 0 ))
         {
 
             bool ret = parseStructralVariant(alleles, alts, hasAlt);
