@@ -12,19 +12,14 @@ See [variant calling](../workflows/README.md) using GATK, BCFtools, svtools.
 
 ### 1. Construct variant panel
 
-**WARNING**: If you use GATK pipeline, you have to filter and subset SNP or Indel first. Haplomap `convert` work best with variants from BCFtools output. 
+**WARNING**: If you use GATK pipeline or Structrual Variants, you have to filter and subset SVs or Indels first. Haplomap `convert` work best with variants from BCFtools output. 
 
-SNPs
 ```shell
-build/bin/haplomap convert -o ${HOME}/data/SNPS/chr18.txt ${HOME}/data/VCFs/chr18.vcf
+build/bin/haplomap convert --type snp \
+                           -o ${HOME}/data/SNPS/chr18.txt ${HOME}/data/VCFs/chr18.vcf
 
 # support stdin, but much slower
 zcat ${HOME}/data/VCFs/chr18.vcf.gz | bin/haplomap convert -o ${HOME}/data/SNPS/chr18.txt
-```
-Structural variants (You need to filter SVs first)
-```shell
-build/bin/haplomap convert -o ${HOME}/data/SNPS/chr18.sv.txt \
-                           --type sv input.sv.vcf
 ```
 
 ### 2. Construct annotation file from ensemble-vep results
