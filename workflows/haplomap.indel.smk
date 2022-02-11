@@ -107,7 +107,7 @@ rule Indel2NIEHS:
     shell:
         "bcftools view -f .,PASS -v indels {input.vcf} | "
         "{params.BIN}/haplomap convert -o {output} -a {params.ad} -r {params.ratio} "
-        "-q {params.qual} -p {params.het} -m {params.mq} -b {params.sb} -t INDEL "
+        "-q {params.qual} -d {params.het} -m {params.mq} -b {params.sb} -t INDEL "
         "-s {input.strain} -v > {log}"
 
 rule unGZip:

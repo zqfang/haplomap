@@ -100,7 +100,7 @@ rule snp2NIEHS:
     shell:
         "bcftools view -f .,PASS -v snps {input.vcf} | "
         "{params.BIN}/haplomap convert -o {output} -a {params.ad} -r {params.ratio} "
-        "-q {params.qual} -p {params.het} -m {params.mq} -b {params.sb} "
+        "-q {params.qual} -d {params.het} -m {params.mq} -b {params.sb} "
         "-s {input.strain} -v > {log}"
 
 
