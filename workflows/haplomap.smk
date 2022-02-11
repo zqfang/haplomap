@@ -42,12 +42,12 @@ IDS = [i for i in IDS_ if i.split("-")[0] in MESH_DICT ]
 pat = config['HBCGM']['WORKSPACE'] + "MPD_{ids}_Indel.results.txt"
 IDS = [mnum for mnum in IDS if not os.path.exists(pat.format(ids = mnum))]
 
-CHROMOSOMES = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
+CHROMSOME = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
 # output files
 # SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOMES)
-HBCGM =  expand("MPD_{ids}/chr{i}.results.txt", ids=IDS, i=CHROMOSOMES)
-HBLOCKS = expand("MPD_{ids}/chr{i}.hblocks.txt", ids=IDS, i=CHROMOSOMES)
-HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.open_region.bed", ids=IDS, i=CHROMOSOMES)
+HBCGM =  expand("MPD_{ids}/chr{i}.results.txt", ids=IDS, i=CHROMSOME)
+HBLOCKS = expand("MPD_{ids}/chr{i}.hblocks.txt", ids=IDS, i=CHROMSOME)
+HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.open_region.bed", ids=IDS, i=CHROMSOME)
 HBCGM_MESH = expand("MPD_{ids}.results.mesh.txt", ids=IDS)
 # rules that not work in a new node
 #localrules: target, traits, strain2trait  
@@ -56,7 +56,7 @@ HBCGM_MESH = expand("MPD_{ids}.results.mesh.txt", ids=IDS)
 rule target:
     input: HBCGM, #HBCGM_MESH, #HBCGM_NONCODING
 
-
+########################### Prepare Phenotypic DATA (from MPD API) ############################
 # rule pheno:
 #     input: TRAIT_DATA
 #     ouput: os.path.join(OUTPUT_DIR, "mpd.ids.txt")
@@ -82,12 +82,16 @@ rule strain2trait:
     script:
         "../scripts/strain2traits.py"
 
+
+############################ Convert VCF to niehs, tped, tfam  ########################################
+
 rule snp2NIEHS:
     input:  
-        strain = "strain.order.snpdb.txt",
         vcf = os.path.join(VCF_DIR, "chr{i}.vcf.gz"),
     output: 
-        protected(os.path.join(SNPDB, "chr{i}.txt"))
+        niehs = protected(os.path.join(SNPDB, "chr{i}.txt")),
+        tped = temp(os.path.join(SNPDB, "chr{i}.tped")),
+        tfam = temp(os.path.join(SNPDB, "chr{i}.tfam")),
     params:
         qual = config['BCFTOOLS']['qual'], 
         het = config['BCFTOOLS']['phred_likelihood_diff'],
@@ -99,11 +103,89 @@ rule snp2NIEHS:
     log: "logs/chr{i}.snp2niehs.log"
     shell:
         "bcftools view -f .,PASS -v snps {input.vcf} | "
-        "{params.BIN}/haplomap convert -o {output} -a {params.ad} -r {params.ratio} "
+        "{params.BIN}/haplomap convert -o {output.niehs} -a {params.ad} -r {params.ratio} "
         "-q {params.qual} -d {params.het} -m {params.mq} -b {params.sb} "
-        "-s {input.strain} -v > {log}"
+        "--plink -v > {log}"
 
+################## Generate Relationship Matrix #################################################
+rule toPLinkBed:
+    input:
+        os.path.join(SNPDB, "chr{i}.tped"),
+        os.path.join(SNPDB, "chr{i}.tfam"),
+    output:
+        temp(os.path.join(SNPDB, "chr{i}.bed")),
+        temp(os.path.join(SNPDB, "chr{i}.bim")),
+        temp(os.path.join(SNPDB, "chr{i}.fam")),
+    params:
+        prefix = os.path.join(SNPDB, "chr{i}")
+    shell:
+        "plink --tfile {params.prefix} --make-bed --out {params.prefix}"
+        
 
+rule merge_list:
+    output: temp(os.path.join(SNPDB, "mergelist.txt"))
+    params:
+        chrom = CHROMSOME,
+        prefix = os.path.join(SNPDB, "chr")
+    run:
+        path = params.prefix
+        with open(output[0], 'w') as out:
+            for i in params.chrom:
+                if str(i) == "1": continue 
+                outline = f"{path}{i}.bed {path}{i}.bim {path}{i}.fam\n"
+                out.write(outline)
+
+rule merge_bed:
+    input: 
+        merge = os.path.join(SNPDB, "mergelist.txt"),
+        beds = expand(os.path.join(SNPDB, "chr{i}.bed"), i=CHROMSOME),
+        bims = expand(os.path.join(SNPDB, "chr{i}.bim"), i=CHROMSOME),
+        fams = expand(os.path.join(SNPDB, "chr{i}.fam"), i=CHROMSOME),
+    output:
+         os.path.join(SNPDB, "PLINK/inbred.bed"),
+         os.path.join(SNPDB, "PLINK/inbred.bim"),
+         os.path.join(SNPDB, "PLINK/inbred.fam"),
+    params:
+        prefix = SNPDB
+    shell:
+        "plink --bfile {params.prefix}/chr1 --merge-list {input.merge} --make-bed --out {params.prefix}/PLINK/inbred"
+
+rule rel_distance_matrix:
+    input:
+        os.path.join(SNPDB, "PLINK/inbred.bed"),
+        os.path.join(SNPDB, "PLINK/inbred.bim"),
+        os.path.join(SNPDB, "PLINK/inbred.fam"),
+    output:
+        os.path.join(SNPDB,"PLINK/inbred_grm.rel"),
+        os.path.join(SNPDB,"PLINK/inbred_grm.rel.id"),
+    params:
+        prefix = os.path.join(SNPDB, "PLINK")
+    threads: 12
+    shell:
+        "plink --bfile {params.prefix}/inbred " # need .bed, .bim, .fam
+        "--make-rel square "
+        "--out {params.prefix}/inbred_grm "
+        "--threads {threads}"
+
+rule rel_dist_ghmap:
+    input:
+        rel = os.path.join(SNPDB,"PLINK/inbred_grm.rel"),
+        names = os.path.join(SNPDB,"PLINK/inbred_grm.rel.id"),
+    output:
+        rel = GENETIC_REL,
+    run:
+        samples = []
+        with open(input.names, 'r') as name:
+            for n in name:
+                samples.append(n.strip().split("\t")[-1])
+        samples = "\t".join(samples)
+        with open(input.rel, 'r') as dist:
+            matrix = dist.read()
+        with open(output.rel, 'w') as out:
+            out.write("#"+samples+"\n")
+            out.write(matrix)
+
+######################### Prepare Variant Annotation File #########################################
 rule unGZip:
     input: os.path.join(VEP_DIR, "chr{i}.pass.vep.txt.gz"),
     output: temp(os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"))
@@ -120,6 +202,8 @@ rule annotateSNPs:
     shell:
         "{params.bin}/haplomap annotate -t snp -s {input.strains} -o {output} {input.vep} "
 
+
+######################## START TO RUN Main Program #####################################
 # find haplotypes
 rule eblocks:
     input: 
@@ -160,7 +244,7 @@ rule ghmap:
 
 rule ghmap_aggregate:
     input: 
-        res = ["MPD_{ids}/chr%s.results.txt"%c for c in CHROMOSOMES]
+        res = ["MPD_{ids}/chr%s.results.txt"%c for c in CHROMSOME]
     output: temp("MPD_{ids}.results.txt")
     run:
         # read input
