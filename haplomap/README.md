@@ -122,14 +122,14 @@ note: the mergelist.txt in this format
   ...
   ```
 
-3. Sample-distance and similarity matrices
+4. Sample-distance and similarity matrices
 ```shell
 plink --bfile mouse_merged # need .bim, .fam
       --make-rel square \ # Relationship/covariance
       --out mouse_grm \
       --threads 12
 ```
-4. format to (ghmap -r) input
+5. format to (ghmap -r) input
 ```shell
 cut -f2 mouse_grm.rel.id | tr "\n" "\t" > mouse_grm.dist
 echo "#$(cat mouse_grm.dist)" > mouse_grm.dist
