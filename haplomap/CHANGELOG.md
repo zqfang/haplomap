@@ -35,11 +35,12 @@ v0.1
   - make cmdline option (-p) become optional. 
   - patches for structural variant input.
 * pca: 
-  - could be used for getting genetic relationship 
+  - could be used for genetic relationship analysis 
 * covnert:
   - For historical reasons, eblocks use NIEHS compact format as input. 
   - To use haplomap more friendly, we now do this for you. 
   - support structral variant input. 
+  - output tped, tfam file for plinks (used for genetic distance matrix calculation)
 * annotate:
   - convert ensemble-vep result for variant annotation input for eblocks.
  

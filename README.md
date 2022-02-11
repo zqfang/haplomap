@@ -157,5 +157,6 @@ Authors: Zhuoqing Fang and Gary Peltz.
 
 The original HBCGM (the maximal haplotype construction method) was developed by Dr. David Dill and Dr. Gary Peltz at Stanford.
 
+HBCGM/Halomap is patented to Dr. Gary Peltz.
 
 This program is licensed with commercial restriction use license. Please see the attached LICENSE file for details.
