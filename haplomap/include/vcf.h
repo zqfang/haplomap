@@ -21,6 +21,7 @@ struct VCFOptions
     char *outputFileName;
     char *sampleFileName;
     char *variantType; 
+    bool plink; 
     float phredLikelihoodDifference; // PL_other - PL_homo > 20
     float qual;  // QUAL field
     float mappingQuality; // MQ
@@ -42,7 +43,7 @@ struct VCFOptions
     // constructor
     VCFOptions() : inputFileName(nullptr), outputFileName(nullptr), 
                      sampleFileName(nullptr), variantType((char*)"snv"),
-                     phredLikelihoodDifference(20.0), 
+                     plink(false), phredLikelihoodDifference(20.0), 
                      qual(50.0), mappingQuality(20.0), strandBiasPhredPval(50.0), 
                      readPositionBias(0.0001), baseQualityBias(0),variantDistanceBias(0), 
                      alleleDepth(3.0), ratio(0.1), gapWindow(20), snpGap(3), 
@@ -93,16 +94,20 @@ public:
     bool parseSNP(std::vector<std::string> & alleles, 
                            std::vector<std::string>& alts, std::vector<int>& hasAlt);
     void writeSNP(std::vector<std::string> &alleles);
+    void writeTPED(std::vector<std::string> &alleles);
+    void writeTFAM();
     void writeStructralVariant(std::vector<std::string> &alleles, const char* varType);
 
 private:
     std::string line;
     Variant variant;
-    std::string outHeader = "C57BL/6J";
+    std::string outHeader;
     Dynum<std::string> strains;
     std::vector<std::string> samples;
     // output file
     std::ofstream output;
+    std::ofstream tped;
+    std::ofstream tfam;
     // read input file
     std::istream* input;
     VCFOptions* opts;

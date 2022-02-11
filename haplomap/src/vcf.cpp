@@ -121,31 +121,70 @@ float Variant::max(const std::string & fmt)
 }   
 
 
-VCF::VCF(std::istream* input, std::shared_ptr<VCFOptions> opts)
+VCF::VCF(std::istream* input, std::shared_ptr<VCFOptions> opts):
+outHeader("C57BL/6J")
 {
     this->input = input;
     this->opts = opts.get();
     this->output.open(opts->outputFileName);      
     // output header
-    output<<outHeader;
     parseHeader();
+    output<<outHeader;
+    for (int i=0; i < strains.size(); i++)
+    {
+        output<<"\t"<<strains.eltOf(i);
+    }
+    output<<std::endl;
+    
+    if (opts->plink)
+    {
+       this->tped.open(std::string(opts->outputFileName)+".tped");
+       this->tfam.open(std::string(opts->outputFileName)+".tfam");
+       this->writeTFAM();
+    }
 
 }
-VCF::VCF(std::istream* input,  std::shared_ptr<VCFOptions> opts, std::vector<std::string> samples)
+VCF::VCF(std::istream* input,  std::shared_ptr<VCFOptions> opts, std::vector<std::string> samples):
+outHeader("C57BL/6J")
 {
     this->input = input;
     this->opts = opts.get();
     this->samples = samples;
-    this->output.open(opts->outputFileName);      
+    this->output.open(opts->outputFileName);   
+  
+    parseHeader();
     // output header
     output<<outHeader;
     if (!samples.empty()) 
     {
-        for (auto& s: samples)
-            output <<"\t"<<s;
-        output<<std::endl;
+        int refind = -1;
+        for (size_t i = 0; i < samples.size(); i++)
+        {
+            if (samples[i] == outHeader) 
+            {
+                refind = i;
+                continue;
+            }
+            output <<"\t"<<samples[i];
+        }   
+        // drop reference strain if in the samples 
+        if (refind >= 0)
+            samples.erase(samples.begin()+refind);
+    } else
+    {
+        for (int i=0; i < strains.size(); i++)
+            output<<"\t"<<strains.eltOf(i);
     }
-    parseHeader();
+    output<<std::endl;
+
+    if (opts->plink)
+    {
+       std::string pout(opts->outputFileName);
+       size_t pos = pout.find_last_of(".");
+       this->tped.open(pout.substr(0, pos)+".tped");
+       this->tfam.open(pout.substr(0, pos)+".tfam");
+       this->writeTFAM();
+    } 
 }
 
 
@@ -153,6 +192,11 @@ VCF::~VCF()
 {
     // input.close();
     output.close();
+    if (opts->plink)
+    {
+        tped.close();
+        tfam.close();
+    }
 }
 
 void VCF::parseHeader()
@@ -171,39 +215,29 @@ void VCF::parseHeader()
             //strains = std::vector<std::string>(header.begin()+9, header.end());
             for (auto itr = header.begin()+9; itr != header.end(); itr++)
                 strains.addElementIfNew(*itr);
-             
-            if (!samples.empty()) 
-            {
-                if (strains.size() < (int) samples.size())
-                {
-                    std::cerr<<"Input (--samples) size larger than vcf sample size !!!"
-                             <<std::endl;
-                    exit(-1);
-                }
-                break;
-            }
-            // write header
-            for (auto itr = header.begin()+9; itr != header.end(); itr++)
-                output <<"\t"<< *itr;
-            output<<std::endl;
             break;
         }  
     }
-
     this->checkSamples();
 }
 void VCF::checkSamples() 
 {
-    // check samples in strains
     if (!samples.empty()) 
     {
+        if (strains.size() < (int) samples.size())
+        {
+            std::cerr<<"Input (--samples) size larger than vcf sample size !!!"
+                        <<std::endl;
+            std::exit(-1);
+        }
+        // check samples in strains
         for (auto &s: samples)
         {
             int inStrain = strains.hasIndex(s);
             if (inStrain == -1)
             {
                 std::cerr<<"Input name: "<<s<<"  NOT in VCF samples"<<std::endl;
-                exit(1);
+                std::exit(1);
             }
         }
     }
@@ -371,6 +405,51 @@ void VCF::writeSNP(std::vector<std::string> &alleles)
     output<<std::endl;
 }
 
+void VCF::writeTPED(std::vector<std::string> &alleles)
+{
+    tped <<variant.CHROM<<" "<<"SNP_"<<variant.CHROM<<"_"<<variant.POS;
+    tped <<" 0 "<<variant.POS<<" "<<variant.REF<<" "<<variant.REF; // write REF
+
+    // write allele pattern
+    if (!samples.empty())
+    {
+        for(auto &s: samples)
+        {
+            int strIdx = strains.indexOf(s);
+            std::string a = alleles[strIdx];
+            if (a == "?") a = "0";
+            tped<<" "<<a<<" "<<a;
+        }
+    } else 
+    {
+        for (auto a: alleles) 
+        {
+            if (a=="?") a ="0";
+            tped<<" "<<a<<" "<<a;
+        }
+    }
+    tped<<std::endl;
+}
+
+void VCF::writeTFAM()
+{
+    // write allele pattern
+    if (!samples.empty())
+    {
+        tfam<<"0 "<<outHeader<<" 0 0 1 0"<<std::endl;
+        for (size_t i = 0; i < samples.size(); i ++)
+        {
+            tfam<<"0 "<<samples[i]<<" 0 0 1 "<<(i+1)<<std::endl;
+        }
+    } else 
+    {
+        tfam<<"0 "<<outHeader<<" 0 0 1 0"<<std::endl;
+        for (int i=0; i < strains.size(); i++) 
+            tfam<<"0 "<<strains.eltOf(i)<<" 0 0 1 "<<(i+1)<<std::endl;
+    }
+}
+
+
 void VCF::writeStructralVariant(std::vector<std::string> &alleles, const char* vartype)
 {                
     std::unordered_map<std::string, std::string> INFO = variant.getINFO();
@@ -425,7 +504,11 @@ void VCF::parseRecords()
                 continue;
             int numGoodAlt = std::accumulate(hasAlt.begin(), hasAlt.end(), 0);
             if (numGoodAlt == 1)
+            {
                 writeSNP(alleles);
+                if (opts->plink) writeTPED(alleles);
+
+            }
         } 
         else if (!variant.isSNP && (std::strcmp(opts->variantType, "sv") == 0 || std::strcmp(opts->variantType, "indel") == 0 ))
         {
@@ -435,7 +518,10 @@ void VCF::parseRecords()
                 continue;
             int numGoodAlt = std::accumulate(hasAlt.begin(), hasAlt.end(), 0);
             if (numGoodAlt == 1)
+            {
                 writeStructralVariant(alleles, opts->variantType);
+                if (opts->plink) writeTPED(alleles);
+            }
         } 
     }
 }

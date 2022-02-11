@@ -77,25 +77,65 @@ Recommend adding `-a` flag, which will output gene-oriented format results.
 ## Input
 see `example` folder for test cases.
 
-1. eblocks:
-    - Strain file (-s): 
-      - Tree column txt file: "#Abbrev \t (Optional) \t Values "
-      - see `test.strain.txt` in the example folder
-    - Allele file (-a): NIEHS compact format (use subcmd `convert` to convert vcf to niehs)
-    - Gene Annotation (-g): 
-      - format: " <SNP_{chr}_{postion}>  <gene_name>  < consequence> "
-      - see above to prepare this file
+### eblocks:
+- Strain file (-s): 
+  - Tree column txt file: "#Abbrev \t (Optional) \t Values "
+  - see `test.strain.txt` in the example folder
+- Allele file (-a): NIEHS compact format (use subcmd `convert` to convert vcf to niehs)
+- Gene Annotation (-g): 
+  - format: " <SNP_{chr}_{postion}>  <gene_name>  < consequence> "
+  - see above to prepare this file
 
-2. ghmap:
-    - Trait file (-p):  
-        - same as eblocks -s:  "#Abbrev \t (Optional) \t Values "
-        - If multiple aninmal values for same strain, seperate them by comma. Example:
-        ```$xslt
-           129S1	18.2,19.1,14.3
-           A_J	19.3,18.2
-        ```
-    - haploblocks (-b): eblocks output file
-    - genetic relation (-r): optional file, could obtain from plink.
+### ghmap:
+- Trait file (-p):  
+    - same as eblocks -s:  "#Abbrev \t (Optional) \t Values "
+    - If multiple aninmal values for same strain, seperate them by comma. Example:
+    ```$xslt
+        129S1	18.2,19.1,14.3
+        A_J	19.3,18.2
+    ```
+- haploblocks (-b): eblocks output file
+- genetic distance matrix (-r): optional file, could obtain from plink.
+
+**How to get the genetic distance matrix**
+
+1. convert vcf to plink .tped, .tfam
+```shell
+haplomap convert  --plink \
+                  -o ${HOME}/data/SNPS/chr1.snp.txt \
+                  --type snp input.vcf
+```
+
+2. convert tped, tfam to .bed, .bim, .fam
+```
+plink --tfile chr1.snp --make-bed --out chr1
+```
+3. merge .bed files
+```shell
+plink --bfile chr1 --merge-list mergelist.txt --make-bed --out mouse_merged
+```
+
+note: the mergelist.txt in this format
+  ```
+  chr2.bed chr2.bim chr2.fam
+  chr3.bed chr3.bim chr3.fam
+  ...
+  ```
+
+3. Sample-distance and similarity matrices
+```shell
+plink --bfile mouse_merged # need .bim, .fam
+      --make-rel square \ # Relationship/covariance
+      --out mouse_grm \
+      --threads 12
+```
+4. format to (ghmap -r) input
+```shell
+cut -f2 mouse_grm.rel.id | tr "\n" "\t" > mouse_grm.dist
+echo "#$(cat mouse_grm.dist)" > mouse_grm.dist
+cat mouse_grm.rel >> mouse_grm.dist
+```
+
 
 ## Output
 
