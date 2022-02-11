@@ -34,9 +34,9 @@ std::shared_ptr<VEPOptions> parseVEPOptions(int argc, char **argv)
             {nullptr,          no_argument, nullptr,        0}};
 
     const char *usage = "Convert ensembl-VEP to eblocks (-g) input\n"
-                        "\nUsage: annotate [options] <in.txt> \n"
+                        "\nUsage: annotate [options] <in.vep.txt> \n"
                         "\nRequired arguments:\n"
-                        "    in.vep.txt             Input sorted ensembl-VEP file\n"
+                        "    in.vep.txt             Input ensembl-VEP file name\n"
                         "    -o, --output           Output file name, for (eblocks -g)\n"
                         "\nOptional arguments:\n"
                         "    -c,  --csq             Output a annotation with impact and sample names.\n"
