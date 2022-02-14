@@ -454,7 +454,7 @@ void VCF::writeStructralVariant(std::vector<std::string> &alleles, const char* v
 {                
     std::unordered_map<std::string, std::string> INFO = variant.getINFO();
     output << vartype <<"_"<<variant.CHROM<<"_"<<variant.POS;
-    if (std::strcmp(vartype, "sv") == 0) output <<"_"<<INFO["END"]<<"_"<<INFO["SVTYPE"];                
+    if (std::strcmp(vartype, "SV") == 0) output <<"_"<<INFO["END"]<<"_"<<INFO["SVTYPE"];                
     output <<"\t"<<variant.CHROM<<"\t"<<variant.POS<<"\t";
     output << "A"; // write REF
     // write allele pattern
