@@ -4,13 +4,14 @@ Haplotype-based computational genetic mapping (a.k.a HBCGM)
 
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 
-
 Haplomap is a successor project of HBCGM, as development on the latter was last continued in 2010. Haplomap has been adopted as a replacement for the original HBCGM 
 
 see what's new  in the [CHANGELOG](./haplomap/CHANGELOG.md).
 
+![HBCGM](./docs/HBCGM.png)
+
 ## Dependency 
-Works both on `Linux`and `MacOS`
+Works both on `Linux` and `MacOS`
 
 Haplomap:
 * CMake
