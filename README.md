@@ -6,6 +6,12 @@ Haplotype-based computational genetic mapping (a.k.a HBCGM)
 
 Haplomap is a successor project of HBCGM, as development on the latter was last continued in 2010. Haplomap has been adopted as a replacement for the original HBCGM 
 
+Citation:
+
+```
+Zhuoqing Fang, Gary Peltz, An Automated Multi-Modal Graph-Based Pipeline for Mouse Genetic Discovery, Bioinformatics, 2022;, btac356, https://doi.org/10.1093/bioinformatics/btac356
+```
+
 see what's new  in the [CHANGELOG](./haplomap/CHANGELOG.md).
 
 ![HBCGM](./docs/HBCGM.png)
