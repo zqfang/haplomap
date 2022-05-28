@@ -8,9 +8,8 @@ Haplomap is a successor project of HBCGM, as development on the latter was last 
 
 Citation:
 
-```
-Zhuoqing Fang, Gary Peltz, An Automated Multi-Modal Graph-Based Pipeline for Mouse Genetic Discovery, Bioinformatics, 2022;, btac356, https://doi.org/10.1093/bioinformatics/btac356
-```
+> Zhuoqing Fang, Gary Peltz, An Automated Multi-Modal Graph-Based Pipeline for Mouse Genetic Discovery, Bioinformatics, 2022;, btac356, https://doi.org/10.1093/bioinformatics/btac356
+
 
 see what's new  in the [CHANGELOG](./haplomap/CHANGELOG.md).
 

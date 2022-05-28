@@ -1,6 +1,8 @@
 import os, json
 import numpy as np
 import pandas as pd
+import bs4
+import requests
 from functools import lru_cache
 from pathlib import Path
 
@@ -123,3 +125,34 @@ def get_datasets(data_dir):
         d = p.stem.split(".")[0]
         data.append(d)
     return sorted(list(set(data)))
+
+def get_entrez_expr(genename):
+    """
+    get expression data from NCBI gene database
+
+    Note: This is very slow
+    """
+    if genename in GENE2ENTREZ:
+        entrezid = GENE2ENTREZ[genename] 
+    else: 
+        return
+    res = requests.get(f"https://www.ncbi.nlm.nih.gov/gene/{entrezid}/report=expression")
+    if not res.ok:
+        return
+    soup = bs4.BeautifulSoup(res.text, features='lxml')
+    v = soup.find_all(name="script", attrs={"type":"text/javascript"})
+    d = ''
+    for i, x in enumerate(v):
+        if x.text.find("tissues_data") > 1:
+            tok_start = x.text.find("{")
+            tok_end = x.text.find("};")
+            d = x.text[tok_start:tok_end+1]
+            break
+    if len(d) < 10:
+        return
+    d = json.loads(d.replace("\'", "\""))
+    exp = {'tissue':[],'rpkm': [], 'entrezid': str(entrezid)}
+    for t, e in d.items():
+        exp['tissue'].append(t)
+        exp['rpkm'].append(float(e['exp_rpkm']))
+    return exp

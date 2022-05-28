@@ -16,7 +16,7 @@ from bokeh.palettes import Category10
 from bokeh.transform import factor_cmap, linear_cmap, factor_mark
 from bokeh.core.enums import MarkerType
 from .helpers import gene_expr_order, codon_flag, mesh_terms
-from .helpers import load_ghmap, get_color, get_expr, get_datasets, get_pubmed_link
+from .helpers import load_ghmap, get_color, get_expr, get_datasets, get_pubmed_link, get_entrez_expr
 
 ### mousephoeotpe.org datasets
 ## https://www.mousephenotype.org/help/programmatic-data-access/
@@ -37,7 +37,7 @@ fcmap = factor_cmap('impact', palette=Category10[6], factors=['0','1','2','3','-
 ## data
 source = ColumnDataSource(pd.DataFrame())
 source_bar = ColumnDataSource(data=dict(strains=[],traits=[], colors=[]))
-
+source_hbar = ColumnDataSource(data=dict(tissues=[],exprs=[]))
 ### setup widgets
 # dataset id
 dataset = AutocompleteInput(completions=DATASETS, #value="MPD_26711-f_Indel",width=550,
@@ -85,6 +85,23 @@ bar.xgrid.grid_line_color = None
 #bar.xaxis.axis_label = ""#"Strains"
 bar.yaxis.axis_label = "Values"
 bar.xaxis.major_label_orientation = np.pi/4
+# or alternatively:
+#p.xaxis.major_label_orientation = "vertical"
+
+## bar plot
+
+# hbar = figure(plot_width=300, plot_height=800, # x_range=strains, 
+#            title="Gene Expression", 
+#            toolbar_location="right",
+#            tools='pan,reset,lasso_select,save', output_backend="svg", name="HBar")
+# hbar.toolbar.logo = None
+# hbar.hbar(y='tissues', right='exprs', left=0,source=source_hbar, line_width=0, height=0.5)
+# hbar.text(y='tissues', text='tissues', text_baseline='middle', x=0, x_offset=10, source=source_hbar)
+# hbar.xgrid.grid_line_color = None
+#p.y_range.start = 0
+#bar.xaxis.axis_label = ""#"Strains"
+# hbar.yaxis.axis_label = "Values"
+# hbar.xaxis.major_label_orientation = np.pi/4
 # or alternatively:
 #p.xaxis.major_label_orientation = "vertical"
 
@@ -148,6 +165,10 @@ def gene_update(attr, old, new):
             papers = str(source.data[pid][selected_index])
             papers = get_pubmed_link(papers)
             message.text = f"<h3>PubMedIDs:</h3><p>{papers}</p><h3>Gene Expression:</h3>{ep}" 
+
+        # data = get_entrez_expr(s)
+        # if data is not None:
+        #     source_hbar.data.update(tissues=data['tissue'], exprs=data['rpkm'])
         
     except IndexError:
         pass
@@ -277,6 +298,7 @@ figs = row(bar, sca)
 figs2 = column(figs, myTable)
 # curdoc.add_root(figs2)
 robj4 = column(button, symbol, pval, codon, slider, message, exprs)
+#robj4 = column(button, symbol, pval, codon, slider, message, hbar)
 o = row(figs2, robj4)
 layout = column(inputs, o)
 
