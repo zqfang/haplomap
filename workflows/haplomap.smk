@@ -39,22 +39,21 @@ with open(MPD2MeSH, 'r') as j:
     MESH_DICT = json.load(j)
 IDS = [i for i in IDS_ if i.split("-")[0] in MESH_DICT ]
 # filter id that already run
-pat = config['HBCGM']['WORKSPACE'] + "MPD_{ids}_Indel.results.txt"
+pat = config['HBCGM']['WORKSPACE'] + "MPD_{ids}_snp.results.txt"
 IDS = [mnum for mnum in IDS if not os.path.exists(pat.format(ids = mnum))]
 
 CHROMSOME = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
 # output files
 # SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOMES)
-HBCGM =  expand("MPD_{ids}/chr{i}.results.txt", ids=IDS, i=CHROMSOME)
-HBLOCKS = expand("MPD_{ids}/chr{i}.hblocks.txt", ids=IDS, i=CHROMSOME)
+HBCGM =  expand("MPD_{ids}/chr{i}.snp.results.txt", ids=IDS, i=CHROMSOME)
 HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.open_region.bed", ids=IDS, i=CHROMSOME)
-HBCGM_MESH = expand("MPD_{ids}.results.mesh.txt", ids=IDS)
+HBCGM_MESH = expand("MPD_{ids}_snp.results.mesh.txt", ids=IDS)
 # rules that not work in a new node
 #localrules: target, traits, strain2trait  
 
 
 rule target:
-    input: HBCGM, #HBCGM_MESH, #HBCGM_NONCODING
+    input: HBCGM_MESH, #HBCGM_NONCODING
 
 ########################### Prepare Phenotypic DATA (from MPD API) ############################
 # rule pheno:
@@ -89,7 +88,7 @@ rule snp2NIEHS:
     input:  
         vcf = os.path.join(VCF_DIR, "chr{i}.vcf.gz"),
     output: 
-        niehs = protected(os.path.join(SNPDB, "chr{i}.txt")),
+        niehs = protected(os.path.join(SNPDB, "chr{i}.snp.txt")),
         tped = temp(os.path.join(SNPDB, "chr{i}.tped")),
         tfam = temp(os.path.join(SNPDB, "chr{i}.tfam")),
     params:
@@ -196,7 +195,7 @@ rule annotateSNPs:
     input: 
         vep = os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"),
         strains = "MPD_{ids}/trait.{ids}.txt",
-    output: "MPD_{ids}/chr{i}.genename.txt"
+    output: "MPD_{ids}/chr{i}.snp.annot.txt"
     params:
         bin = HBCGM_BIN,
     shell:
@@ -207,12 +206,12 @@ rule annotateSNPs:
 # find haplotypes
 rule eblocks:
     input: 
-        snps = os.path.join(SNPDB, "chr{i}.txt"),
-        gene_anno = "MPD_{ids}/chr{i}.genename.txt",
+        snps = os.path.join(SNPDB, "chr{i}.snp.txt"),
+        gene_anno = "MPD_{ids}/chr{i}.snp.annot.txt",
         strains = "MPD_{ids}/trait.{ids}.txt",
     output: 
-        hb = protected("MPD_{ids}/chr{i}.hblocks.txt"),
-        snphb = protected("MPD_{ids}/chr{i}.snp.hblocks.txt")
+        hb = protected("MPD_{ids}/chr{i}.snp.hblocks.txt"),
+        snphb = protected("MPD_{ids}/chr{i}.snp.haplotypes.txt")
     params:
         bin = HBCGM_BIN,
     log: "logs/MPD_{ids}.chr{i}.eblocks.log"
@@ -224,11 +223,11 @@ rule eblocks:
 # statistical testing with trait data       
 rule ghmap:
     input: 
-        hb = "MPD_{ids}/chr{i}.hblocks.txt",
+        hb = "MPD_{ids}/chr{i}.snp.hblocks.txt",
         trait = "MPD_{ids}/trait.{ids}.txt",
         gene_exprs = GENE_EXPRS,
         rel = GENETIC_REL
-    output: "MPD_{ids}/chr{i}.results.txt"
+    output: "MPD_{ids}/chr{i}.snp.results.txt"
     params:
         bin = HBCGM_BIN,
         cat = "MPD_{ids}/trait.{ids}.categorical"
@@ -244,8 +243,8 @@ rule ghmap:
 
 rule ghmap_aggregate:
     input: 
-        res = ["MPD_{ids}/chr%s.results.txt"%c for c in CHROMSOME]
-    output: temp("MPD_{ids}.results.txt")
+        res = ["MPD_{ids}/chr%s.snp.results.txt"%c for c in CHROMSOME]
+    output: temp("MPD_{ids}_snp.results.txt")
     run:
         # read input
         dfs = []
@@ -270,9 +269,9 @@ rule ghmap_aggregate:
 
 rule mesh:
     input: 
-        res = expand("MPD_{ids}.results.txt", ids=IDS),
+        res = expand("MPD_{ids}_snp.results.txt", ids=IDS),
         json = MPD2MeSH,
-    output: expand("MPD_{ids}.results.mesh.txt", ids=IDS)
+    output: expand("MPD_{ids}_snp.results.mesh.txt", ids=IDS)
     params: 
         # mesh = lambda wildcards: MESH_DICT[wildcards.ids]
         gnnhap = config['HBCGM']['GNNHAP'],

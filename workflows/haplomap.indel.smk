@@ -21,7 +21,7 @@ MPD2MeSH = config['HBCGM']['MPD2MeSH']
 # eblock input
 STRAIN_ANNO = config['HBCGM']['STRAIN_ANNO']
 VCF_DIR = config['HBCGM']['VCF_DIR']
-SNPDB = config['HBCGM']['SNPS_DIR']
+SNPDB = config['HBCGM']['VAR_DIR']
 VEP_DIR = config['HBCGM']['VEP_DIR']
 GENE_EXPRS = config['HBCGM']['GENE_EXPRS']
 # open chromatin regions input
@@ -39,22 +39,22 @@ with open(MPD2MeSH, 'r') as j:
     MESH_DICT = json.load(j)
 IDS = [i for i in IDS_ if i.split("-")[0] in MESH_DICT ]
 # filter id that already run
-pat = config['HBCGM']['WORKSPACE'] + "MPD_{ids}_Indel.results.mesh.txt"
-IDS = [mnum for mnum in IDS if not os.path.exists(pat.format(ids = mnum))]
+# pat = config['HBCGM']['WORKSPACE'] + "MPD_{ids}_indel.results.mesh.txt"
+# IDS = [mnum for mnum in IDS if not os.path.exists(pat.format(ids = mnum))]
 
 CHROMOSOMES = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
 # output files
 # SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOMES)
 HBCGM =  expand("MPD_{ids}/chr{i}.indel.results.txt", ids=IDS, i=CHROMOSOMES)
 # HBLOCKS = expand("MPD_{ids}/hblocks/chr{i}.hblocks.txt", ids=IDS, i=CHROMOSOMES)
-MESH = expand("MPD_{ids}_Indel.results.mesh.txt", ids=IDS)
+MESH = expand("MPD_{ids}_indel.results.mesh.txt", ids=IDS)
 #HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.open_region.bed", ids=IDS, i=CHROMOSOMES)
 # rules that not work in a new node
 # localrules: target, traits, strain2trait  
 
 
 rule target:
-    input: HBCGM #, MESH#HBCGM_NONCODING
+    input: HBCGM, #MESH #, MESH#HBCGM_NONCODING
 
 
 # rule pheno:
@@ -120,7 +120,7 @@ rule annotateSNPs:
     input: 
         vep = os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"),
         strains = "MPD_{ids}/trait.{ids}.txt",
-    output: "MPD_{ids}/chr{i}.indel.anot.txt"
+    output: "MPD_{ids}/chr{i}.indel.annot.txt"
     params:
         bin = HBCGM_BIN,
     shell:
@@ -130,11 +130,11 @@ rule annotateSNPs:
 rule eblocks:
     input: 
         snps = os.path.join(SNPDB, "chr{i}.indel.txt"),
-        gene_anno = "MPD_{ids}/chr{i}.indel.anot.txt",
+        gene_anno = "MPD_{ids}/chr{i}.indel.annot.txt",
         strains = "MPD_{ids}/trait.{ids}.txt",
     output: 
         hb = protected("MPD_{ids}/chr{i}.indel.hblocks.txt"),
-        snphb = protected("MPD_{ids}/chr{i}.indel.snp.hblocks.txt")
+        snphb = protected("MPD_{ids}/chr{i}.indel.haplotypes.txt")
     params:
         bin = HBCGM_BIN,
     log: "logs/MPD_{ids}.chr{i}.eblocks.log"
@@ -161,7 +161,7 @@ rule ghmap:
         cmd = "{params.bin}/haplomap ghmap %s "%categorical +\
               "-e {input.gene_exprs} -r {input.rel} " +\
               "-p {input.trait} -b {input.hb} -o {output} " +\
-              "-n MPD_{wildcards.ids}_Indel%s -a -v > {log}"%cats
+              "-n MPD_{wildcards.ids}_indel%s -a -v > {log}"%cats
 
         if os.stat(input.hb).st_size == 0:
             shell("touch {output}")
@@ -193,7 +193,7 @@ rule ghmap:
 
 rule ghmap_aggregate:
     input: ["MPD_{ids}/chr%s.indel.results.txt"%c for c in CHROMOSOMES]
-    output: temp("MPD_{ids}_Indel.results.txt")
+    output: temp("MPD_{ids}_indel.results.txt")
     run:
         # read input
         dfs = []
@@ -218,9 +218,9 @@ rule ghmap_aggregate:
 
 rule mesh:
     input: 
-        res = expand("MPD_{ids}_Indel.results.txt", ids=IDS),
+        res = expand("MPD_{ids}_indel.results.txt", ids=IDS),
         json = MPD2MeSH,
-    output: expand("MPD_{ids}_Indel.results.mesh.txt", ids=IDS)
+    output: expand("MPD_{ids}_indel.results.mesh.txt", ids=IDS)
     params: 
         # mesh = lambda wildcards: MESH_DICT[wildcards.ids]
         gnnhap = config['HBCGM']['GNNHAP'],
