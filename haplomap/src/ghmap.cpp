@@ -151,6 +151,8 @@ void BlockSummary::showIsCoding()
 
 bool BlockSummary::isNumber(const std::string & str) {
 {
+    if (str.empty())
+        return false;
     for (char const &c : str) 
     {
         if (std::isdigit(c) == 0) return false;
@@ -404,7 +406,7 @@ bool GenesComparator::operator()(const GeneSummary *pg1, const GeneSummary *pg2)
 
 
 GhmapWriter::GhmapWriter(char *outputFileName, char *datasetName, bool categorical, float pvalCutoff, const char* datasetFormat):
-_dataset_name(datasetName), _dataset_format(datasetFormat), isCategorical(categorical), pvalueCutoff(pvalCutoff)
+_dataset_name(datasetName), _dataset_format(datasetFormat), _outFileName(outputFileName), isCategorical(categorical), pvalueCutoff(pvalCutoff)
 {
     os = std::ofstream(outputFileName);
     if (!os.is_open())

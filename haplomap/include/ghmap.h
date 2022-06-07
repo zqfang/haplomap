@@ -152,6 +152,7 @@ class GhmapWriter
 private:
   std::string _dataset_name;
   std::string _dataset_format;
+  std::string _outFileName;
   //std::vector<int> strOrderVec;
   bool isCategorical;
   float pvalueCutoff;
