@@ -196,16 +196,76 @@ void VarirantEeffectPredictor::readHeader(char *inFileName, char *delemiter)
     }
 
 }
+
+// var_class must be lowercase
+std::string VarirantEeffectPredictor::set_key(std::string location, std::string var_class)
+{
+    size_t tokstart = 0;
+    size_t sz = location.size();
+    size_t tok1 = location.find_first_of(":", tokstart);
+    size_t tok2 = location.find_first_of("-", tokstart);
+    int start;
+    int end;
+    std::string key;
+    std::string chrom = location.substr(tokstart, tok1);
+
+    /// For ensembl-vep results, the coordinates (chrStart) of
+    /// indel, deletion need to -1 to get original position in vcf.
+    /// SNV, insertion stay the same to position in vcf
+    /// The quick trick to handle these cases is whether the location string contains "-"
+    if (tok2 == std::string::npos) // no match found
+    {
+        start = std::stoi(location.substr(tok1 + 1, sz-tok1)); // (pos, len)
+        end = start; 
+        if (var_class == "indel") start --; // indel (dup) with "chr:start" format need to minus 1 
+    }
+    else
+    {
+        // NOTE: need to minius 1, since VEP made pos+1 in their annotatoin
+        start = std::stoi(location.substr(tok1 + 1, tok2 - tok1)) - 1; 
+        if (var_class == "insertion") start ++; // only insertion case are stay the same pos as original vcf
+        end = std::stoi(location.substr(tok2 + 1, sz - tok2)); // empty string if snp
+    }
+
+    int var_len = end - start;
+    if (var_class == "snv")
+    {
+        key = "SNP_" + chrom + "_" + std::to_string(start);
+    }
+    else if ((var_class == "indel") ||
+                ((var_class == "insertion") && var_len < 50) ||  
+                ((var_class ==  "deletion") && var_len < 50) )
+    {
+        /// NOTE: VEP indels are > 2bp, else it will annotate as deletions and insertions. 
+        /// So, defined 1 bp del or ins as Indels for downstream analysis
+        /// see docs: https://m.ensembl.org/info/genome/variation/prediction/classification.html  
+        /// we force var_len < 50 bp to be indels
+        key = "INDEL_" + chrom + "_" + std::to_string(start);
+    }
+    else
+    {
+        std::string _svtype = var_class.substr(0,3);
+        this->upcase(_svtype);
+        key = "SV_" + chrom + "_" 
+                    + std::to_string(start) + "_" 
+                    + std::to_string(end) + "_" 
+                    + _svtype;
+    }
+    return key;
+
+}
+
 /// varType (variant classes): https://m.ensembl.org/info/genome/variation/prediction/classification.html
 void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* varType)
 {
 
     ColumnReader rdr(inVEPName, delemiter);
     // read header first to get column names
-    std::string location = "";
-    std::string key = "SNP_";
+    std::string location;
+    std::string key;
     std::string transcript_id = "ENT";
     std::string _varType(varType);
+    std::string _varclass;
 
     lowercase(_varType);
     while ((numtoks = rdr.getLine()) >= 0)
@@ -213,9 +273,8 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
         // skip header
         if (rdr.getCurrentLineNum() < 1)
             continue;
-        // 
-        std::string _varclass = rdr.getToken(columns["VARIANT_CLASS"]);
-        lowercase(_varclass);
+        _varclass = rdr.getToken(columns["VARIANT_CLASS"]);
+        this->lowercase(_varclass);
         // if varType is "sv", "all", write all
         if ((_varType == "snv" || _varType == "indel") && (_varclass.find(_varType) == std::string::npos)) //
             continue;
@@ -231,6 +290,11 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
         
         /// aggregate results groupby location and transcript
         transcript_id = rdr.getToken(columns["Feature"]);
+        location = rdr.getToken(columns["Location"]);
+        key = this->set_key(location, _varclass);
+        // std::cout<<"Current keys: "<<key<<" <-->  "<<transcript_id<<std::endl;
+        // std::cout<<rdr.getCurrentLineString()<<"\n\n"<<std::endl;
+
         if ((geneCodingMap.find(key) != geneCodingMap.end()) && (geneCodingMap[key].find(transcript_id) != geneCodingMap[key].end()))
         {
             /// now add annotations
@@ -261,7 +325,6 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
         }
         else
         {
-            location = rdr.getToken(columns["Location"]);
             VEPSummary *pRecord = new VEPSummary(rdr.getToken(columns["Uploaded_variation"]), // alread trim # when read header
                                                  rdr.getToken(columns["Location"]),
                                                  rdr.getToken(columns["Allele"]),
@@ -282,31 +345,6 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
                                                  rdr.getToken(columns["HGVSc"]),
                                                  rdr.getToken(columns["HGVSp"]));
             this->data.push_back(pRecord); // for deconstuctor
-            /// FIXME: indel annotation vep input also have entries indel, insertion, deletion. How to handel these?
-            int var_len = pRecord->end - pRecord->start;
-            if (pRecord->variant_class == "SNV")
-            {
-                key = "SNP_" + pRecord->chrom + "_" + std::to_string(pRecord->start);
-            }
-            else if ((pRecord->variant_class == "indel") ||
-                     ((pRecord->variant_class == "insertion") && var_len < 50) ||  
-                     ((pRecord->variant_class ==  "deletion") && var_len < 50) )
-            {
-                /// NOTE: VEP indels are > 2bp, else it will annotate as deletions and insertions. 
-                /// So, defined 1 bp del or ins as Indels for downstream analysis
-                /// see docs: https://m.ensembl.org/info/genome/variation/prediction/classification.html  
-                /// we force var_len < 50 bp to be indels
-                key = "INDEL_" + pRecord->chrom + "_" + std::to_string(pRecord->start);
-            }
-            else
-            {
-                std::string _svtype = pRecord->variant_class.substr(0,3);
-                upcase(_svtype);
-                key = "SV_" + pRecord->chrom + "_" 
-                            + std::to_string(pRecord->start) + "_" 
-                            + std::to_string(pRecord->end) + "_" 
-                            + _svtype;
-            }
             this->geneCodingMap[key][transcript_id] = pRecord;
         }
     }
@@ -321,7 +359,11 @@ std::string VarirantEeffectPredictor::codonChange(VEPSummary * pRecord)
     for (int j = 0; j < pRecord->codons.size(); j++)
     {
         std::string codon = pRecord->codons.eltOf(j);
-        if (codon == "-") continue;
+        if (codon == "-") 
+        {
+            // _expr = "";
+            continue;
+        }
         // std::string _codon(codon);
         upcase(codon);
         int pos = codon.find_first_of("/", 0);
@@ -396,7 +438,7 @@ void VarirantEeffectPredictor::writeVEPImpact(char* outFileName)
         csqos << k;
         // aggregate impact to variant level
         std::unordered_map<std::string, VEPSummary *>::iterator transxit = geneCodingMap[k].begin();
-        Dynum<std::string> csq;
+        Dynum<std::string> csq; // aggregate annotation to snp level, easy to remove duplicates
         for (; transxit != geneCodingMap[k].end(); transxit++)
         { // iter transcripts
             VEPSummary *pRecord = transxit->second;
@@ -434,24 +476,31 @@ void VarirantEeffectPredictor::writeVEPCsq(char* outFileName)
         for (; transxit != geneCodingMap[k].end(); transxit++)
         { // iter transcripts
             VEPSummary *pRecord = transxit->second;
-            if (pRecord->symbol == "-") continue;        
+            if (pRecord->symbol == "-") continue; 
+            // Dynum<std::string> csq; // aggreate annotation to record level     
             for (int i = 0; i < pRecord->consequence.size(); i++)
             {
                 std::string s = pRecord->symbol + "\t";//+ pRecord->consequence.eltOf(i);
                 std::string csq_str = pRecord->consequence.eltOf(i);
-                if (CSQs[csq_str] == "HIGH")
+                // if (CSQs[csq_str] == "HIGH")
+                // {
+
+                //     if (csq_str.find("stop") != std::string::npos)
+                //     {
+                //         s.append(this->codonChange(pRecord));
+                //     } 
+                //     else if (csq_str.find("splice") != std::string::npos)
+                //     {
+                //         s.append("SPLICE_SITE");
+                //     } 
+                //     else
+                //     {
+                //         s.append(csq_str);
+                //     }
+                // } 
+                if (csq_str.find("stop") != std::string::npos)
                 {
-                    if (csq_str.find("splice") != std::string::npos)
-                    {
-                        s.append("SPLICE_SITE");
-                    } else if (csq_str.find("stop") != std::string::npos)
-                    {
-                        s.append(this->codonChange(pRecord));
-                        //s.append("STOP");
-                    } else
-                    {
-                        s.append(csq_str);
-                    }
+                    s.append(this->codonChange(pRecord));
                 } 
                 else if (csq_str == "missense_variant" || csq_str == "synonymous_variant")
                 {
@@ -459,9 +508,9 @@ void VarirantEeffectPredictor::writeVEPCsq(char* outFileName)
                 }
                 else 
                 {
-                    //s.append(CSQs[csq_str]);
                     s.append(csq_str);
                 }
+                // write annotation
                 if (csq.hasIndex(s) < 0)
                 { // remove duplicate entries
                     csqos<< "\t" << s ; //<<"\t"<<pRecord->samples;
