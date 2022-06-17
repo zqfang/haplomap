@@ -7,7 +7,23 @@ Haplotype-based computational genetic mapping
 ![HBCGM](../docs/HBCGM.png)
 ## Usage
 ### 0. Variant calling
-See [variant calling](../workflows/README.md) using GATK, BCFtools, svtools.
+See [variant calling](../workflows/README.md) in the workflow folder using GATK, BCFtools, svtools.
+
+
+Note: You need to use Ensemble-vep to annotate your VCF files.
+
+This code snap works for haplomap
+```shell
+bcftools view -f .,PASS ${vcf} | \
+        vep --fasta ${reference} ${genome_build} \
+        --format vcf --fork ${threads} --hgvs --force_overwrite \
+        --uniprot --domains --symbol --regulatory --distance 1000 --biotype \
+        --gene_phenotype MGI --check_existing  --pubmed --numbers \
+        --offline --cache --variant_class \
+        --gencode_basic --no_intergenic --individual all \
+        -o ${output} --tab --compress_output gzip \
+```
+
 
 
 ### 1. Construct variant panel

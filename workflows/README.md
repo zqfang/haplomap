@@ -61,6 +61,20 @@ or Huam
 INSTALL.pl -a cfp -s homo_sapiens -y GRCh38 --CONVERT
 ```
 
+
+### Annotation
+e.g
+```shell
+bcftools view -f .,PASS ${input.vcf} | \
+        ${params.VEPBIN}/vep --fasta ${input.reference} ${params.genome_build} \
+        --format vcf --fork ${threads} --hgvs --force_overwrite \
+        --uniprot --domains --symbol --regulatory --distance 1000 --biotype \
+        --gene_phenotype MGI --check_existing  --pubmed --numbers \
+        --offline --cache --variant_class \
+        --gencode_basic --no_intergenic --individual all \
+        -o ${output} --tab --compress_output gzip \
+```
+
 ### Notes
 
 

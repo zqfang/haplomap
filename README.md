@@ -72,7 +72,7 @@ See more detail in ``haplomap`` subfolder: [Run haplomap standalone](haplomap/RE
 
 #### 0. Variant calling
 
-See [variant calling](../workflows/README.md) using GATK, BCFtools, svtools.
+See [variant calling](./workflows/README.md) using GATK, BCFtools, svtools.
 
 e.g.
 ```shell
