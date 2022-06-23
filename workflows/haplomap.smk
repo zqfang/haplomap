@@ -17,7 +17,7 @@ GENETIC_REL = config['HBCGM']['GENETIC_REL']
 MPD2MeSH = config['HBCGM']['MPD2MeSH'] # json file
 # eblock input
 STRAIN_ANNO = config['HBCGM']['STRAIN_ANNO']
-SNPDB = config['HBCGM']['SNPS_DIR']
+SNPDB = config['HBCGM']['VAR_DIR']
 VCF_DIR = config['HBCGM']['VCF_DIR']
 VEP_DIR = config['HBCGM']['VEP_DIR']
 # ANNOVAR = config['HBCGM']['ANNOVAR'] 
@@ -194,12 +194,11 @@ rule unGZip:
 rule annotateSNPs:
     input: 
         vep = os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"),
-        strains = "MPD_{ids}/trait.{ids}.txt",
-    output: "MPD_{ids}/chr{i}.snp.annot.txt"
+    output: os.path.join(SNPDB, "chr{i}.snp.annot.txt")
     params:
         bin = HBCGM_BIN,
     shell:
-        "{params.bin}/haplomap annotate -t snp -s {input.strains} -o {output} {input.vep} "
+        "{params.bin}/haplomap annotate -t snp -o {output} {input.vep} "
 
 
 ######################## START TO RUN Main Program #####################################
@@ -207,7 +206,7 @@ rule annotateSNPs:
 rule eblocks:
     input: 
         snps = os.path.join(SNPDB, "chr{i}.snp.txt"),
-        gene_anno = "MPD_{ids}/chr{i}.snp.annot.txt",
+        gene_anno =  os.path.join(SNPDB, "chr{i}.snp.annot.txt"),
         strains = "MPD_{ids}/trait.{ids}.txt",
     output: 
         hb = protected("MPD_{ids}/chr{i}.snp.hblocks.txt"),

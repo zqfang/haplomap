@@ -54,7 +54,7 @@ MESH = expand("MPD_{ids}_indel.results.mesh.txt", ids=IDS)
 
 
 rule target:
-    input: HBCGM, #MESH #, MESH#HBCGM_NONCODING
+    input: HBCGM, MESH #, MESH#HBCGM_NONCODING
 
 
 # rule pheno:
@@ -119,22 +119,21 @@ rule unGZip:
 rule annotateSNPs:
     input: 
         vep = os.path.join(VEP_DIR, "chr{i}.pass.vep.txt"),
-        strains = "MPD_{ids}/trait.{ids}.txt",
-    output: "MPD_{ids}/chr{i}.indel.annot.txt"
-    params:
+    output: os.path.join(SNPDB, "chr{i}.indel.annot.txt")
+    params: 
         bin = HBCGM_BIN,
     shell:
-        "{params.bin}/haplomap annotate -t indel -s {input.strains} -o {output} {input.vep} "
+        "{params.bin}/haplomap annotate -t indel -o {output} {input.vep} "
 
 # # find haplotypes
 rule eblocks:
     input: 
         snps = os.path.join(SNPDB, "chr{i}.indel.txt"),
-        gene_anno = "MPD_{ids}/chr{i}.indel.annot.txt",
+        gene_anno = os.path.join(SNPDB, "chr{i}.indel.annot.txt"),
         strains = "MPD_{ids}/trait.{ids}.txt",
     output: 
-        hb = protected("MPD_{ids}/chr{i}.indel.hblocks.txt"),
-        snphb = protected("MPD_{ids}/chr{i}.indel.haplotypes.txt")
+        hb = "MPD_{ids}/chr{i}.indel.hblocks.txt",
+        snphb = "MPD_{ids}/chr{i}.indel.haplotypes.txt"
     params:
         bin = HBCGM_BIN,
     log: "logs/MPD_{ids}.chr{i}.eblocks.log"
