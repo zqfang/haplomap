@@ -92,7 +92,7 @@ void readPerlegenAlleleInfo(char *fname);
 void writeAlleleInfoCompact(char *fname);
 
 // read the compact format.
-void readAlleleInfoCompact(char *fname);
+void readAlleleInfoCompact(char *fname, char* refgenome);
 
 // Read gene names and add to SNP info
 void readSNPGeneNames(char *fname);
