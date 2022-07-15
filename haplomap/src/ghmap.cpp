@@ -243,6 +243,7 @@ int BlockSummary::updateCodonScore(std::string str)
     return -1; // no_codon_change"; include INTRONIC, intergenic, 5PRIME_UTR, 3PRIME_UTR
 }
 
+/// aggregate the codon flag in a haplotype block by gene
 void BlockSummary::updateGeneIsInteresting()
 {
     bool keep = false;
@@ -261,7 +262,7 @@ void BlockSummary::updateGeneIsInteresting()
         else
         {
             // insert the codon flag
-            this->geneIsInteresting[giit->first] = this->updateCodonScore(giit->second);
+            this->geneIsInteresting[giit->first] = flag;
         }
 
         if (this->geneIsInteresting[giit->first] >= 0)
