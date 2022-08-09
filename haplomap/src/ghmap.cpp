@@ -243,6 +243,7 @@ int BlockSummary::updateCodonScore(std::string str)
     return -1; // no_codon_change"; include INTRONIC, intergenic, 5PRIME_UTR, 3PRIME_UTR
 }
 
+/// aggregate the codon flag in a haplotype block by gene
 void BlockSummary::updateGeneIsInteresting()
 {
     bool keep = false;
@@ -261,7 +262,7 @@ void BlockSummary::updateGeneIsInteresting()
         else
         {
             // insert the codon flag
-            this->geneIsInteresting[giit->first] = this->updateCodonScore(giit->second);
+            this->geneIsInteresting[giit->first] = flag;
         }
 
         if (this->geneIsInteresting[giit->first] >= 0)
@@ -807,7 +808,7 @@ void GhmapWriter::showGeneBestBlockSums(std::vector<GeneSummary *> geneList, flo
             if (!pBestBlock->relIgnore)
                 os << "\t" << pBestBlock->relPvalue << "\t" << pBestBlock->relFDR;
             os << "\t" << pBestBlock->chrName << "\t" << pBestBlock->chrBegin << "\t" << pBestBlock->chrEnd;
-            // os << "\t" << pBestBlock->blockIdx << "\t" << pBestBlock->blockStart << "\t" << pBestBlock->blockSize;
+            os << "\t" << pBestBlock->blockIdx << "\t" << pBestBlock->blockStart << "\t" << pBestBlock->blockSize;
 
             // write gene expression values
             if (geneExprMap.find(ugname) == geneExprMap.end())
@@ -953,7 +954,8 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
 {
     int numStrains = phenvec.size();
     std::vector<int> strOrderVec(numStrains);
-    const char *fmt = "gene-summaried; To get exact CodonFlag coordinates, re-run ghmap with -k/m/a";
+    const char *fmt = "gene-summaried; Aggregate haplotypeblock by gene (keep haplotype with lowest pvalue, and marked the most interesting codon-flag)."
+                      "To get the exact CodonFlag coordinates, please re-run ghmap with -k/m/a flag to show all haplotype blocks in a gene";
     GhmapWriter writer(outputFileName, datasetName, isCategorical, pvalueCutoff, fmt);
     writer.sortStrainsByPheno(phenvec, strOrderVec);
     writer.writeExpressionNames(geneExprHeader);
@@ -964,7 +966,7 @@ void writeGeneSums(bool isCategorical, char *outputFileName,
     writer.os << "\tEffectSize\tFDR\t";
     if (!blocks[0]->relIgnore)
         writer.os << "PopPvalue\tPopFDR\t";
-    writer.os << "Chr\tChrStart\tChrEnd\tGeneExprMap\n";
+    writer.os << "Chr\tChrStart\tChrEnd\tBlockIdx\tBlockStart\tBlockSize\tGeneExprMap\n";
 
     GenesComparator gcomp(isCategorical);
     // Copy genesTable values into a vector and sort using GenesComparator
