@@ -67,6 +67,7 @@ public:
     std::string name;
     int chrIdx;   // chromosome index
     int position; // location on chromosome
+    char ref;
     // string of alleles "ACGTD?" "D" is deletion, "?" is unspecified.
     char *alleles;
     // string of haplotype numbers (not printable).
@@ -78,8 +79,16 @@ public:
 
     char getAllele(int i);
     void setAllele(int i, char a);
-};
+    void setReference(char c);
+    char getReference(void);
 
+    // Convert allele string (e.g., "?ACCAT?") to a pattern (e.g., "?01102?").
+    // This is an updated version of allelesToPattern. 
+    // only used for writting output pattern, explicity set (ref: 0, alternate: 1-3, unknown: ?)
+    // old version ? we don't know 0 is ref or alternate.
+    std::string allelesToPattern(void);
+
+};
 
 class HaploBlock
 {

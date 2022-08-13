@@ -206,7 +206,7 @@ void writeAlleleInfoCompact(char *fname)
 }
 
 // read the compact format.
-void readAlleleInfoCompact(char *fname)
+void readAlleleInfoCompact(char *fname, char* refgenome)
 {
   ColumnReader rdr(fname, (char *)"\t");
 
@@ -221,7 +221,14 @@ void readAlleleInfoCompact(char *fname)
     std::string strain = rdr.getToken(aStrIdx);
     allStrains.addElementIfNew(strain);
   }
+  // reference genome strain index
+  int refStrIdx = allStrains.indexOf(refgenome);
 
+  if (refStrIdx >=0 && verbose)
+  {
+    std::cout<<"Reference Genome is found: "<<refgenome<<std::endl;
+  }
+   
   // read the lines with the SNP info
   while ((numtoks = rdr.getLine()) >= 0)
   {
@@ -269,6 +276,9 @@ void readAlleleInfoCompact(char *fname)
         std::cerr << "Fatal error: Could not allocation SNPInfo for " << snpName << "\n";
         std::abort();
       }
+      // set reference genome allele
+      if (refStrIdx >= 0)
+          pSNPInfo->setReference(alleleStr[refStrIdx]);
 
       // Insert a blank SNPEntry in the table with snpName
       std::pair<std::unordered_map<std::string, SNPInfo *>::iterator, bool> snpLookup =
@@ -279,7 +289,6 @@ void readAlleleInfoCompact(char *fname)
         std::cout << "WARNING: SNP " << snpName << " is duplicated in " << fname << std::endl;
         continue; // just skip duplicate one, although this should never happen.
       }
-
       // build up the allele string
       for (int strIdx = 0; strIdx < numStrains; strIdx++)
       {
@@ -2339,7 +2348,8 @@ void writeBlockSNPs(char *fname, int minBlockSNPs)
     std::string chrName = chromosomes.eltOf(pSNPInfo->chrIdx);
     snpOut << chrName << "\t" << pSNPInfo->position << "\t"
            << pSNPInfo->name << "\t";
-    showPattern(snpOut, pSNPInfo->pattern);
+    // showPattern(snpOut, pSNPInfo->pattern);
+    snpOut <<pSNPInfo->allelesToPattern();
     std::map<std::string, std::string> &geneMap = pSNPInfo->geneCodonMap;
     for (std::map<std::string, std::string>::iterator gcit = geneMap.begin(); gcit != geneMap.end(); gcit++)
     {

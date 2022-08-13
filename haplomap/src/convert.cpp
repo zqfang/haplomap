@@ -29,7 +29,8 @@ std::shared_ptr<VCFOptions> parseNIEHSOptions(int argc, char **argv)
             {"output",         required_argument, nullptr, 'o'},
             {"samples",        required_argument, nullptr, 's'},
             {"type",           required_argument, nullptr, 't'},
-            {"pl-diff",        required_argument, nullptr, 'p'},
+            {"plink",          no_argument, nullptr,       'p'},
+            {"pl-diff",        required_argument, nullptr, 'd'},
             {"qual",           required_argument, nullptr, 'q'},
             {"allelic-depth",  required_argument, nullptr, 'a'},
             {"mapping-quality",required_argument, nullptr, 'm'},
@@ -43,11 +44,12 @@ std::shared_ptr<VCFOptions> parseNIEHSOptions(int argc, char **argv)
                         "    in.vcf                Input sorted VCF file or stdin\n"
                         "    -o, --output          Output file name\n"
                         "\nOptional arguments:\n"
-                        "    -s,  --samples         New sample order. One name per line.\n"
+                        "    -s,  --samples         New sample order file. One name per line.\n"
                         "    -t,  --type            Select variant type: [snp|indel|sv]. Default: snp\n"
                         "    -q,  --qual            QUAL field of VCF file. Only keep variant > qual. Default 50. \n"
+                        "    -p,  --plink           Output tped, tfam file for plink. Default: false.\n"
                         "\nSNP only arguments (INDEL and SV have not effects!):\n"
-                        "    -p,  --pl-diff         Phred-scaled genotype likelihood (PL) difference. Default 20.\n"
+                        "    -d,  --pl-diff         Phred-scaled genotype likelihood (PL) difference. Default 20.\n"
                         "                           GT's PL must at least pl-diff unit lower than any other PL value. \n"
                         "                           The greater, the more '?' in the output. \n" 
                         "    -a,  --allelic-depth   Min allelic depth (AD) of samples. Default 3.\n"
@@ -68,7 +70,7 @@ std::shared_ptr<VCFOptions> parseNIEHSOptions(int argc, char **argv)
     {
 
        int option_index = 0;
-       c = getopt_long(argc, argv, "hva:m:o:p:q:r:s:t:b:", long_options_niehs, &option_index);
+       c = getopt_long(argc, argv, "hvpa:m:o:q:r:s:t:b:d:", long_options_niehs, &option_index);
 
         /* Detect the end of the options. */
         if (c == -1)
@@ -109,10 +111,15 @@ std::shared_ptr<VCFOptions> parseNIEHSOptions(int argc, char **argv)
                     opts->variantType = optarg;
                 break;
             }
-            case 'p':
+            case 'd':
             {
                 if (optarg != nullptr)
                     opts->phredLikelihoodDifference = std::stof(optarg);
+                break;
+            }
+            case 'p':
+            {
+                opts->plink = true;
                 break;
             }
             case 'q':
@@ -181,14 +188,14 @@ int main_convert(int argc, char **argv)
     // 
     // to lower case
     std::string varType(opts->variantType);
-    std::transform(varType.begin(), varType.end(), varType.begin(), ::tolower);
-    std::vector<std::string> v = {"snp","snv", "indel", "sv"};
+    std::transform(varType.begin(), varType.end(), varType.begin(), ::toupper);
+    std::vector<std::string> v = {"SNP","SNV", "INDEL", "SV"};
     if (std::find(v.begin(), v.end(), varType) == v.end())
     {
         std::cerr<<"Variant type (-t) error. Input one of these: snp, indel, sv"<<std::endl;
         std::exit(1);
     }
-    if (varType == "snp") varType = "snv";
+    if (varType == "SNP") varType = "SNV";
     opts->variantType = (char*)varType.c_str();
     ///
     std::string line;

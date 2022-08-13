@@ -1,14 +1,22 @@
 
 # Haplomap 
+Haplotype-based computational genetic mapping (a.k.a HBCGM)
+
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
-Haplotype-based computational genetic mapping 
 
 Haplomap is a successor project of HBCGM, as development on the latter was last continued in 2010. Haplomap has been adopted as a replacement for the original HBCGM 
 
+Citation:
+
+> Zhuoqing Fang, Gary Peltz, An Automated Multi-Modal Graph-Based Pipeline for Mouse Genetic Discovery, Bioinformatics, 2022;, btac356, https://doi.org/10.1093/bioinformatics/btac356
+
+
 see what's new  in the [CHANGELOG](./haplomap/CHANGELOG.md).
 
+![HBCGM](./docs/HBCGM.png)
+
 ## Dependency 
-Works both on `Linux`and `MacOS`
+Works both on `Linux` and `MacOS`
 
 Haplomap:
 * CMake
@@ -61,6 +69,17 @@ make
 See more detail in ``haplomap`` subfolder: [Run haplomap standalone](haplomap/README.md)
 
 ### Use `snakemake` workflow to run Mouse Phenome Database (MPD) datasets
+
+#### 0. Variant calling
+
+See [variant calling](./workflows/README.md) using GATK, BCFtools, svtools.
+
+e.g.
+```shell
+# modify the file path in haplomap and run with 12 cores
+snakemake -s workflows/bcftools.call.smk  --configfile config.yaml \
+          -k -p -j 12   
+```
 
 [Mouse Phenome Database](https://phenome.jax.org/) have > 10K datasets. Try to configure the files below to run
 #### 1. Prepare MPD `measnum` id file. One id per row, suffixed with "-m" or "-f"(f: female, m: male)
@@ -144,5 +163,6 @@ Authors: Zhuoqing Fang and Gary Peltz.
 
 The original HBCGM (the maximal haplotype construction method) was developed by Dr. David Dill and Dr. Gary Peltz at Stanford.
 
+HBCGM/Halomap is patented to Dr. Gary Peltz.
 
 This program is licensed with commercial restriction use license. Please see the attached LICENSE file for details.

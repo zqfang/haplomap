@@ -72,11 +72,13 @@ private:
     std::unordered_map<std::string, unsigned> columns; // header colum name to index
     std::vector<std::string> keys; // output order sorted by key
 
+
     void lowercase(std::string & str);
     void upcase(std::string & str);
     void readHeader(char *inFileName, char *delemiter);
     bool compareKey(Key key1, Key key2);
     std::string codonChange(VEPSummary * pRecord); // reformat codon chagne strings e.g. CTA/L<->CTG/L
+    std::string set_key(std::string location, std::string var_class);
 
 public:
     VarirantEeffectPredictor(char* inVEPName, char* inStrainName);

@@ -7,24 +7,35 @@ Haplotype-based computational genetic mapping
 ![HBCGM](../docs/HBCGM.png)
 ## Usage
 ### 0. Variant calling
-See [variant calling](../workflows/README.md) using GATK, BCFtools, svtools.
+See [variant calling](../workflows/README.md) in the workflow folder using GATK, BCFtools, svtools.
+
+
+Note: You need to use Ensemble-vep to annotate your VCF files.
+
+This code snap works for haplomap
+```shell
+bcftools view -f .,PASS ${vcf} | \
+        vep --fasta ${reference} ${genome_build} \
+        --format vcf --fork ${threads} --hgvs --force_overwrite \
+        --uniprot --domains --symbol --regulatory --distance 1000 --biotype \
+        --gene_phenotype MGI --check_existing  --pubmed --numbers \
+        --offline --cache --variant_class \
+        --gencode_basic --no_intergenic --individual all \
+        -o ${output} --tab --compress_output gzip \
+```
+
 
 
 ### 1. Construct variant panel
 
-**WARNING**: If you use GATK pipeline, you have to filter and subset SNP or Indel first. Haplomap `convert` work best with variants from BCFtools output. 
+**WARNING**: If you use GATK pipeline or Structrual Variants, you have to filter and subset SVs or Indels first. Haplomap `convert` work best with variants from BCFtools output. 
 
-SNPs
 ```shell
-build/bin/haplomap convert -o ${HOME}/data/SNPS/chr18.txt ${HOME}/data/VCFs/chr18.vcf
+build/bin/haplomap convert --type snp \
+                           -o ${HOME}/data/SNPS/chr18.txt ${HOME}/data/VCFs/chr18.vcf
 
 # support stdin, but much slower
 zcat ${HOME}/data/VCFs/chr18.vcf.gz | bin/haplomap convert -o ${HOME}/data/SNPS/chr18.txt
-```
-Structural variants (You need to filter SVs first)
-```shell
-build/bin/haplomap convert -o ${HOME}/data/SNPS/chr18.sv.txt \
-                           --type sv input.sv.vcf
 ```
 
 ### 2. Construct annotation file from ensemble-vep results
@@ -77,25 +88,65 @@ Recommend adding `-a` flag, which will output gene-oriented format results.
 ## Input
 see `example` folder for test cases.
 
-1. eblocks:
-    - Strain file (-s): 
-      - Tree column txt file: "#Abbrev \t (Optional) \t Values "
-      - see `test.strain.txt` in the example folder
-    - Allele file (-a): NIEHS compact format (use subcmd `convert` to convert vcf to niehs)
-    - Gene Annotation (-g): 
-      - format: " <SNP_{chr}_{postion}>  <gene_name>  < consequence> "
-      - see above to prepare this file
+### eblocks:
+- Strain file (-s): 
+  - Tree column txt file: "#Abbrev \t (Optional) \t Values "
+  - see `test.strain.txt` in the example folder
+- Allele file (-a): NIEHS compact format (use subcmd `convert` to convert vcf to niehs)
+- Gene Annotation (-g): 
+  - format: " <SNP_{chr}_{postion}>  <gene_name>  < consequence> "
+  - see above to prepare this file
 
-2. ghmap:
-    - Trait file (-p):  
-        - same as eblocks -s:  "#Abbrev \t (Optional) \t Values "
-        - If multiple aninmal values for same strain, seperate them by comma. Example:
-        ```$xslt
-           129S1	18.2,19.1,14.3
-           A_J	19.3,18.2
-        ```
-    - haploblocks (-b): eblocks output file
-    - genetic relation (-r): optional file, could obtain from plink.
+### ghmap:
+- Trait file (-p):  
+    - same as eblocks -s:  "#Abbrev \t (Optional) \t Values "
+    - If multiple aninmal values for same strain, seperate them by comma. Example:
+    ```$xslt
+        129S1	18.2,19.1,14.3
+        A_J	19.3,18.2
+    ```
+- haploblocks (-b): eblocks output file
+- genetic distance matrix (-r): optional file, could obtain from plink.
+
+**How to get the genetic distance matrix**
+
+1. convert vcf to plink .tped, .tfam
+```shell
+haplomap convert  --plink \
+                  -o ${HOME}/data/SNPS/chr1.snp.txt \
+                  --type snp input.vcf
+```
+
+2. convert tped, tfam to .bed, .bim, .fam
+```
+plink --tfile chr1.snp --make-bed --out chr1
+```
+3. merge .bed files
+```shell
+plink --bfile chr1 --merge-list mergelist.txt --make-bed --out mouse_merged
+```
+
+note: the mergelist.txt in this format
+  ```
+  chr2.bed chr2.bim chr2.fam
+  chr3.bed chr3.bim chr3.fam
+  ...
+  ```
+
+4. Sample-distance and similarity matrices
+```shell
+plink --bfile mouse_merged # need .bim, .fam
+      --make-rel square \ # Relationship/covariance
+      --out mouse_grm \
+      --threads 12
+```
+5. format to (ghmap -r) input
+```shell
+cut -f2 mouse_grm.rel.id | tr "\n" "\t" > mouse_grm.dist
+echo "#$(cat mouse_grm.dist)" > mouse_grm.dist
+cat mouse_grm.rel >> mouse_grm.dist
+```
+
 
 ## Output
 

@@ -206,3 +206,13 @@ rule VEP4Indels:
         "--offline --cache --variant_class "
         "--gencode_basic --no_intergenic --individual all "
         "-o {output} --tab --compress_output gzip"
+
+
+rule vcf2bed:
+    input: "VCFs/chr{i}.vcf.gz"
+    output: 
+        "PLINK/chr{i}.bed",
+        "PLINK/chr{i}.bim", 
+        "PLINK/chr{i}.fam"
+    shell:
+        "plink --vcf ../VCFs/chr{wildcards.i}.vcf.gz --make-bed --out PLINK/chr{wildcards.i}"

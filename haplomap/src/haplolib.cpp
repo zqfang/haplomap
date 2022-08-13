@@ -134,12 +134,12 @@ char *dupPattern(char *pattern)
 }
 
 // default constructor
-SNPInfo::SNPInfo() : alleles(initAlleles()), frozen(false), used(false), qMarks(true) { pattern = initPattern(); };
+SNPInfo::SNPInfo() : ref('?'), alleles(initAlleles()), frozen(false), used(false), qMarks(true) { pattern = initPattern(); };
 
 // constructor for stuff in chr_info_perl file.
 //  SNPInfo(string n, int ci, int pos) : name(n), chrIdx(ci), position(pos) { alleles = initAlleles(); };
 SNPInfo::SNPInfo(std::string n, int ci, int pos) : name(n), chrIdx(ci), position(pos),
-                                                   alleles(initAlleles()),
+                                                   ref('?'), alleles(initAlleles()),
                                                    frozen(false), used(false), qMarks(true)
 {
   pattern = initPattern();
@@ -153,7 +153,7 @@ SNPInfo::SNPInfo(SNPInfo const &snpInfo) : name(snpInfo.name), chrIdx(snpInfo.ch
 {
 
   std::cerr << "Illegal call to SNPInfo copy constructor" << std::endl;
-  exit(1);
+  std::exit(1);
   //     if (frozen) {
   //       cerr << "Copy constructor applied to frozen SNPInfo:" << this << endl;
   //     }
@@ -195,6 +195,54 @@ char *SNPInfo::initPattern()
 
 char SNPInfo::getAllele(int i) { return alleles[i]; }
 void SNPInfo::setAllele(int i, char a) { alleles[i] = a; }
+void SNPInfo::setReference(char a) { this->ref = a; }
+char SNPInfo::getReference(void) { return this->ref; }
+
+// this function make ref: 0, alternate 1-3, unknown: ?
+std::string SNPInfo::allelesToPattern(void)
+{
+  std::string _pattern(this->alleles);
+  char map[128];
+  map[(int)'A'] = '?';
+  map[(int)'C'] = '?';
+  map[(int)'G'] = '?';
+  map[(int)'T'] = '?';
+  map[(int)'?'] = '?';
+  map[(int)'D'] = '?'; // deletion
+  map[(int)'U'] = '?'; // duplication
+  map[(int)'I'] = '?'; // insertion
+  map[(int)'V'] = '?'; // inversion
+  // update Ref if defined
+  int eqclass = 0;
+  if (this->ref != '?')
+  {
+      map[(int)this->ref] = '0';
+      eqclass++;
+  }
+  // Traverse the string
+  std::string::iterator it;
+  for (it = _pattern.begin(); it != _pattern.end(); it++) 
+  {
+    int a = *it; // ascii
+    if (*it  == '?')
+    {
+      continue;
+      // no change to map. *it stays '?'
+    }
+    else if (map[a] == '?')
+    {
+      // a not yet mapped.  Bind it.
+      map[a] = eqclass + '0'; // int to char
+      *it = map[a];
+      eqclass++;
+    }
+    else
+    {
+      *it = map[a];
+    }
+  }
+  return _pattern;
+}
 
 SNPInfo &SNPInfo::operator=(const SNPInfo &si)
 {

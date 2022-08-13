@@ -2,7 +2,19 @@
 
 ## Usage
 ### 1. Edit the `config.yaml` file for required files:
-Install `snakemake` first
+Install `snakemake`, `ensembl-vep` first.
+
+update the path to:
+- BAM_DIR
+- GENOME
+- VEP
+
+And the output directory:
+- BCFTOOL (bcftools pipeline)
+  - WORKSPACE
+
+- GATK (gatk pipeline)
+  - WORKSPACE
 
 ### 2 Run on local computer
 ```shell
@@ -11,15 +23,20 @@ snakemake -s bcftools.call.smk  --configfile config.yaml \
           -k -p -j 12   
 ```
 
-## Two pipeline developed:
-1. bcftools call 
-  - prefer pipeline for inbred mouse and HBCGM input
-  - more accuracy for inbred mouse ?
+or 
+```shell
+# modify the file path in haplomap and run with 12 cores
+snakemake -s gatk.call.smk  --configfile config.yaml \
+          -k -p -j 12   
+```
 
+## About variant calling pipeline:
+1. bcftools call 
+  - prefered pipeline for inbred mouse and haplomap input
 
 2. GATK best practice
   - designed for human genetics 
-  - have to play with ``VQSR`` or ``hardfiltering`` parameters if use non-human data
+  - users are responsible for tuning ``VQSR`` or ``hardfiltering`` parameters if use non-human data
 
 
 **Caution !**: Both pipelines take a long time to run.
@@ -44,10 +61,24 @@ or Huam
 INSTALL.pl -a cfp -s homo_sapiens -y GRCh38 --CONVERT
 ```
 
+
+### Annotation
+e.g
+```shell
+bcftools view -f .,PASS ${input.vcf} | \
+        ${params.VEPBIN}/vep --fasta ${input.reference} ${params.genome_build} \
+        --format vcf --fork ${threads} --hgvs --force_overwrite \
+        --uniprot --domains --symbol --regulatory --distance 1000 --biotype \
+        --gene_phenotype MGI --check_existing  --pubmed --numbers \
+        --offline --cache --variant_class \
+        --gencode_basic --no_intergenic --individual all \
+        -o ${output} --tab --compress_output gzip \
+```
+
 ### Notes
 
 
-## Why not GATK ?
+## Why not GATK for inbred population ?
 
 One of my colleague who studies mouse genetics, said, 
 
@@ -55,4 +86,5 @@ One of my colleague who studies mouse genetics, said,
 
 > In addition, in one of their mouse genomic paper that we reviewed, they even skipped the second recalibration step. We asked them why and they said it was because of the same reason: good for human but not that good for the homogeneous inbred mouse.
 
-From my point of view, I think GATK works OK.
+
+However, my experiences with GATK (>v4.0) is as good as bcftools.

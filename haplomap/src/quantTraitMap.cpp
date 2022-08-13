@@ -28,7 +28,7 @@ struct GhmapOptions
     char *geneticRelationMatrix;
     // constructor
     GhmapOptions() : isCategorical(false), filterCoding(false), haploBlocks(false),
-                     geneBlocks(false), pvalueCutoff(0.05),datasetName((char *)"Unnamed_dataset"),
+                     geneBlocks(false), geneAllBlocks(false), pvalueCutoff(0.05),datasetName((char *)"Unnamed_dataset"),
                      phenotypeFileName(NULL), blocksFileName(NULL), outputFileName(NULL), geneName(NULL),
                      equalFile(NULL), goTermFile(NULL), goFilter(NULL),
                      geneticRelationMatrix(NULL) {};
@@ -65,31 +65,34 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
 
     const char *usage = "usage: ghmap [options]\n"
                         "\nRequired arguments:\n"
-                        "    -p, --phenotypes       <phenotype file> strain order should match to (eblocks -b)\n"
-                        "    -b, --blocks           <output file from (eblocks -o) >\n"
+                        "    -p, --phenotypes       <phenotype file> \n"
+                        "                                The same input file of (eblocks -b)\n"
+                        "    -b, --blocks           <haploblocks file >\n"
+                        "                                The output file from (eblocks -o)\n"
                         "    -o, --output           <output file name>\n"
-                        "                           output gene-summaried results by default.\n"
+                        "                                Output gene-summaried results by default.\n"
                         "\nOptional arguments:\n"
-                        "    -n, --name             name of phenotype dataset. \n"
-                        "                           suffix with _INDEL or _SV to indicate indel/SV blocks\n"
-                        "    -c, --categorical      phenotype (-p) is categorical\n"
-                        "    -r, --relation         genetic relation file <.rel> for population structure analysis.\n"
-                        "                           n x n matrix with header line (startswith '#') contain sample names.\n"
+                        "    -n, --name             <name of phenotype dataset> \n"
+                        "                                Suffix with _INDEL or _SV to indicate indel/SV blocks\n"
+                        "    -c, --categorical           phenotype (-p) is categorical\n"
+                        "    -r, --relation         <genetic relation file> \n" 
+                        "                                <.rel> file for population structure analysis.\n"
+                        "                                n x n matrix with header line (startswith '#') contain sample names.\n"
                         "    -e, --expression       <name of file>\n"
                         "    -q, --equal            <name of file>\n"
                         "    -t, --goterms          <name of file>\n"
                         "    -i, --goterms_include  <name of file> \n"
-                        "                           output only genes with these terms\n"
-                        "    -f, --filter_coding    filter out non-coding blocks\n"
-                        "    -g, --gene             output gene-summaried results. Default.\n"
-                        "                           NOTE:: Only wirte the overlapped halpoblock with best pvalue/Fstat, representing all overlapped blocks. \n"
-                        "                                  The CodonFlag is an aggregated indicator showing that a gene has blocks with coding change. \n"
-                        "                                  The best block itself might not contain any coding changes. \n"
-                        "                                  Run the ghmap with -a/k/m tag will give you all overlapped blocks with correct CodonFlag. \n"
-                        "    -a, --gene_all_blocks  output gene-oriented results of all blocks that overalp a gene. \n"
-                        "    -m, --gene_block       output gene-oriented results block by block. almost the same to -a\n"
-                        "    -k, --haploblocks      output block-oriented results.\n"
-                        "    -l, --pvalue_cutoff    only write results with pvalue < cutoff\n"
+                        "                                 Output only genes with these terms\n"
+                        "    -f, --filter_coding          Filter out non-coding blocks\n"
+                        "    -g, --gene                   Output gene-summaried results. Default.\n"
+                        "                                 NOTE:: Only write the overlapped halpoblock with best pvalue/Fstat, representing all overlapped blocks. \n"
+                        "                                     The CodonFlag is an aggregated indicator showing that a gene has blocks with coding change. \n"
+                        "                                     The best block itself might not contain any coding changes. \n"
+                        "                                     Run the ghmap with -a/k/m tag will give you all overlapped blocks with correct CodonFlag. \n"
+                        "    -a, --gene_all_blocks       Output gene-oriented results of all blocks that overalp a gene. \n"
+                        "    -m, --gene_block            Output gene-oriented results block by block. almost the same to -a\n"
+                        "    -k, --haploblocks           Output block-oriented results.\n"
+                        "    -l, --pvalue_cutoff    <float>   Only write results with pvalue < cutoff\n"
                         "    -v, --verbose\n"
                         "    -h, --help\n";
 
