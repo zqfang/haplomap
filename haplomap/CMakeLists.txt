@@ -1,7 +1,6 @@
 project(haplomap)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-#find_package(GSL REQUIRED)
 
 # For profiler on Ubuntu
 if (CMAKE_BUILD_TYPE STREQUAL Debug AND NOT MSVC)
@@ -22,7 +21,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src HAPLOMAP_SRC)
 
 add_executable(haplomap main.cpp "${HAPLOMAP_SRC}")
-#target_include_directories(haplomap PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(haplomap PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${GSL_INCLUDE_DIRS})
 target_link_libraries(haplomap PUBLIC ${GSL_LIBRARIES}) # link libgsl.so libgslcblas.so
 #install binary to directory you specified
 install(TARGETS haplomap 

@@ -6,13 +6,9 @@ on:
   push:
     branches: 
       - master
-      - dev
-      - v0.1
   pull_request:
     branches: 
       - master
-      - dev 
-      - v0.1
   
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -29,19 +25,21 @@ jobs:
     - name: Install gcc, cmake
       run: |
         sudo apt-get install -qq cmake
+        sudo apt-get install make
+        sudo apt-get install libgsl-dev
         
     # Runs a set of commands using the runners shell
-    - name: Install GSL
-      # run: sudo apt-get install libgsl-dev
-      run: |
-        cd ${GITHUB_WORKSPACE}
-        wget http://ftp.wayne.edu/gnu/gsl/gsl-2.6.tar.gz
-        tar -xvzf gsl-2.6.tar.gz 
-        cd gsl-2.6
-        sudo ./configure --prefix=${GITHUB_WORKSPACE}/gsl
-        sudo make
-        sudo make install
-        export LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/gsl/lib:$LD_LIBRARY_PATH 
+    # - name: Install GSL
+    #   # run: sudo apt-get install libgsl-dev
+    #   run: |
+    #     cd ${GITHUB_WORKSPACE}
+    #     wget http://ftp.wayne.edu/gnu/gsl/gsl-2.6.tar.gz
+    #     tar -xvzf gsl-2.6.tar.gz 
+    #     cd gsl-2.6
+    #     sudo ./configure --prefix=${GITHUB_WORKSPACE}/gsl
+    #     sudo make
+    #     sudo make install
+    #     export LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/gsl/lib:$LD_LIBRARY_PATH 
 
     - name: CMake build 
       run: |
@@ -49,4 +47,10 @@ jobs:
         mkdir -p build && cd build
         cmake ..
         make 
+        
+    - name: Test cmmand 
+      run: |
+        cd ${GITHUB_WORKSPACE}  
+        ./build/bin/haplomap --help
+
         

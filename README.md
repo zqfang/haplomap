@@ -38,8 +38,23 @@ Running pipeline
 
 ## Installation
 
-1. Download and compile [GSL](https://www.gnu.org/software/software.html), then export the lib path  
+1. Install [GSL](https://www.gnu.org/software/software.html)  
 e.g.
+
+Ubuntu
+```shell
+sudo apt-get install libgsl-dev
+```
+
+
+MacOS
+```shell
+brew install gsl
+```
+
+
+
+Mannual install (makesure that GSL include and lib path is exported)
 ```bash
 ./configure --prefix=${HOME}/program/gsl
 make && make install
@@ -47,16 +62,10 @@ make && make install
 export LD_LIBRARY_PATH="${HOME}/program/gsl/lib:$LD_LIBRARY_PATH"
 ```
 
-2. edit `CMakeLists.txt`, set GSL header and lib path, 
-
-```cmake
-set(GSL_INCLUDE /path/to/gsl/include)
-set(GSL_LIBS /path/to/gsl/lib)
-```
-
-3. build
+2. build
 
 ```bash
+cd ${haplomap_repo}
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make

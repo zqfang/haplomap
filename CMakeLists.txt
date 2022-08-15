@@ -28,16 +28,16 @@ set(CMAKE_CXX_STANDARD 11)
 # # Now, you could use unitest inside u projects
 # enable_testing()
 
-#find_package(GSL REQUIRED)
+find_package(GSL REQUIRED)
 # define some globals
 SET(SOURCECODE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 # output dir
 # add GSL
-set(GSL_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/gsl/include)
-set(GSL_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/gsl/lib)
-include_directories(${GSL_INCLUDE})
-link_directories(${GSL_LIBS})  # so, libgsl.so libgslcblas.so are found in ${GSL_LIBS}
-set(GSL_LIBRARIES gsl gslcblas)
+#set(GSL_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/gsl/include)
+#set(GSL_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/gsl/lib)
+include_directories(${GSL_INCLUDE_DIRS})
+#link_directories(${GSL_LIBRARIES})  # so, libgsl.so libgslcblas.so are found in ${GSL_LIBS}
+#set(GSL_LIBS GSL::gsl GSL::gslcblas)
 
 file(GLOB HBCGM_SRC ${CMAKE_SOURCE_DIR}/*/src/*.cpp)
 
