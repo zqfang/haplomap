@@ -2,7 +2,9 @@
 # Haplomap 
 Haplotype-based computational genetic mapping (a.k.a HBCGM)
 
+![bioconda](https://img.shields.io/conda/vn/bioconda/haplomap.svg?style=plastic)
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
+
 
 Haplomap is a successor project of HBCGM, as development on the latter was last continued in 2010. Haplomap has been adopted as a replacement for the original HBCGM 
 
@@ -38,7 +40,12 @@ Running pipeline
 
 ## Installation
 
-1. Install [GSL](https://www.gnu.org/software/software.html)  
+```shell
+conda install -c bioconda haplomap
+```
+
+## Installl from source
+1. Install [GSL](https://www.gnu.org/software/software.html) first 
 e.g.
 
 Ubuntu
@@ -46,15 +53,13 @@ Ubuntu
 sudo apt-get install libgsl-dev
 ```
 
-
 MacOS
 ```shell
 brew install gsl
 ```
 
 
-
-Mannual install (makesure that GSL include and lib path is exported)
+or compile GSL(makesure that GSL include and lib path is exported)
 ```bash
 ./configure --prefix=${HOME}/program/gsl
 make && make install
@@ -62,12 +67,12 @@ make && make install
 export LD_LIBRARY_PATH="${HOME}/program/gsl/lib:$LD_LIBRARY_PATH"
 ```
 
-2. build
+2. build and install to path
 
 ```bash
 cd ${haplomap_repo}
 mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/path/to/directory/bin ..
 make
 ```
 

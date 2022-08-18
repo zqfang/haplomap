@@ -2,6 +2,12 @@
 # Haplomap
 Haplotype-based computational genetic mapping  
 
+## Installation
+
+```shell
+conda install -c bioconda haplomap
+```
+
 ![Haplomap](https://github.com/zqfang/haplomap/workflows/Haplomap/badge.svg)
 
 ![HBCGM](../docs/HBCGM.png)
