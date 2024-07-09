@@ -30,7 +30,7 @@ struct GhmapOptions
     GhmapOptions() : isCategorical(false), filterCoding(false), haploBlocks(false),
                      geneBlocks(false), geneAllBlocks(false), pvalueCutoff(0.05),datasetName((char *)"Unnamed_dataset"),
                      phenotypeFileName(NULL), blocksFileName(NULL), outputFileName(NULL), geneName(NULL),
-                     equalFile(NULL), goTermFile(NULL), goFilter(NULL),
+                     expressionFile(NULL), equalFile(NULL), goTermFile(NULL), goFilter(NULL),
                      geneticRelationMatrix(NULL) {};
 };
 

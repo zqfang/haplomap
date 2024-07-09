@@ -25,7 +25,7 @@ dbSNP: "/home/fangzq/genome/mouse/mouse.dbsnp.vcf.gz" # mm10
 
 HBCGM:
     # working directory
-    WORKSPACE: "/data/bases/shared/haplomap/MPD_MeSH_Indel_example"
+    WORKSPACE: "/data/bases/shared/haplomap/MPD_MeSH_Indel"
     # path to haplomap
     BIN: "/home/fangzq/github/HBCGM/build/bin"
     # path to GNNHap repo
@@ -34,7 +34,7 @@ HBCGM:
     GNNHAP_BUNDLE: "/home/fangzq/github/GNNHap/bundle"
     
     # MPD trait ids 
-    TRAIT_IDS: "/home/fangzq/github/HBCGM/example/MPD_MeSH.example.txt"
+    TRAIT_IDS: "/data/bases/shared/haplomap/PELTZ_20210609/MPD_MeSH_suffixed.txt"
     # set to true if input individual animal data. Default: use strain means.   
     USE_RAWDATA: false 
     # use custom database instead of using MPD API to get data.
@@ -47,7 +47,7 @@ HBCGM:
     # Ensembl-vep output after variant calling step
     VEP_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/VEP"
     # path to indel database
-    SNPS_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/INDELs"
+    VAR_DIR: "/data/bases/shared/haplomap/PELTZ_20210609/HBCGM_VAR_DB"
 
     # genetic relation file from PLink output
     GENETIC_REL: "/data/bases/shared/haplomap/PELTZ_20210609/mouse54_grm.rel"

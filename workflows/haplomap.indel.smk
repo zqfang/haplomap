@@ -37,7 +37,7 @@ with open(TRAIT_IDS, 'r') as t:
 # filter id in MeSH
 with open(MPD2MeSH, 'r') as j:
     MESH_DICT = json.load(j)
-IDS = [i for i in IDS_ if i.split("-")[0] in MESH_DICT ]
+IDS = [i for i in IDS_ if i.replace("MPD_", "").split("-")[0] in MESH_DICT ]
 # filter id that already run
 # pat = config['HBCGM']['WORKSPACE'] + "MPD_{ids}_indel.results.mesh.txt"
 # IDS = [mnum for mnum in IDS if not os.path.exists(pat.format(ids = mnum))]
@@ -62,26 +62,26 @@ rule target:
 #     ouput: os.path.join(OUTPUT_DIR, "mpd.ids.txt")
 #     shell: 
 #         "cut -d, -f1 {input} | uniq | sed '1d' > {output.txt}"
-rule traits: 
-    output: temp(expand("MPD_{ids}/strain.{ids}.temp", ids=IDS))
-    run:
-        for out in output:
-            shell("touch %s"%out)
+# rule traits: 
+#     output: temp(expand("MPD_{ids}/strain.{ids}.temp", ids=IDS))
+#     run:
+#         for out in output:
+#             shell("touch %s"%out)
 
-rule strain2trait:
-    input: 
-        strain = STRAIN_ANNO,
-        ids = "MPD_{ids}/strain.{ids}.temp"
-    output: 
-        "MPD_{ids}/strain.{ids}.txt",
-        "MPD_{ids}/trait.{ids}.txt",
-    params:
-        trait = TRAIT_DATA,
-        outdir = config['HBCGM']['WORKSPACE'],
-        traitid = "{ids}",
-        rawdata = config['HBCGM']['USE_RAWDATA']
-    script:
-        "../scripts/strain2traits.py"
+# rule strain2trait:
+#     input: 
+#         strain = STRAIN_ANNO,
+#         ids = "MPD_{ids}/strain.{ids}.temp"
+#     output: 
+#         "MPD_{ids}/strain.{ids}.txt",
+#         "MPD_{ids}/trait.{ids}.txt",
+#     params:
+#         trait = TRAIT_DATA,
+#         outdir = config['HBCGM']['WORKSPACE'],
+#         traitid = "{ids}",
+#         rawdata = config['HBCGM']['USE_RAWDATA']
+#     script:
+#         "../scripts/strain2traits.py"
 
 rule strainOrder:
     output: "strain.order.snpdb.txt"

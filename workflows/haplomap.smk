@@ -37,7 +37,7 @@ with open(TRAIT_IDS, 'r') as t:
 # filter id in MeSH
 with open(MPD2MeSH, 'r') as j:
     MESH_DICT = json.load(j)
-IDS = [i for i in IDS_ if i.split("-")[0] in MESH_DICT ]
+IDS = [i for i in IDS_ if i.replace("MPD_","").split("-")[0] in MESH_DICT ]
 # filter id that already run
 pat = config['HBCGM']['WORKSPACE'] + "MPD_{ids}_snp.results.txt"
 IDS = [mnum for mnum in IDS if not os.path.exists(pat.format(ids = mnum))]
@@ -47,13 +47,13 @@ CHROMSOME = [str(i) for i in range (1, 20)] + ['X'] # NO 'Y'
 # SNPDB = expand("SNPs/chr{i}.txt", i=CHROMOSOMES)
 HBCGM =  expand("MPD_{ids}/chr{i}.snp.results.txt", ids=IDS, i=CHROMSOME)
 HBCGM_NONCODING = expand("MPD_{ids}/chr{i}.open_region.bed", ids=IDS, i=CHROMSOME)
-HBCGM_MESH = expand("MPD_{ids}_snp.results.mesh.txt", ids=IDS)
+# HBCGM_MESH = expand("MPD_{ids}_snp.results.mesh.txt", ids=IDS)
 # rules that not work in a new node
 #localrules: target, traits, strain2trait  
 
 
 rule target:
-    input: HBCGM_MESH, #HBCGM_NONCODING
+    input: HBCGM, #HBCGM_NONCODING
 
 ########################### Prepare Phenotypic DATA (from MPD API) ############################
 # rule pheno:
@@ -61,25 +61,25 @@ rule target:
 #     ouput: os.path.join(OUTPUT_DIR, "mpd.ids.txt")
 #     shell: 
 #         "cut -d, -f1 {input} | uniq | sed '1d' > {output.txt}"
-rule traits: 
-    output: temp(expand("MPD_{ids}/strain.{ids}.temp", ids=IDS))
-    run:
-        for out in output:
-            shell("touch %s"%out)
+# rule traits: 
+#     output: temp(expand("MPD_{ids}/strain.{ids}.temp", ids=IDS))
+#     run:
+#         for out in output:
+#             shell("touch %s"%out)
 
-rule strain2trait:
-    input: 
-        strain = STRAIN_ANNO,
-        ids = "MPD_{ids}/strain.{ids}.temp"
-    output: 
-        "MPD_{ids}/trait.{ids}.txt",
-    params:
-        trait = TRAIT_DATA,
-        outdir = config['HBCGM']['WORKSPACE'],
-        traitid = "{ids}",
-        rawdata = config['HBCGM']['USE_RAWDATA']
-    script:
-        "../scripts/strain2traits.py"
+# rule strain2trait:
+#     input: 
+#         strain = STRAIN_ANNO,
+#         ids = "MPD_{ids}/strain.{ids}.temp"
+#     output: 
+#         "MPD_{ids}/trait.{ids}.txt",
+#     params:
+#         trait = TRAIT_DATA,
+#         outdir = config['HBCGM']['WORKSPACE'],
+#         traitid = "{ids}",
+#         rawdata = config['HBCGM']['USE_RAWDATA']
+#     script:
+#         "../scripts/strain2traits.py"
 
 
 ############################ Convert VCF to niehs, tped, tfam  ########################################

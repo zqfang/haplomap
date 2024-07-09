@@ -57,7 +57,7 @@ HBCGM:
     # KNOWNGENE: "/data/bases/shared/haplomap/PELTZ_20210609/SNP_Annotation/mm10_knownGene.txt" 
 
     # genetic relation file from PLink output
-    GENETIC_REL: "/data/bases/shared/haplomap/PELTZ_20210609/mouse54_grm.rel"
+    GENETIC_REL: "/data/bases/shared/haplomap/PELTZ_20210609/mouse_grm.dist"
     # gene expression file
     GENE_EXPRS: "/data/bases/shared/haplomap/PELTZ_20210609/mus.compact.exprs.txt"
     # MeSH mapping
