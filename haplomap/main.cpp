@@ -3,7 +3,7 @@
 //
 
 #ifndef __HAPLOMAP_VER__
-#define __HAPLOMAP_VER__ "0.1.0"
+#define __HAPLOMAP_VER__ "0.1.1"
 #endif
 
 #if defined(__clang__)
