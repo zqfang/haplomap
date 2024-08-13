@@ -49,9 +49,9 @@ struct VEPSummary
     std::string biotype; //23, protein_coding, lincRNA, etc
     Dynum<std::string> HGVSc; //31 HGVSp strings
     Dynum<std::string> HGVSp; //32 HGVSp strings
-    std::string chrom;
-    int start;
-    int end;
+    // std::string chrom;
+    // int start;
+    // int end;
 
    VEPSummary(std::string uploaded_variant, std::string loc, std::string seq, std::string gene,
                 std::string transcript, std::string feature_type, std::string csq, std::string aa_pos, std::string aa,

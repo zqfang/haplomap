@@ -45,32 +45,10 @@ VEPSummary::VEPSummary(
 {
     size_t tokstart = 0;
     size_t dpos = 0;
-    size_t sz = location.size();
-    size_t tok1 = location.find_first_of(":", tokstart);
-    size_t tok2 = location.find_first_of("-", tokstart);
-    // size_t tok0 = location.find_first_not_of("chr");
-    this->chrom = location.substr(tokstart, tok1);
-
-
-    /// For ensembl-vep results, the coordinates (chrStart) of
-    /// indel, deletion need to -1 to get original position in vcf.
-    /// SNV, insertion stay the same to position in vcf
-    /// The quick trick to handle these cases is whether the location string contains "-"
-    if (tok2 == std::string::npos) // no match found
-    {
-        this->start = std::stoi(location.substr(tok1 + 1, sz-tok1)); // (pos, len)
-        this->end = this->start; 
-        if (var_class == "indel") this->start --; // indel (dup) with "chr:start" format need to minus 1 
-    }
-    else
-    {
-        // NOTE: need to minius 1, since VEP made pos+1 in their annotatoin
-        this->start = std::stoi(location.substr(tok1 + 1, tok2 - tok1)) - 1; 
-        if (var_class == "insertion") this->start ++; // only insertion case are stay the same pos as original vcf
-        this->end = std::stoi(location.substr(tok2 + 1, sz - tok2)); // empty string if snp
-    }
-    // split consequence strings
-    tokstart = 0;
+    // Key* loc2 = Key(location);
+    // this->chrom = loc2->chrom;
+    // this->start = loc2->start;
+    // this->end = loc2->end;
     while (dpos < csq.size())
     {
         dpos = csq.find_first_of(",", tokstart);
@@ -210,7 +188,8 @@ void VarirantEeffectPredictor::readHeader(char *inFileName, char *delemiter)
 
 }
 
-// var_class must be lowercase
+/// var_class must be lowercase
+/// var_type: snv, indel, sv. 
 std::string VarirantEeffectPredictor::set_key(std::string location, std::string var_class, std::string& var_type)
 {
     size_t tokstart = 0;
@@ -244,7 +223,9 @@ std::string VarirantEeffectPredictor::set_key(std::string location, std::string 
     int var_len = end - start;
     if (var_type == "sv") 
     {
-        var_len = 100; // set to 100, so the key is like SV_** 
+        // for sv's inserstion, var_len is 1. 
+        // set to 100, so the key is like SV_** 
+        var_len = 100; 
         if (var_class == "insertion") end = start;
     }
 
@@ -257,9 +238,9 @@ std::string VarirantEeffectPredictor::set_key(std::string location, std::string 
                 ((var_class == "insertion") && var_len < 50) ||  
                 ((var_class ==  "deletion") && var_len < 50) )
     {
-        /// NOTE: VEP indels are > 2bp, else it will annotate as deletions and insertions. 
+        /// NOTE: VEP indels are > 2bp, or else it will annotate as deletions and insertions. 
         /// So, defined 1 bp del or ins as Indels for downstream analysis
-        /// see docs: https://m.ensembl.org/info/genome/variation/prediction/classification.html  
+        /// see docs: https://ensembl.org/info/genome/variation/prediction/classification.html
         /// we force var_len < 50 bp to be indels
         key = "INDEL_" + chrom + "_" + std::to_string(start);
     }
@@ -276,7 +257,8 @@ std::string VarirantEeffectPredictor::set_key(std::string location, std::string 
 
 }
 
-/// varType (variant classes): https://m.ensembl.org/info/genome/variation/prediction/classification.html
+/// varType (variant classes): 
+/// https://ensembl.org/info/genome/variation/prediction/classification.html
 void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* varType)
 {
 
