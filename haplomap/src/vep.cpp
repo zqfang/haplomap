@@ -48,8 +48,9 @@ VEPSummary::VEPSummary(
     size_t sz = location.size();
     size_t tok1 = location.find_first_of(":", tokstart);
     size_t tok2 = location.find_first_of("-", tokstart);
-
+    // size_t tok0 = location.find_first_not_of("chr");
     this->chrom = location.substr(tokstart, tok1);
+
 
     /// For ensembl-vep results, the coordinates (chrStart) of
     /// indel, deletion need to -1 to get original position in vcf.
@@ -164,16 +165,23 @@ VarirantEeffectPredictor::~VarirantEeffectPredictor()
     
 }
 
-void::VarirantEeffectPredictor::upcase(std::string & str)
+void VarirantEeffectPredictor::upcase(std::string & str)
 {
   // upase strings
   std::transform(str.begin(), str.end(), str.begin(), ::toupper);
 }
 
-void::VarirantEeffectPredictor::lowercase(std::string & str)
+void VarirantEeffectPredictor::lowercase(std::string & str)
 {
     std::transform(str.begin(), str.end(), str.begin(), ::tolower);
 }
+
+bool VarirantEeffectPredictor::isValidDNASequence(const std::string& sequence) {
+    return std::all_of(sequence.begin(), sequence.end(), [](char nucleotide) {
+        return nucleotide == 'a' || nucleotide == 'c' || nucleotide == 'g' || nucleotide == 't';
+    });
+}
+
 
 void VarirantEeffectPredictor::readHeader(char *inFileName, char *delemiter)
 {
@@ -194,20 +202,26 @@ void VarirantEeffectPredictor::readHeader(char *inFileName, char *delemiter)
     {
         this->hasIND = false;
     }
+    if (columns.find("VARIANT_CLASS") == columns.end())
+    {
+        std::cerr<<"VARIANT_CLASS column is missing, please re-run vep with `--variant_class`\n";
+        std::exit(1);
+    }
 
 }
 
 // var_class must be lowercase
-std::string VarirantEeffectPredictor::set_key(std::string location, std::string var_class)
+std::string VarirantEeffectPredictor::set_key(std::string location, std::string var_class, std::string& var_type)
 {
     size_t tokstart = 0;
     size_t sz = location.size();
     size_t tok1 = location.find_first_of(":", tokstart);
     size_t tok2 = location.find_first_of("-", tokstart);
+    size_t tok0 = location.find_first_not_of("chr");
     int start;
     int end;
     std::string key;
-    std::string chrom = location.substr(tokstart, tok1);
+    std::string chrom = location.substr(tok0, tok1);
 
     /// For ensembl-vep results, the coordinates (chrStart) of
     /// indel, deletion need to -1 to get original position in vcf.
@@ -228,6 +242,13 @@ std::string VarirantEeffectPredictor::set_key(std::string location, std::string 
     }
 
     int var_len = end - start;
+    if (var_type == "sv") 
+    {
+        var_len = 100; // set to 100, so the key is like SV_** 
+        if (var_class == "insertion") end = start;
+    }
+
+
     if (var_class == "snv")
     {
         key = "SNP_" + chrom + "_" + std::to_string(start);
@@ -273,8 +294,10 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
         // skip header
         if (rdr.getCurrentLineNum() < 1)
             continue;
+        /// FIXME: since vep 111, insertion may become a sequences, e.g. tagttga...
         _varclass = rdr.getToken(columns["VARIANT_CLASS"]);
         this->lowercase(_varclass);
+        if (isValidDNASequence(_varclass)) _varclass =  "insertion"; // seq -> category
         // if varType is "sv", "all", write all
         if ((_varType == "snv" || _varType == "indel") && (_varclass.find(_varType) == std::string::npos)) //
             continue;
@@ -285,13 +308,16 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
             if (strainAbbrevs.hasIndex(rdr.getToken(columns["IND"])) < 0) continue;
         }
         /// if a heterozyote is annotated, treat them as the same to the reference genome, skip here
+        /// FIXME: if don't exist ?
         if (rdr.getToken(columns["ZYG"]) == "HET")
             continue;
         
         /// aggregate results groupby location and transcript
         transcript_id = rdr.getToken(columns["Feature"]);
         location = rdr.getToken(columns["Location"]);
-        key = this->set_key(location, _varclass);
+        size_t tok0 = location.find_first_not_of("chr");
+        location = location.substr(tok0, location.size());
+        key = this->set_key(location, _varclass, _varType);
         // std::cout<<"Current keys: "<<key<<" <-->  "<<transcript_id<<std::endl;
         // std::cout<<rdr.getCurrentLineString()<<"\n\n"<<std::endl;
 
@@ -326,7 +352,7 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
         else
         {
             VEPSummary *pRecord = new VEPSummary(rdr.getToken(columns["Uploaded_variation"]), // alread trim # when read header
-                                                 rdr.getToken(columns["Location"]),
+                                                 location, // rdr.getToken(columns["Location"]),
                                                  rdr.getToken(columns["Allele"]),
                                                  rdr.getToken(columns["Gene"]),
                                                  rdr.getToken(columns["Feature"]),

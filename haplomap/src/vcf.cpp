@@ -8,7 +8,10 @@
 Variant::Variant(std::string record)
 {
     std::vector<std::string> rec = split(trim(record), '\t');
+
     CHROM = rec[0];
+    size_t tok0 = CHROM.find_first_not_of("chr");
+    CHROM = CHROM.substr(tok0, CHROM.size());
     POS = std::stoi(rec[1]);
     ID = rec[2];
     REF = rec[3];

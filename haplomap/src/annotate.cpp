@@ -46,7 +46,9 @@ std::shared_ptr<VEPOptions> parseVEPOptions(int argc, char **argv)
                         "    -h,  --help\n"
                         "\nImportant message:\n"
                         "Please run ensemble-vep containing following flags: \n"
-                        "    vep --fasta --individual all --gencode_basic --everything\n";
+                        "    vep --fasta --individual_zyg all --gencode_basic --everything\n"
+                        "For structrual variant input format, please ref to: \n"
+                        "https://ensembl.org/info/docs/tools/vep/vep_formats.html#sv \n";
 
     if (argc == 1)
     {

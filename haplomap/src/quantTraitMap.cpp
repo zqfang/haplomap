@@ -73,7 +73,9 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
                         "                                Output gene-summaried results by default.\n"
                         "\nOptional arguments:\n"
                         "    -n, --name             <name of phenotype dataset> \n"
-                        "                                Suffix with _INDEL or _SV to indicate indel/SV blocks\n"
+                        "                                 To include INDEL/SV codon flag, please make sure to \n" 
+                        "                                 add _INDEL or _SV as a suffix to the name explicitly. \n"
+                        "                                 e.g. MPD123_SV. Default, output SNP CodonFlag .\n"
                         "    -c, --categorical           phenotype (-p) is categorical\n"
                         "    -r, --relation         <genetic relation file> \n" 
                         "                                <.rel> file for population structure analysis.\n"
@@ -92,7 +94,7 @@ GhmapOptions *parseGhmapOptions(int argc, char **argv)
                         "    -a, --gene_all_blocks       Output gene-oriented results of all blocks that overalp a gene. \n"
                         "    -m, --gene_block            Output gene-oriented results block by block. almost the same to -a\n"
                         "    -k, --haploblocks           Output block-oriented results.\n"
-                        "    -l, --pvalue_cutoff    <float>   Only write results with pvalue < cutoff\n"
+                        "    -l, --pvalue_cutoff    <float>   Only write results with pvalue < cutoff. Default: 0.05\n"
                         "    -v, --verbose\n"
                         "    -h, --help\n";
 

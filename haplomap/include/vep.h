@@ -1,6 +1,12 @@
 //
 // Created by Zhuoqing Fang on 2/1/22.
 //
+// Insertion and Deletion coordinates
+// In Ensembl, an insertion is indicated by start coordinate = end coordinate + 1. For example, an insertion of 'C' between nucleotides 12600 and 12601 on the forward strand is indicated with start and end coordinates as follows:
+//    12601     12600   
+// A deletion is indicated by the exact nucleotide coordinates. For example, a three base pair deletion of nucleotides 12600, 12601, and 12602 of the reverse strand will have start and end coordinates of :
+//    12600     12602 
+// see here: https://useast.ensembl.org/info/genome/variation/prediction/classification.html#classes
 
 #include <memory>
 #include <iostream>
@@ -25,7 +31,7 @@ struct VEPSummary
 {
     std::string idx; //0
     std::string location; //1 /// for snp, its 'chr:pos', for indel,sv, its 'chr:start-end'
-    std::string allel;// 2, for snp, indel -> dna seqence; sv -> "deletion", "duplicatoin" ...
+    std::string allel;// 2, for snp, indel -> dna seqence; sv -> "deletion","insertion" "duplication", inversion, when insertion, it's DNA seqs...
     std::string geneid; //3 ensembl_gene_id
     std::string transxid; //4 ensembl_transcript_id
     std::string transtype; //5 -
@@ -77,8 +83,10 @@ private:
     void upcase(std::string & str);
     void readHeader(char *inFileName, char *delemiter);
     bool compareKey(Key key1, Key key2);
+    bool isValidDNASequence(const std::string& sequence);
+
     std::string codonChange(VEPSummary * pRecord); // reformat codon chagne strings e.g. CTA/L<->CTG/L
-    std::string set_key(std::string location, std::string var_class);
+    std::string set_key(std::string location, std::string var_class, std::string& var_type);
 
 public:
     VarirantEeffectPredictor(char* inVEPName, char* inStrainName);
