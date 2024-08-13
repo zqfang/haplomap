@@ -294,7 +294,7 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
         // skip header
         if (rdr.getCurrentLineNum() < 1)
             continue;
-        /// FIXME: since vep 111, insertion may become a sequences, e.g. tagttga...
+        /// FIXME: since vep 111, sv's insertion may become a sequences, e.g. tagttga...
         _varclass = rdr.getToken(columns["VARIANT_CLASS"]);
         this->lowercase(_varclass);
         if (isValidDNASequence(_varclass)) _varclass =  "insertion"; // seq -> category
@@ -303,7 +303,7 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
             continue;
         /// if the record is no in the queried input strains, skip.
         /// this ensure that we could identify impactful variants only from the queried strains.
-        if ((strainAbbrevs.size() > 0) && hasIND) // if no IND column, then we need to parse the record
+        if (hasIND && (strainAbbrevs.size() > 0)) // if no IND column, then we need to parse the record
         {
             if (strainAbbrevs.hasIndex(rdr.getToken(columns["IND"])) < 0) continue;
         }
@@ -313,7 +313,8 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
             continue;
         
         /// aggregate results groupby location and transcript
-        transcript_id = rdr.getToken(columns["Feature"]);
+        /// FIXME: what if transcript_id is '-'
+        transcript_id = rdr.getToken(columns["Feature"]); 
         location = rdr.getToken(columns["Location"]);
         size_t tok0 = location.find_first_not_of("chr");
         location = location.substr(tok0, location.size());
@@ -502,28 +503,14 @@ void VarirantEeffectPredictor::writeVEPCsq(char* outFileName)
         for (; transxit != geneCodingMap[k].end(); transxit++)
         { // iter transcripts
             VEPSummary *pRecord = transxit->second;
+            /// FIXME: write records even symbol is "-" ?
             if (pRecord->symbol == "-") continue; 
             // Dynum<std::string> csq; // aggreate annotation to record level     
             for (int i = 0; i < pRecord->consequence.size(); i++)
             {
                 std::string s = pRecord->symbol + "\t";//+ pRecord->consequence.eltOf(i);
                 std::string csq_str = pRecord->consequence.eltOf(i);
-                // if (CSQs[csq_str] == "HIGH")
-                // {
-
-                //     if (csq_str.find("stop") != std::string::npos)
-                //     {
-                //         s.append(this->codonChange(pRecord));
-                //     } 
-                //     else if (csq_str.find("splice") != std::string::npos)
-                //     {
-                //         s.append("SPLICE_SITE");
-                //     } 
-                //     else
-                //     {
-                //         s.append(csq_str);
-                //     }
-                // } 
+                // update codon change
                 if (csq_str.find("stop") != std::string::npos)
                 {
                     s.append(this->codonChange(pRecord));
