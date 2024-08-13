@@ -244,5 +244,5 @@ ii. Indels and structral variants:
   * 0: LOW
   * -1: MODIFIER
 
-See explanation [here](https://uswest.ensembl.org/info/genome/variation/prediction/predicted_data.html) 
+See explanation [here](https://ensembl.org/info/genome/variation/prediction/predicted_data.html) 
 

@@ -56,7 +56,7 @@ Install data for offline mode
 INSTALL.pl -a cfp -s mus_musculus -y GRCm38 --CONVERT --PLUGINS CADD,GO,TSSDistance,LoF,SpliceAI
 ```
 
-or Huam
+or Human
 ```shell
 INSTALL.pl -a cfp -s homo_sapiens -y GRCh38 --CONVERT
 ```
