@@ -18,8 +18,11 @@ See [variant calling](../workflows/README.md) in the workflow folder using GATK,
 
 Note: You need to use Ensemble-vep to annotate your VCF files.
 
+the required flags: `--variant_class`, `--symbol`, `--individual_zyg all`, `--tab`
+
 This code snap works for haplomap
 ```shell
+## ensembl-vep version 101
 bcftools view -f .,PASS ${vcf} | \
         vep --fasta ${reference} ${genome_build} \
         --format vcf --fork ${threads} --hgvs --force_overwrite \
@@ -28,7 +31,22 @@ bcftools view -f .,PASS ${vcf} | \
         --offline --cache --variant_class \
         --gencode_basic --no_intergenic --individual all \
         -o ${output} --tab --compress_output gzip \
+
+## for SV: https://useast.ensembl.org/info/docs/tools/vep/vep_formats.html#sv
+## ensembl-vep version 111
+bcftools view -f PASS ${vcf} | \
+          vep -a GRCm38 --species mus_musculus --refseq --cache --cache_version 102 \
+          --offline --compress_output gzip -o ${output} --tab \
+          --fork 16 --offline --uniprot --cache --format vcf \
+          --force_overwrite -overlaps --plugin TSSDistance --domains \
+          --plugin phenotypes --symbol --canonical --variant_class \
+          --nearest gene --regulatory --distance 5000 \
+          --individual_zyg all --no_check_variants_order \
+          --max_sv_size 100000 
 ```
+
+
+
 
 
 
@@ -158,7 +176,7 @@ cat mouse_grm.rel >> mouse_grm.dist
 
 1. eblocks:
 
-- SNP file (-p):
+- Variant level file (-p): this file is used to check the individual variant in a haploblock
 
 | NO | Field | Explanation |
 |--- | ---- | ------------ |
@@ -169,7 +187,7 @@ cat mouse_grm.rel >> mouse_grm.dist
 |4 |GeneName| Associated Gene   |
 |5 |CodonFlag | Annotation |
 
-- Haploblock file (-o):
+- Aggregated haploblock file (-o): this file is used for ANNOVA
 
 | NO | Field | Explanation |
 |--- | ---- | ------------ |
