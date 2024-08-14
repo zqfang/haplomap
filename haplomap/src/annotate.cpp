@@ -39,14 +39,14 @@ std::shared_ptr<VEPOptions> parseVEPOptions(int argc, char **argv)
                         "    in.vep.txt             Input ensembl-VEP file name\n"
                         "    -o, --output           Output file name, for (eblocks -g)\n"
                         "\nOptional arguments:\n"
-                        "    -c,  --csq             Output a annotation with impact and sample names.\n"
+                        "    -c,  --csq             Output a annotation with impact score and sample names.\n"
                         "    -s,  --samples         Only get annotation for the input samples, use same strains to (eblocks -s).\n"
                         "    -t,  --type            Select variant type: [snp|indel|sv|all]. Default: all\n"
                         "    -v,  --verbose\n"
                         "    -h,  --help\n"
                         "\nImportant message:\n"
                         "Please run ensemble-vep containing following flags: \n"
-                        "    vep --fasta --individual_zyg all --gencode_basic --everything\n"
+                        "    vep --fasta --individual_zyg all --everything\n"
                         "For structrual variant input format, please ref to: \n"
                         "https://ensembl.org/info/docs/tools/vep/vep_formats.html#sv \n";
 
@@ -172,7 +172,13 @@ int main_annot(int argc, char **argv)
     // read data
     vep.readVEP(opts->inputVEPName, (char*)"\t", (char*)varType.c_str());
     // write
-    if (opts->verbose) std::cout<<"Write detail Annotation"<<std::endl;
+    if (opts->verbose) 
+    {
+        std::cout<<"Write Annotation"<<std::endl;
+        std::cout<<"    For each variant (row), only write the most impactful variant per gene.\n";
+        std::cout<<"    If multiple variant consequence has the same impact score, select one randomly.\n";
+        std::cout<<"    Please refer to haplomap/src/constants.cpp file to see or update scores."<<std::endl;
+    }
     vep.writeVEPCsq(opts->outputCSQName);
     if (opts->outputSUMName != nullptr)
     {

@@ -1,5 +1,6 @@
 
 #include "eblocks.h"
+// #include "constants.h"
 
 // For setting initial datastructure sizes
 const int approxNumSNPs = 8000000;
@@ -314,8 +315,6 @@ void readSNPGeneNames(char *fname)
     if (rdr.getCurrentLineNum() < 1)
       continue; // skip header
     std::string snpName = rdr.getToken(0);
-    std::string geneName = rdr.getToken(1);
-
     // cout << " geneName = " << geneName << endl;
     std::unordered_map<std::string, SNPInfo *>::iterator fit = snpMap.find(snpName);
     if (fit == snpMap.end())
@@ -326,17 +325,50 @@ void readSNPGeneNames(char *fname)
     }
 
     SNPInfo *pSNPInfo = fit->second;
-
-    // rest of line is alternating gene names/codons
-
+    /// rest of line is alternating gene names/codons
     for (std::vector<std::string>::iterator rit = rdr.begin() + 1; rit != rdr.end(); rit += 2)
     {
       // Store "<" in the map even if there is already something there.
       if (pSNPInfo->geneCodonMap.find(*rit) == pSNPInfo->geneCodonMap.end() || (*(rit + 1)).find("<") != std::string::npos)
       {
+        // one gene, one annotate only
         pSNPInfo->geneCodonMap[*rit] = *(rit + 1);
       }
     }
+    // std::unordered_map<std::string, std::string> gene_csq; // used to store priority value
+    // for (std::vector<std::string>::iterator rit = rdr.begin() + 1; rit != rdr.end(); rit += 2)
+    // {
+    //   // max csq 
+    //   std::string csq_str = *(rit + 1);
+    //   if (gene_csq.find(*rit) != gene_csq.end() )
+    //   {
+    //       // do a santicheck for csq
+    //       if (traceFBB && csq_str.find("<") == std::string::npos && CSQs.find(csq_str) == CSQs.end())
+    //       {
+    //         std::cout<<"Variant Annotation file error: "<<csq_str<<" is not supported"<<std::endl;
+    //       }
+
+    //       if (csq_str.find("<") != std::string::npos || CSQs[csq_str] > CSQs[gene_csq[*rit]]) 
+    //       {
+    //           gene_csq[*rit] = csq_str;
+    //       } 
+    //   }
+    //   else 
+    //   {
+    //       // this means if csq_str
+    //       gene_csq[*rit] = csq_str;
+    //   }
+    // }
+    // for (auto it = gene_csq.begin(); it != gene_csq.end(); ++it) 
+    // {
+    //   // Store "<" in the map even if there is already something there.
+    //   if (pSNPInfo->geneCodonMap.find(it->first) == pSNPInfo->geneCodonMap.end() || ((it->second).find("<") != std::string::npos))
+    //   {
+    //     // one gene, one annotate only
+    //     pSNPInfo->geneCodonMap[it->first] = it->second;
+    //   }
+    // }
+  
   }
 }
 

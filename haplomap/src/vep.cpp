@@ -3,6 +3,7 @@
 //
 
 #include "vep.h"
+#include "constants.h"
 
 Key::Key(std::string key) 
 {
@@ -73,52 +74,6 @@ VEPSummary::VEPSummary(
 
 VarirantEeffectPredictor::VarirantEeffectPredictor(char *inVEPName, char *inStrainName) : numtoks(-1), hasIND(true)
 {
-    CODONs = {{"TTT", "F"}, {"TTC", "F"}, {"TCT", "S"}, {"TCC", "S"}, {"TAT", "Y"}, {"TAC", "Y"}, {"TGT", "C"}, {"TGC", "C"}, 
-          {"TTA", "L"}, {"TCA", "S"}, {"TAA", "X"}, {"TGA", "X"}, {"TTG", "L"}, {"TCG", "S"}, {"TAG", "X"}, {"TGG", "W"}, 
-          {"CTT", "L"}, {"CTC", "L"}, {"CCT", "P"}, {"CCC", "P"}, {"CAT", "H"}, {"CAC", "H"}, {"CGT", "R"}, {"CGC", "R"}, 
-          {"CTA", "L"}, {"CTG", "L"}, {"CCA", "P"}, {"CCG", "P"}, {"CAA", "Q"}, {"CAG", "Q"}, {"CGA", "R"}, {"CGG", "R"}, {"ATT", "I"}, 
-          {"ATC", "I"}, {"ACT", "T"}, {"ACC", "T"}, {"AAT", "N"}, {"AAC", "N"}, {"AGT", "S"}, {"AGC", "S"}, {"ATA", "I"}, {"ACA", "T"}, 
-          {"AAA", "K"}, {"AGA", "R"}, {"ATG", "M"}, {"ACG", "T"}, {"AAG", "K"}, {"AGG", "R"}, {"GTT", "V"}, {"GTC", "V"}, {"GCT", "A"}, 
-          {"GCC", "A"}, {"GAT", "D"}, {"GAC", "D"}, {"GGT", "G"}, {"GGC", "G"}, {"GTA", "V"}, {"GTG", "V"}, {"GCA", "A"}, {"GCG", "A"}, 
-          {"GAA", "E"}, {"GAG", "E"}, {"GGA", "G"}, {"GGG", "G"}};
-    PRIOR = {{"HIGH", 2}, {"MODERATE", 1}, {"LOW", 0}, {"MODIFIER", -1}};
-    CSQs = { {"transcript_ablation", "HIGH"},
-             {"splice_acceptor_variant", "HIGH"},
-             {"splice_donor_variant", "HIGH"},
-             {"stop_gained", "HIGH"},
-             {"frameshift_variant", "HIGH"},
-             {"stop_lost", "HIGH"},
-             {"start_lost", "HIGH"},
-             {"transcript_amplification", "HIGH"},
-             {"inframe_insertion", "MODERATE"},
-             {"inframe_deletion", "MODERATE"},
-             {"missense_variant", "MODERATE"},
-             {"protein_altering_variant", "MODERATE"},
-             {"splice_region_variant", "LOW"},
-             {"incomplete_terminal_codon_variant", "LOW"},
-             {"start_retained_variant", "LOW"},
-             {"stop_retained_variant", "LOW"},
-             {"synonymous_variant", "LOW"},
-             {"coding_sequence_variant", "MODIFIER"},
-             {"mature_miRNA_variant", "MODIFIER"},
-             {"5_prime_UTR_variant", "MODIFIER"},
-             {"3_prime_UTR_variant", "MODIFIER"},
-             {"non_coding_transcript_exon_variant", "MODIFIER"},
-             {"intron_variant", "MODIFIER"},
-             {"NMD_transcript_variant", "MODIFIER"},
-             {"non_coding_transcript_variant", "MODIFIER"},
-             {"upstream_gene_variant", "MODIFIER"},
-             {"downstream_gene_variant", "MODIFIER"},
-             {"TFBS_ablation", "MODIFIER"},
-             {"TFBS_amplification", "MODIFIER"},
-             {"TF_binding_site_variant", "MODIFIER"},
-             {"regulatory_region_ablation", "MODERATE"},
-             {"regulatory_region_amplification", "MODIFIER"},
-             {"feature_elongation", "MODIFIER"},
-             {"regulatory_region_variant", "MODIFIER"},
-             {"feature_truncation", "MODIFIER"},
-             {"intergenic_variant", "MODIFIER"},
-    };
     // read strain file
     if (inStrainName != nullptr)
     {
@@ -327,8 +282,9 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
                 dpos = csq.find_first_of(",", tokstart);
                 // this crock necessitated by weird segfault.
                 size_t csz = csq.size();
+                std::string _csq = csq.substr(tokstart, dpos - tokstart);
                 if (dpos > csz) dpos = csz;
-                pVEP->consequence.addElementIfNew(csq.substr(tokstart, dpos - tokstart));
+                pVEP->consequence.addElementIfNew(_csq);
                 tokstart = dpos + 1; // don't care if it overflows
             }
         }
@@ -364,7 +320,7 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
 }
 std::string VarirantEeffectPredictor::codonChange(VEPSummary * pRecord)
 {   // aggregate all condon changes groupby (location, transcript)
-    std::string _expr;
+    std::string _expr = "CodonUnknown";
     for (int j = 0; j < pRecord->codons.size(); j++)
     {
         std::string codon = pRecord->codons.eltOf(j);
@@ -375,7 +331,8 @@ std::string VarirantEeffectPredictor::codonChange(VEPSummary * pRecord)
         }
         // std::string _codon(codon);
         upcase(codon);
-        int pos = codon.find_first_of("/", 0);
+        size_t pos = codon.find_first_of("/", 0);
+        if (pos == std::string::npos) continue;
         std::string ref = codon.substr(0, pos); // keep original case sensitive strings for expr
         std::string alt = codon.substr(pos+1, codon.size() - pos);
         //std::string _ref = _codon.substr(0, pos);
@@ -479,41 +436,58 @@ void VarirantEeffectPredictor::writeVEPCsq(char* outFileName)
     for (auto & k: this->keys)
     { // iter variant
         csqos << k;
-        // aggregate consequences to variant level
         std::unordered_map<std::string, VEPSummary *>::iterator transxit = geneCodingMap[k].begin();
-        Dynum<std::string> csq; // aggreate transcript results to snp level
+        /// aggreate snp annotation to gene level 
+        std::unordered_map<std::string, CsqCoding> gene_csq; // used to store priority value
         for (; transxit != geneCodingMap[k].end(); transxit++)
         { // iter transcripts
             VEPSummary *pRecord = transxit->second;
-            /// FIXME: write records even symbol is "-" ?
-            if (pRecord->symbol == "-") continue; 
-            // Dynum<std::string> csq; // aggreate annotation to record level     
+            /// write records even symbol is "-" ? it's useless
+            if (pRecord->symbol == "-") continue;  
+            // aggregate annotation to gene level
             for (int i = 0; i < pRecord->consequence.size(); i++)
             {
-                std::string s = pRecord->symbol + "\t";//+ pRecord->consequence.eltOf(i);
+                // std::string s = pRecord->symbol + "\t";
                 std::string csq_str = pRecord->consequence.eltOf(i);
-                // update codon change
-                if (csq_str.find("stop") != std::string::npos)
+                // std::string csq_str2 = csq_str; // copy constructor
+                // check
+                if (CSQs.find(csq_str) == CSQs.end())
                 {
-                    s.append(this->codonChange(pRecord));
+                    std::cerr<< k << " " << pRecord->symbol <<"  ==> ";
+                    std::cerr<< csq_str <<" <== is not recongnized. Skip."<<std::endl;
+                    continue;
+                }
+                // current 
+                // int code = CSQs[csq_str];
+                CsqCoding csqcoding_cur = CsqCoding(pRecord->symbol, csq_str, CSQs[csq_str]);
+                // update condon score, need to iterate the gene_csq_dict
+                if (csq_str.find("stop") != std::string::npos || 
+                    csq_str == "missense_variant" || 
+                    csq_str == "synonymous_variant" )
+                {
+                    csqcoding_cur.repr = this->codonChange(pRecord);
                 } 
-                else if (csq_str == "missense_variant" || csq_str == "synonymous_variant")
+                // max csq 
+                if ((gene_csq.find(pRecord->symbol) != gene_csq.end()) && 
+                    (csqcoding_cur.code > gene_csq[pRecord->symbol].code) )
                 {
-                    s.append(this->codonChange(pRecord));
+                        gene_csq[pRecord->symbol] = csqcoding_cur;
                 }
                 else 
                 {
-                    s.append(csq_str);
+                    gene_csq[pRecord->symbol] = csqcoding_cur;
                 }
-                // write annotation
-                if (csq.hasIndex(s) < 0)
-                { // remove duplicate entries
-                    csqos<< "\t" << s ; //<<"\t"<<pRecord->samples;
-                    csq.addElementIfNew(s);
-                }
-          
             } 
-               
+                   
+        }
+        // write gene level annotation
+        // std::cout <<k<<" ";
+        // for (auto it = gene_csq_codon.begin(); it != gene_csq_codon.end(); ++it) 
+        for (auto it = gene_csq.begin(); it != gene_csq.end(); ++it) 
+        {
+            // std::cout << " " << it->first << " " << it->second.repr << std::endl;
+            // write annotation
+            csqos<< "\t" << it->first << "\t" << it->second.repr; //<<"\t"<<pRecord->samples;
         }
         csqos << std::endl;
     }

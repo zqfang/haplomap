@@ -14,6 +14,7 @@
 #include <string>
 #include <cstring>
 #include <vector>
+#include <set>
 #include <unordered_map>
 #include <algorithm>
 #include <numeric>
@@ -25,6 +26,22 @@ struct Key {
     int start;
     int end;
     Key(std::string key);
+};
+
+struct CsqCoding {
+    std::string id;
+    std::string raw; // original string
+    std::string repr; // new representation
+    int code;
+    CsqCoding(): id(""), raw(""), repr(""), code(-100) {}
+    CsqCoding(std::string name, std::string csq, int priority): 
+    id(name), raw(csq), repr(csq), code(priority) {}
+    CsqCoding(const CsqCoding& other) {
+        id = other.id;
+        raw = other.raw;
+        repr = other.repr;
+        code = other.code;
+    }
 };
 
 struct VEPSummary 
@@ -49,9 +66,6 @@ struct VEPSummary
     std::string biotype; //23, protein_coding, lincRNA, etc
     Dynum<std::string> HGVSc; //31 HGVSp strings
     Dynum<std::string> HGVSp; //32 HGVSp strings
-    // std::string chrom;
-    // int start;
-    // int end;
 
    VEPSummary(std::string uploaded_variant, std::string loc, std::string seq, std::string gene,
                 std::string transcript, std::string feature_type, std::string csq, std::string aa_pos, std::string aa,
@@ -67,12 +81,8 @@ class VarirantEeffectPredictor
 private:
     int numtoks;
     bool hasIND; // whether contain samples (IND) column in vep output
-    std::unordered_map<std::string, int> PRIOR;
-    std::unordered_map<std::string, std::string> CODONs;
-    std::unordered_map<std::string, std::string> CSQs;
     Dynum<std::string> strainAbbrevs;
     std::string _line;
-    // variant loc -> transxid -> record, orded by variant loc
     std::unordered_map<std::string, std::unordered_map<std::string, VEPSummary* >> geneCodingMap; 
     std::vector<VEPSummary*> data;
     std::unordered_map<std::string, unsigned> columns; // header colum name to index
