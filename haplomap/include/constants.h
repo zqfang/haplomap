@@ -5,7 +5,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-
+#include <string>
 #include <unordered_map>
 
 extern std::unordered_map<std::string, std::string> CODONs;
