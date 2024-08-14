@@ -33,22 +33,22 @@ std::shared_ptr<VEPOptions> parseVEPOptions(int argc, char **argv)
             {"type",           required_argument, nullptr, 't'},
             {nullptr,          no_argument, nullptr,        0}};
 
-    const char *usage = "Convert ensembl-VEP to eblocks (-g) input\n"
+    const char *usage = "Convert ensembl-vep to eblocks (-g) input\n"
                         "\nUsage: annotate [options] <in.vep.txt> \n"
                         "\nRequired arguments:\n"
                         "    in.vep.txt             Input ensembl-VEP file name\n"
                         "    -o, --output           Output file name, for (eblocks -g)\n"
                         "\nOptional arguments:\n"
                         "    -c,  --csq             Output a annotation with impact score and sample names.\n"
-                        "    -s,  --samples         Only get annotation for the input samples, use same strains to (eblocks -s).\n"
+                        "    -s,  --samples         Only write annotation for the input samples (e.g. eblocks -s).\n"
                         "    -t,  --type            Select variant type: [snp|indel|sv|all]. Default: all\n"
                         "    -v,  --verbose\n"
                         "    -h,  --help\n"
                         "\nImportant message:\n"
                         "Please run ensemble-vep containing following flags: \n"
-                        "    vep --fasta --individual_zyg all --everything\n"
-                        "For structrual variant input format, please ref to: \n"
-                        "https://ensembl.org/info/docs/tools/vep/vep_formats.html#sv \n";
+                        "    vep --fasta --individual_zyg all --everything\n\n"
+                        "Structural variant input format for ensembl-vep, please ref to: \n"
+                        "    https://ensembl.org/info/docs/tools/vep/vep_formats.html#sv \n";
 
     if (argc == 1)
     {
