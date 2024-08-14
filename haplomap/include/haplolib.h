@@ -1,5 +1,6 @@
 // -*-c++-*-
-
+#ifndef HAPLOLIB_H
+#define HAPLOLIB_H
 // Various useful functions from nhaploblocks
 //#pragma once
 #include <fstream>
@@ -185,3 +186,4 @@ extern Dynum<std::string> chromosomes;
 // vector of all good SNPs in order of chromosome, position.
 extern std::vector<SNPInfo *> snpVec;
 
+#endif

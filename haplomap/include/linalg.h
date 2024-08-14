@@ -2,8 +2,8 @@
 // Created by Zhuoqing Fang on 7/8/20.
 //
 
-#ifndef HBCGM_LINALG_H
-#define HBCGM_LINALG_H
+#ifndef LINALG_H
+#define LINALG_H
 #include <vector>
 #include <assert.h>
 
@@ -66,4 +66,4 @@ std::vector<size_t> argsort(_RAIter first, _RAIter last, _Compare comp) {
 
 
 
-#endif //HBCGM_LINALG_H
+#endif // LINALG_H

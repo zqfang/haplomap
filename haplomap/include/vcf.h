@@ -1,6 +1,8 @@
 //
 // Created by Zhuoqing Fang on 2/22/21.
 //
+#ifndef VCF_H
+#define VCF_H
 
 #include <memory>
 #include <iostream>
@@ -112,3 +114,5 @@ private:
     std::istream* input;
     VCFOptions* opts;
 };
+
+#endif

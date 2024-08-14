@@ -7,6 +7,8 @@
 // A deletion is indicated by the exact nucleotide coordinates. For example, a three base pair deletion of nucleotides 12600, 12601, and 12602 of the reverse strand will have start and end coordinates of :
 //    12600     12602 
 // see here: https://useast.ensembl.org/info/genome/variation/prediction/classification.html#classes
+#ifndef VEP_H
+#define VEP_H
 
 #include <memory>
 #include <iostream>
@@ -106,3 +108,5 @@ public:
     void writeVEPCsq(char* outFileName);
     bool getline(std::string &);
 };
+
+#endif

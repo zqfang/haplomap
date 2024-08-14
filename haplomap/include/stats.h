@@ -2,8 +2,8 @@
 // Created by Zhuoqing Fang on 7/6/20.
 //
 
-#ifndef HBCGM_STATS_H
-#define HBCGM_STATS_H
+#ifndef STATS_H
+#define STATS_H
 
 #include <iostream>
 #include <vector>
@@ -185,4 +185,4 @@ std::vector<bool> bh_fdr(std::vector<_NumericType>& pval, std::vector<_NumericTy
  */
 void bh_fdr(std::vector<BlockSummary *> & pval, float alpha=0.05, bool flag = 1);
 
-#endif //HBCGM_STATS_H
+#endif //STATS_H

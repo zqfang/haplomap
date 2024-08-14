@@ -15,45 +15,8 @@ std::vector<BlockSummary *> blocks;                       // global vector of al
 std::vector<std::string> geneExprHeader;
 int traceFStat = false;
 
-// std::unordered_map<std::string, int> PRIOR = {{"HIGH", 2}, {"MODERATE", 1}, {"LOW", 0}, {"MODIFIER", -1}};
-// std::unordered_map<std::string, int> CSQs = {
-//     {"transcript_ablation", 2},
-//     {"splice_acceptor_variant", 2},
-//     {"splice_donor_variant", 2},
-//     {"stop_gained", 2},
-//     {"frameshift_variant", 2},
-//     {"stop_lost", 2},
-//     {"start_lost", 2},
-//     {"transcript_amplification", 2},
-//     {"inframe_insertion", 1},
-//     {"inframe_deletion", 1},
-//     {"missense_variant", 1},
-//     {"protein_altering_variant", 1},
-//     {"splice_region_variant", 0},
-//     {"incomplete_terminal_codon_variant", 0},
-//     {"start_retained_variant", 0},
-//     {"stop_retained_variant", 0},
-//     {"synonymous_variant", 0},
-//     {"coding_sequence_variant", -1},
-//     {"mature_miRNA_variant", -1},
-//     {"5_prime_UTR_variant", -1},
-//     {"3_prime_UTR_variant", -1},
-//     {"non_coding_transcript_exon_variant", -1},
-//     {"intron_variant", -1},
-//     {"NMD_transcript_variant", -1},
-//     {"non_coding_transcript_variant", -1},
-//     {"upstream_gene_variant", -1},
-//     {"downstream_gene_variant", -1},
-//     {"TFBS_ablation", -1},
-//     {"TFBS_amplification", -1},
-//     {"TF_binding_site_variant", -1},
-//     {"regulatory_region_ablation", -1},
-//     {"regulatory_region_amplification", -1},
-//     {"feature_elongation", -1},
-//     {"regulatory_region_variant", -1},
-//     {"feature_truncation", -1},
-//     {"intergenic_variant", -1},
-// };
+// std::unordered_map<std::string, int> PRIOR // from constants.h;
+// std::unordered_map<std::string, int> CSQs // from constants.h
 
 // constructor
 BlockSummary::BlockSummary(const char *chrnm, int num, int start, int size,

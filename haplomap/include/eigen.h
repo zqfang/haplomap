@@ -2,8 +2,8 @@
 // Created by Zhuoqing Fang on 7/8/20.
 //
 
-#ifndef HBCGM_EIGEN_H
-#define HBCGM_EIGEN_H
+#ifndef EIGEN_H
+#define EIGEN_H
 #include <vector>
 #include <string>
 #include "dynum.h"
@@ -38,4 +38,4 @@ struct EigenMat
     gsl_matrix* pca(unsigned int L);
 };
 
-#endif //HBCGM_EIGEN_H
+#endif // EIGEN_H

@@ -320,7 +320,7 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
 }
 std::string VarirantEeffectPredictor::codonChange(VEPSummary * pRecord)
 {   // aggregate all condon changes groupby (location, transcript)
-    std::string _expr = "";
+    std::string _expr;
     for (int j = 0; j < pRecord->codons.size(); j++)
     {
         std::string codon = pRecord->codons.eltOf(j);

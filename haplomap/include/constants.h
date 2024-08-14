@@ -2,8 +2,8 @@
 // Created by Zhuoqing Fang on 8/13/24.
 //
 // #pragma once
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
 
 #include <string>
 #include <unordered_map>
