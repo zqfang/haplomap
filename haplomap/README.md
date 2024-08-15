@@ -62,13 +62,39 @@ build/bin/haplomap convert --type snp \
 zcat ${HOME}/data/VCFs/chr18.vcf.gz | bin/haplomap convert -o ${HOME}/data/SNPS/chr18.txt
 ```
 
+
+
+
 ### 2. Construct annotation file from ensemble-vep results
+
+NOTE: Structural variants only support ensemble-vep inputs now !
+
 ```shell
 build/bin/haplomap annotate -o ${HOME}/data/SNPS/chr18.annotation.txt \
                             --type snp \
                             --samples test_strains.txt \ # only annotate the selected strains
                             input.vep.txt
 ```
+
+**About input file format**:
+
+1. To annotate each variant, one gene follow by one annotation string (concat by ! with multiple consequence). 
+2. missense, synonymous, stop codon covert to string like: TCT/S<->CCT/P!TCT/S<->TCT/S!GAC/D<->GAC/D!GAC/D<->GAT/D
+3. To see all supported annotation, see [constants.cpp](src/constants.cpp)
+
+
+e.g.
+```
+SNP_19_3358277  Cpt1a   splice_region_variant!AGG/R<->AGA/R
+SNP_19_3365789  Cpt1a   splice_region_variant!intron_variant
+SNP_19_3366324  Cpt1a   splice_region_variant!intron_variant
+SNP_19_4000682  Nudt8   GAC/D<->GTC/V   Gm49405 GAC/D<->GTC/V!NMD_transcript_variant    Gm16312 downstream_gene_variant 4833408A19Rik   upstream_gene_variant
+SNP_19_4000803  Nudt8   ACG/T<->ACT/T   Gm49405 ACG/T<->ACT/T!NMD_transcript_variant    Gm16312 non_coding_transcript_exon_variant      4833408A19Rik   upstream_gene_variant
+SNP_19_4000809  Nudt8   CGT/R<->CGC/R   Gm49405 CGT/R<->CGC/R!NMD_transcript_variant    Gm16312 non_coding_transcript_exon_variant      4833408A19Rik   upstream_gene_variant 
+SNP_19_4137099  Cabp4   splice_region_variant!intron_variant
+SNP_19_4143385  Gpr152  CGA/R<->CGC/R!CGA/R<->CGT/R
+```        
+
 
 (Optional) If you'd like to use `ANNOVAR` (contributed by Boyoung Yoo @byoo1), see this
 
@@ -85,7 +111,7 @@ python scripts/annotateSNPs.py test_strains.txt chr18.txt \
                     AA_by_strains_chr18.pkl mm10_kgXref.txt mm10_knownGene.txt
                     genes_coding.txt genes_coding_transcript.txt
 ```
-NOTE: Structural variants only support ensemble-vep inputs now !
+
 
 ### 3. Find haploblocks
 
@@ -208,7 +234,7 @@ cat mouse_grm.rel >> mouse_grm.dist
 | NO |Field | Explanation |
 |---| ---- | ------------ |
 |0 |GeneName     | Associated Gene     |
-|1 |CodonFlag    | -1: non-coding; 0: synonymouse; 1: missense; 2: splicing  |             |
+|1 |CodonFlag    | [see here](src/constants.cpp)   |             
 |2 |Haplotype    | Haplotype pattern, see header line for strain order   |
 |3 |FStat/Pvalue | isCategorical ? Fstat : Pvalue |
 |4 |EffectSize   | Genetic Effect ( Omega^2 )   |
@@ -231,6 +257,7 @@ BlockIdx | BlockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat
 
 **CodonFlag**
 
+
 i. SNPs
   * -1: Non-codon change
   * 0: Synonymous (not important)
@@ -243,6 +270,9 @@ ii. Indels and structral variants:
   * 1: MODERATE
   * 0: LOW
   * -1: MODIFIER
+
+
+See CodonFlag: [constants](src/constants.cpp) 
 
 See explanation [here](https://ensembl.org/info/genome/variation/prediction/predicted_data.html) 
 
