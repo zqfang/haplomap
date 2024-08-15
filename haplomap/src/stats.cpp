@@ -177,7 +177,9 @@ int ANOVA::numDefinedStrains(char *pattern)
     }
     return count;
 }
-
+/// @brief this version works for categorical and quantitative data both.
+///         numCategories > 1, means the input is categorical
+/// @param pattern haplotype pattern
 void ANOVA::stat(char *pattern, float &FStat, float &pvalue, float &effect)
 {
     int _numHaplo = this->numHaplotypes(pattern);
@@ -189,7 +191,7 @@ void ANOVA::stat(char *pattern, float &FStat, float &pvalue, float &effect)
 
     float numDefined = 0.0F; // numbers of strains without ?
     float numDefinedDataPoints = 0.0F; // number of all individual data point without '?' strain
-    std::vector<float> sumDefined(numCategories, 0.0F); //size 1
+    std::vector<float> sumDefined(numCategories, 0.0F); //size 1. but > 1 if categorical
 
     std::vector<std::vector<float>> sumStrains;
 
@@ -201,14 +203,20 @@ void ANOVA::stat(char *pattern, float &FStat, float &pvalue, float &effect)
         if ('?' != hap)
         {
             numDefined ++;
-            numDefinedDataPoints += phen.size();
-            sumStrains.push_back(sumVector(phen));
-            //addVectors(sumDefined, sumStrains.back());
-            //haploNum[hap]++;
-
-            //addVectors(haploMean[hap], phen); // temporarily, the total, not mean.
-            addVectors(haploMean[hap], sumStrains.back());
-            haploNum[hap] += phen.size();
+            if (numCategories > 1)
+            {
+                addVectors(sumDefined, phen);
+                haploNum[hap]++;
+                addVectors(haploMean[hap], phen); // temporarily, the total, not mean
+                numDefinedDataPoints ++;
+            } 
+            else 
+            {
+                numDefinedDataPoints += phen.size();
+                sumStrains.push_back(sumVector(phen));
+                addVectors(haploMean[hap], sumStrains.back());
+                haploNum[hap] += phen.size();
+            }
         }
     }
 
@@ -234,13 +242,21 @@ void ANOVA::stat(char *pattern, float &FStat, float &pvalue, float &effect)
         }
         std::cout << "]" << std::endl;
     }
-
+    
+    /// for quanti
     std::vector<float> mean(1, 0.0F); // mean of all data
-    for (auto & s: sumStrains)
-        mean[0] += s.back();
-    // scaleVector(mean, 1.0 / numDefined);
-    scaleVector(mean, 1.0 / numDefinedDataPoints);
-
+    if (numCategories > 1)
+    { 
+        mean = sumDefined;
+        scaleVector(mean, 1.0 / numDefined);
+    } 
+    else
+    { 
+        for (auto & s: sumStrains)
+            mean[0] += s.back();
+        // scaleVector(mean, 1.0 / numDefined);
+        scaleVector(mean, 1.0 / numDefinedDataPoints);
+    }
     //float SST = 0.0F;
     float SSW = 0.0F;
     for (unsigned str1 = 0; str1 < _numStrains; str1++)
@@ -249,7 +265,10 @@ void ANOVA::stat(char *pattern, float &FStat, float &pvalue, float &effect)
         if ('?' != hap)
         {
             std::vector<float> resid = phenvec[str1];
-            subVector(resid, haploMean[hap].back());
+            if (numCategories > 1)
+                subtractVectors(resid, haploMean[hap]);
+            else 
+                subVector(resid, haploMean[hap].back());
             SSW += dotVectors(resid, resid);
             // vector<float> resid2 = phenvec[str1];
             // subVector(resid2, mean.back());
@@ -274,7 +293,8 @@ void ANOVA::stat(char *pattern, float &FStat, float &pvalue, float &effect)
 
     // mean square within
     // df within is (numDefined-numHaplo)
-    float dfW = numDefinedDataPoints - _numHaplo; // degrees of freedom within
+    float _numDefined_tmp = numCategories > 1 ? numDefined : numDefinedDataPoints;
+    float dfW = _numDefined_tmp - _numHaplo; // degrees of freedom within
     float dfB = _numHaplo - 1;          // degrees of freedom between.
     if (dfW == 0.0)
     {
