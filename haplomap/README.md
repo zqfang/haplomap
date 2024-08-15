@@ -67,7 +67,10 @@ zcat ${HOME}/data/VCFs/chr18.vcf.gz | bin/haplomap convert -o ${HOME}/data/SNPS/
 
 ### 2. Construct annotation file from ensemble-vep results
 
-NOTE: Structural variants only support ensemble-vep inputs now !
+NOTE:
+
+1. Structural variants only support ensemble-vep inputs now !
+2. Always check the variant name can be matched to `haplomap convert` output, since vep will change coordinate of variants in the output. Write your own annotation file if `haplomap annotate` did not work.
 
 ```shell
 build/bin/haplomap annotate -o ${HOME}/data/SNPS/chr18.annotation.txt \
@@ -76,10 +79,10 @@ build/bin/haplomap annotate -o ${HOME}/data/SNPS/chr18.annotation.txt \
                             input.vep.txt
 ```
 
-**About input file format**:
+**About file format**:
 
 1. To annotate each variant, one gene follow by one annotation string (concat by ! with multiple consequence). 
-2. missense, synonymous, stop codon covert to string like: TCT/S<->CCT/P!TCT/S<->TCT/S!GAC/D<->GAC/D!GAC/D<->GAT/D
+2. For codon changes (missense, synonymous, stop), covert strings into a format like this: TCT/S<->CCT/P
 3. To see all supported annotation, see [constants.cpp](src/constants.cpp)
 
 
