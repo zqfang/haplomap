@@ -255,6 +255,24 @@ BlockIdx | BlockStart | blockSize | ChrIdx | ChrStart | ChrEnd | Pattern | Fstat
 
 
 
+**CodonFlag**
+
+
+i. SNPs
+  * -1: Non-codon change
+  * 0: Synonymous (not important)
+  * 1: missense/nonsense
+  * 2: Splicing site change
+  * 3: Stop codon
+
+ii. Indels and structral variants: 
+  * 2: HIGH
+  * 1: MODERATE
+  * 0: LOW
+  * -1: MODIFIER
+
+
 See CodonFlag: [constants](src/constants.cpp) 
+
 See explanation [here](https://ensembl.org/info/genome/variation/prediction/predicted_data.html) 
 
