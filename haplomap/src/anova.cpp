@@ -8,6 +8,13 @@
 // #include "ghmap.h"
 
 //// old code
+/// This version takes vector of vectors in phenotypes, so that it can handle normal
+/// and categorical data in the same code.
+/// Handling of categorical data is as described to me by Ming.
+/// Means are means of vectors.
+/// SSW is sum of squares of Euclidean distances of phenotype vectors to the phenotype mean.
+/// SSB is sum of squares of Euclidean distances of haplotype averages to global mean.
+/// This does not actually compute the p-value.  It stops with the F statistic
 //void ANOVA(std::vector<std::vector<float>> &phenvec, char *pattern, float &FStat, float &pvalue, float &effect)
 //{
 //    int numHaplo = numHaplotypes(pattern);
