@@ -34,8 +34,9 @@ struct CsqCoding {
     std::string id;
     std::string raw; // original string
     std::string repr; // new representation
+    Dynum<std::string> csqs; // 
     int code;
-    CsqCoding(): id(""), raw(""), repr(""), code(-100) {}
+    CsqCoding(): id(""), raw(""), repr(""), code(-1) {}
     CsqCoding(std::string name, std::string csq, int priority): 
     id(name), raw(csq), repr(csq), code(priority) {}
     CsqCoding(const CsqCoding& other) {
@@ -43,6 +44,7 @@ struct CsqCoding {
         raw = other.raw;
         repr = other.repr;
         code = other.code;
+        csqs = other.csqs;
     }
 };
 
@@ -105,7 +107,7 @@ public:
     ~VarirantEeffectPredictor();
     void readVEP(char* inVEPName, char* delemiter, char* varType);
     void writeVEPImpact(char* outFileName);
-    void writeVEPCsq(char* outFileName);
+    void writeVEPCsq(char* outFileName, bool prioritize); // indicate if perform max aggregate or not
     bool getline(std::string &);
 };
 

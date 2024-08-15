@@ -419,7 +419,7 @@ void VarirantEeffectPredictor::writeVEPImpact(char* outFileName)
                     {
                         csqos<<pRecord->samples.eltOf(j);
                         if ((j +1 ) < pRecord->samples.size()) 
-                            csqos <<",";
+                            csqos <<"!";
                     }
                     csq.addElementIfNew(s);
                 }
@@ -430,7 +430,7 @@ void VarirantEeffectPredictor::writeVEPImpact(char* outFileName)
     csqos.close();
 }
 
-void VarirantEeffectPredictor::writeVEPCsq(char* outFileName) 
+void VarirantEeffectPredictor::writeVEPCsq(char* outFileName, bool prioritize) 
 {
     std::ofstream csqos(outFileName);
     for (auto & k: this->keys)
@@ -458,36 +458,47 @@ void VarirantEeffectPredictor::writeVEPCsq(char* outFileName)
                     continue;
                 }
                 // current 
-                // int code = CSQs[csq_str];
                 CsqCoding csqcoding_cur = CsqCoding(pRecord->symbol, csq_str, CSQs[csq_str]);
-                // update condon score, need to iterate the gene_csq_dict
+                // update condon score
                 if (csq_str.find("stop") != std::string::npos || 
                     csq_str == "missense_variant" || 
                     csq_str == "synonymous_variant" )
                 {
                     csqcoding_cur.repr = this->codonChange(pRecord);
                 } 
-                // max csq 
-                if ((gene_csq.find(pRecord->symbol) != gene_csq.end()) && 
-                    (csqcoding_cur.code > gene_csq[pRecord->symbol].code) )
+                // update to init
+                csqcoding_cur.csqs.addElementIfNew(csqcoding_cur.repr);
+                // aggregate results
+                if ((gene_csq.find(pRecord->symbol) != gene_csq.end()))
                 {
-                        gene_csq[pRecord->symbol] = csqcoding_cur;
+                    if (prioritize)
+                    {  // max aggregate by impact score
+                       if (csqcoding_cur.code > gene_csq[pRecord->symbol].code)
+                            gene_csq[pRecord->symbol] = csqcoding_cur;
+                    } 
+                    else 
+                    {  // do not prioritize
+                        gene_csq[pRecord->symbol].raw.append("!"+csqcoding_cur.raw); // just concat strings
+                        // gene_csq[pRecord->symbol].repr.append("!"+csqcoding_cur.repr);
+                        gene_csq[pRecord->symbol].csqs.addElementIfNew(csqcoding_cur.repr); // remove duplicates
+                        gene_csq[pRecord->symbol].code = std::max(gene_csq[pRecord->symbol].code, csqcoding_cur.code);
+                    }
                 }
                 else 
-                {
+                {  // init
                     gene_csq[pRecord->symbol] = csqcoding_cur;
                 }
             } 
                    
         }
-        // write gene level annotation
-        // std::cout <<k<<" ";
-        // for (auto it = gene_csq_codon.begin(); it != gene_csq_codon.end(); ++it) 
+        // write gene level annotation 
         for (auto it = gene_csq.begin(); it != gene_csq.end(); ++it) 
         {
-            // std::cout << " " << it->first << " " << it->second.repr << std::endl;
+            // // csqos << "\t" << it->first << "\t" << it->second.raw;
             // write annotation
-            csqos<< "\t" << it->first << "\t" << it->second.repr; //<<"\t"<<pRecord->samples;
+            csqos<< "\t" << it->first << "\t" << it->second.csqs.eltOf(0);
+            for (int j = 1; j < it->second.csqs.size(); j++)
+                csqos <<"!"<<it->second.csqs.eltOf(j); 
         }
         csqos << std::endl;
     }

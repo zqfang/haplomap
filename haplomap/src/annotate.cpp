@@ -12,11 +12,13 @@ struct VEPOptions {
     char *outputSUMName;
     char *outputCSQName;
     char *variantType;
+    bool maxPrioritize;
     bool verbose;
 
     VEPOptions(): inputVEPName(nullptr), inputStrainName(nullptr), 
                     outputSUMName(nullptr), outputCSQName(nullptr),
-                    variantType((char*)"all"), verbose(false) {}
+                    variantType((char*)"all"), maxPrioritize(false), 
+                    verbose(false) {}
 };
 
 std::shared_ptr<VEPOptions> parseVEPOptions(int argc, char **argv) 
@@ -31,6 +33,7 @@ std::shared_ptr<VEPOptions> parseVEPOptions(int argc, char **argv)
             {"csq",            required_argument, nullptr, 'c'},
             {"samples",        required_argument, nullptr, 's'},
             {"type",           required_argument, nullptr, 't'},
+            {"prioritize",     required_argument, nullptr, 'p'},
             {nullptr,          no_argument, nullptr,        0}};
 
     const char *usage = "Convert ensembl-vep to eblocks (-g) input\n"
@@ -42,6 +45,7 @@ std::shared_ptr<VEPOptions> parseVEPOptions(int argc, char **argv)
                         "    -c,  --csq             Output a annotation with impact score and sample names.\n"
                         "    -s,  --samples         Only write annotation for the input samples (e.g. eblocks -s).\n"
                         "    -t,  --type            Select variant type: [snp|indel|sv|all]. Default: all\n"
+                        "    -p,  --prioritize      Whether aggregate variant annotation by max impact score. Default: false"
                         "    -v,  --verbose\n"
                         "    -h,  --help\n"
                         "\nImportant message:\n"
@@ -63,7 +67,7 @@ std::shared_ptr<VEPOptions> parseVEPOptions(int argc, char **argv)
 
        int option_index = 0;
        // : -> expect an associated value
-       c = getopt_long(argc, argv, "hvc:s:o:t:", long_options_vep, &option_index);
+       c = getopt_long(argc, argv, "hvpc:s:o:t:", long_options_vep, &option_index);
 
         /* Detect the end of the options. */
         if (c == -1)
@@ -105,6 +109,11 @@ std::shared_ptr<VEPOptions> parseVEPOptions(int argc, char **argv)
                     opts->variantType = optarg;
                 break;
             }  
+            case 'p':
+            {
+                opts->maxPrioritize = true;
+                break;
+            }
             case 'o':
             {
                 if (optarg != nullptr)
@@ -145,7 +154,11 @@ int main_annot(int argc, char **argv)
     std::shared_ptr<VEPOptions> opts = parseVEPOptions(argc, argv);
 
     VarirantEeffectPredictor vep(opts->inputVEPName, opts->inputStrainName);
-    if (opts->verbose) std::cout<<"Read ensembl-vep Annotation"<<std::endl;
+    if (opts->verbose) 
+    { 
+        std::cout<<"Read ensembl-vep results ..."<<std::endl;
+        // std::count<<"vep --fasta --individual_zyg all --everything"<<std::endl;
+    }
     
     // handle input variant type
     // to lower case
@@ -172,17 +185,17 @@ int main_annot(int argc, char **argv)
     // read data
     vep.readVEP(opts->inputVEPName, (char*)"\t", (char*)varType.c_str());
     // write
-    if (opts->verbose) 
+    if (opts->verbose) std::cout<<"Write Variant Annotation for eblocks"<<std::endl;
+    if (opts->verbose && opts->maxPrioritize) 
     {
-        std::cout<<"Write Annotation"<<std::endl;
+        std::cout<<"    Write Annotation with max prioritization procedure"<<std::endl;
         std::cout<<"    For each variant (row), only write the most impactful variant per gene.\n";
         std::cout<<"    If multiple variant consequence has the same impact score, select one randomly.\n";
-        std::cout<<"    Please refer to haplomap/src/constants.cpp file to see or update scores."<<std::endl;
     }
-    vep.writeVEPCsq(opts->outputCSQName);
+    vep.writeVEPCsq(opts->outputCSQName, opts->maxPrioritize);
     if (opts->outputSUMName != nullptr)
     {
-        if (opts->verbose) std::cout<<"Write CodonFlag Annotation"<<std::endl;
+        if (opts->verbose) std::cout<<"Write CodonFlag Annotation for eblocks"<<std::endl;
         vep.writeVEPImpact(opts->outputSUMName);
     }
     if (opts->verbose) std::cout<<"Job done"<<std::endl;
