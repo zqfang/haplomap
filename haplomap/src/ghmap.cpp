@@ -124,16 +124,18 @@ bool BlockSummary::isNumber(const std::string &str)
     }
 }
 // summary of a block, read for the file.
+/// Make the codon flag compatible with the old, annovar and vep annotation system
 int BlockSummary::updateCodonScore(std::string str)
 {
-    /// if input strings from ANNOVAR or Ensembl-vep (INTRONIC, intergenic, SPLITE_SITE, 5PRIME_UTR, 3PRIME_UTR ...)
-    /// NON_SYNONYMOUS_CODING(1), SYNONYMOUS_CODING (0), STOP have been reformat to <->
-    /// Make the codon flag compatible with the old, annovar and vep annotation system
+    /// if input strings from ANNOVAR or Old represetnation (INTRONIC, intergenic, SPLITE_SITE, 5PRIME_UTR, 3PRIME_UTR ...)
+    /// Note :: NON_SYNONYMOUS_CODING(1), SYNONYMOUS_CODING (0), STOP have been reformat to <->
     int count = 0;
     int synonymous_count = 0;
     size_t pos = 0;
     size_t endpos = 0;
-    /// missense, synonymous, stop
+    int flag_max = -1;
+
+    /// first, search csq with <-> pattern, including missense, synonymous, stop
     /// iter through a string like: TCT/S<->CCT/P!TCT/S<->TCT/S!GAC/D<->GAC/D!GAC/D<->GAT/D
     while (true)
     {
@@ -150,9 +152,9 @@ int BlockSummary::updateCodonScore(std::string str)
             int X = 'X' - 'A'; // 'X' termination condon
             if (aa1 == X || aa2 == X)
             { // stop codon
-                count += 2;
-                this->numInteresting = count;
-                return 3; //"stop_codon";
+                count += 2; // count -> +3
+                //"stop_codon";
+                flag_max = std::max(flag_max, 3);
             }
         }
         else
@@ -164,47 +166,47 @@ int BlockSummary::updateCodonScore(std::string str)
     }
     /// splice_donor, or splice_acceptor
     this->numInteresting = count;
-    if (str.find("SPLICE_SITE") != std::string::npos)
-    {
-        return 2; // splicing";
-    }
 
     if (count > 0)
     {
-        return 1; // codon_change";
+        flag_max = std::max(flag_max, 1); // codon_change";
     }
 
     if ((count == 0) && (synonymous_count > 0))
     {
-        return 0; // synonymous
+        flag_max = std::max(flag_max, 0); // synonymous
     }
 
     /// if input string from Ensemble VEP Impact (HIGH, MODERATE, LOW, MODIFIER) or consequence string
     /// see details here: https://uswest.ensembl.org/info/genome/variation/prediction/predicted_data.html
+    if (CSQs.find(str) != CSQs.end())
+    {   // CSQs encodes scores that compatible with ANNOVAR or old representations
+        // if str is a consequence string, return the score
+        flag_max = std::max(flag_max, CSQs[str]);
+    }
+    else if (str.find("!") != std::string::npos)
+    {
+        // iterator throught a string like this 
+        // 3PRIME_UTR!SYNONYMOUS_CODING!SYNONYMOUS_CODING!INTRONIC!SPLICE_SITE!intergenic
+        // or like this
+        // transcript_ablation!coding_sequence_variant!upstream_gene_variant
+        // only take max 
+        size_t tokstart = 0;
+        size_t dpos = 0;
+        size_t csz = str.size();
+        while (dpos < str.size())
+        {
+            dpos = str.find_first_of("!", tokstart);
+            // this crock necessitated by weird segfault.
+            if (dpos > str.size()) dpos = csz;
+            std::string tok = str.substr(tokstart, dpos - tokstart);
+            if (CSQs.find(tok) != CSQs.end()) 
+                flag_max = std::max(flag_max, CSQs[tok]);
+            tokstart = dpos + 1; // don't care if it overflows
+        }
+    }
 
-    if (str.find("HIGH") != std::string::npos)
-    {
-        return 2; // Frameshift, stop gain, stop lost ...
-    }
-    else if (str.find("MODERATE") != std::string::npos)
-    {
-        return 1; // 	Missense
-    }
-    else if (str.find("LOW") != std::string::npos)
-    {
-        return 0; // Synonymous
-    }
-    else if (str.find("MODIFIER") != std::string::npos)
-    {
-        return -1; // 5 prime UTR, TF binding site varian, Intergenic ...
-    }
-    else if (CSQs.find(str) != CSQs.end())
-    {
-        // if str is a consequence string, return the correspo
-        return CSQs[str];
-    }
-
-    return -1; // no_codon_change"; include INTRONIC, intergenic, 5PRIME_UTR, 3PRIME_UTR
+    return flag_max;
 }
 
 /// aggregate the codon flag in a haplotype block by gene
@@ -1030,6 +1032,19 @@ void readQPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec, Dynu
             phenvec[strIdx].push_back(std::stof(q));
         }
     }
+
+    if (traceFStat)
+    {
+        std::cout << "Phenotype vectors for strains" << std::endl;
+        for (int str = 0; str < numStrains; str++)
+        {
+            std::cout<<strainAbbrevs.eltOf(str) << " : ";
+            for (auto &t : phenvec[str])
+                std::cout << t << " ";
+            std::cout<<std::endl;
+        }
+        std::cout << std::endl;
+    }
 }
 
 // Read a file of categorical phenotypes.
@@ -1091,9 +1106,10 @@ void readCPhenotypes(char *fname, std::vector<std::vector<float>> &phenvec, Dynu
         std::cout << "Phenotype vectors for strains" << std::endl;
         for (int str = 0; str < numStrains; str++)
         {
-
+            std::cout<<strainAbbrevs.eltOf(str) << " : ";
             for (auto &t : phenvec[str])
                 std::cout << t << " ";
+            std::cout<<std::endl;
         }
         std::cout << std::endl;
     }

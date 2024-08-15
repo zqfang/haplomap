@@ -57,4 +57,16 @@ std::unordered_map<std::string, int> CSQs = {
     {"regulatory_region_variant", -1},
     {"intergenic_variant", -1},
     {"sequence_variant", -1},
+    /// for compatible to csq impact annotation input
+    {"HIGH", 2}, 
+    {"MODERATE", 1}, 
+    {"LOW", 0}, 
+    {"MODIFIER", -1},
+    /// compatible to the old flag
+    {"5PRIME_UTR", -1},
+    {"3PRIME_UTR", -1},
+    {"SYNONYMOUS_CODING", 0},
+    {"INTRONIC", -1},
+    {"SPLICE_SITE", 2},
+    {"intergenic", -1},
 };
