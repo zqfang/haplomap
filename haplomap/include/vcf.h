@@ -92,10 +92,8 @@ public:
     void parseRecords();
     void parseHeader();
     void checkSamples();
-    bool parseStructralVariant(std::string& alleles, 
-                           std::vector<std::string>& alts, std::vector<int>& hasAlt);
-    bool parseSNP(std::string& alleles, 
-                           std::vector<std::string>& alts, std::vector<int>& hasAlt);
+    bool parseStructralVariant(std::string& alleles, std::vector<std::string>& alts, std::vector<int>& hasAlt);
+    bool parseSNP(std::string& alleles, std::vector<std::string>& alts, std::vector<int>& hasAlt);
     void writeSNP(std::string& alleles);
     void writeTPED(std::string& alleles);
     void writeTFAM();
