@@ -19,8 +19,16 @@ Variant::Variant(std::string record)
     QUAL = std::stof(rec[5]);
     FILTER = rec[6];
     INFO = rec[7];
-    isSNP = issnp();
     // format dict
+    TYPE = 0;
+    if (this->isSNP())
+    {
+        TYPE = 1; // snv
+    } else if (this->isSV()) {
+        TYPE = 3; // sv
+    } else if (REF.size() != ALT.size() ){
+        TYPE = 2; // indel
+    }
     parseFORMAT(rec);
     
 }
@@ -91,11 +99,11 @@ void Variant::parseFORMAT(const std::vector<std::string> & rec)
     return;
 }
 
-bool Variant::issnp()
+bool Variant::isSNP()
 {
-    if (this->REF.size() > 1)
-        return false;
-
+    if (this->REF.size() > 1) return false;
+    if (this->REF == "N") return false;
+    // e.g. <DEL>
     if (this->ALT.find("<") != std::string::npos || this->ALT.find(">") != std::string::npos)
         return false;
 
@@ -106,6 +114,13 @@ bool Variant::issnp()
             return false;
     }
     return true;
+}
+
+bool Variant::isSV()
+{
+    if (this->INFO.find("SVTYPE=") != std::string::npos)
+        return true;
+    return false;
 }
 
 float Variant::max(const std::string & fmt) 
@@ -247,7 +262,7 @@ void VCF::checkSamples()
 }
 
 
-bool VCF::parseSNP(std::vector<std::string> & alleles, 
+bool VCF::parseSNP(std::string & alleles, 
                     std::vector<std::string>& alts, std::vector<int>& hasAlt)
 {
     if (variant.REF == "N")
@@ -339,18 +354,22 @@ bool VCF::parseSNP(std::vector<std::string> & alleles,
             if (GTs[0] > 0) 
             {
                 if ((alts[GTs[0] - 1]) != "*") // GATK has *, covert to '?'
-                    alleles[s] = alts[GTs[0] - 1];
+                {
+                    std::string c = alts[GTs[0] - 1]; // do a copy
+                    alleles[s] = c[0]; // string to char
+                }
                 hasAlt[GTs[0] - 1] = 1;
                 //sampleAlts[s] = 1;
             } else {
-                alleles[s] = variant.REF;
+                alleles[s] = (char) variant.REF[0];
             }
         }
     }
     return true;
 }
-bool VCF::parseStructralVariant(std::vector<std::string> & alleles, std::vector<std::string>& alts, std::vector<int>& hasAlt) 
+bool VCF::parseStructralVariant(std::string& alleles, std::vector<std::string>& alts, std::vector<int>& hasAlt) 
 {
+    
     for (int s=0; s < strains.size(); s++)
     {
         std::string gt = variant.FORMATS["GT"][s];
@@ -365,7 +384,7 @@ bool VCF::parseStructralVariant(std::vector<std::string> & alleles, std::vector<
         if (gts[0] != gts[1])
             continue; // allele == '?'
 
-        // genotype 0/0, 0/1, 1/1, 1/2,2/2 
+        // genotype 0/0, 0/1, 1/1, 2/2 
         std::vector<int> GTs;
         // string to int, vectorize
         std::transform(gts.begin(), gts.end(), std::back_inserter(GTs),
@@ -378,7 +397,7 @@ bool VCF::parseStructralVariant(std::vector<std::string> & alleles, std::vector<
                 alleles[s] = 'G';
             hasAlt[GTs[0] - 1] = 1;
         } else {
-            alleles[s] = 'A';
+            alleles[s] = 'A'; // ref
         }
         
     }
@@ -386,7 +405,7 @@ bool VCF::parseStructralVariant(std::vector<std::string> & alleles, std::vector<
 } 
 
 
-void VCF::writeSNP(std::vector<std::string> &alleles)
+void VCF::writeSNP(std::string& alleles)
 {
     output <<"SNP_"<<variant.CHROM<<"_"<<variant.POS;
     output <<"\t"<<variant.CHROM<<"\t"<<variant.POS<<"\t";
@@ -402,16 +421,32 @@ void VCF::writeSNP(std::vector<std::string> &alleles)
         }
     } else 
     {
-        for (auto &a: alleles) 
-            output<<a;
+        // for (auto &a: alleles) 
+        output<<alleles;
     }
     output<<std::endl;
 }
 
-void VCF::writeTPED(std::vector<std::string> &alleles)
+void VCF::writeTPED(std::string &alleles)
 {
-    tped <<variant.CHROM<<" "<<"SNP_"<<variant.CHROM<<"_"<<variant.POS;
-    tped <<" 0 "<<variant.POS<<" "<<variant.REF<<" "<<variant.REF; // write REF
+    std::string vartype;
+    switch (variant.TYPE) {
+        case 1:
+            vartype = "SNP";
+            break;
+        case 2:
+            vartype = "INDEL";
+            break;
+        case 3:
+            vartype = "SV";
+            break;
+        default:
+            vartype = "UNKNOWN";
+    }
+    tped <<variant.CHROM<<" "<<vartype<<"_"<<variant.CHROM<<"_"<<variant.POS;
+    tped <<" 0 "<<variant.POS<<" ";
+    if (variant.TYPE == 1) tped <<variant.REF<<" "<<variant.REF; // write REF
+    if (variant.TYPE > 1)  tped <<"A A"; // convert to A as ref
 
     // write allele pattern
     if (!samples.empty())
@@ -419,15 +454,15 @@ void VCF::writeTPED(std::vector<std::string> &alleles)
         for(auto &s: samples)
         {
             int strIdx = strains.indexOf(s);
-            std::string a = alleles[strIdx];
-            if (a == "?") a = "0";
+            char a = alleles[strIdx];
+            if (a == '?') a = '0';
             tped<<" "<<a<<" "<<a;
         }
     } else 
     {
         for (auto a: alleles) 
         {
-            if (a=="?") a ="0";
+            if (a=='?') a = '0';
             tped<<" "<<a<<" "<<a;
         }
     }
@@ -453,11 +488,25 @@ void VCF::writeTFAM()
 }
 
 
-void VCF::writeStructralVariant(std::vector<std::string> &alleles, const char* vartype)
-{                
+void VCF::writeStructralVariant(std::string &alleles)
+{   
+    std::string vartype;
+    switch (variant.TYPE) {
+        case 1:
+            vartype = "SNP";
+            break;
+        case 2:
+            vartype = "INDEL";
+            break;
+        case 3:
+            vartype = "SV";
+            break;
+        default:
+            vartype = "UNKNOWN";
+    }
     std::unordered_map<std::string, std::string> INFO = variant.getINFO();
     output << vartype <<"_"<<variant.CHROM<<"_"<<variant.POS;
-    if (std::strcmp(vartype, "SV") == 0) output <<"_"<<INFO["END"]<<"_"<<INFO["SVTYPE"];                
+    if (variant.TYPE == 3) output <<"_"<<INFO["END"]<<"_"<<INFO["SVTYPE"];                
     output <<"\t"<<variant.CHROM<<"\t"<<variant.POS<<"\t";
     output << "A"; // write REF
     // write allele pattern
@@ -470,8 +519,8 @@ void VCF::writeStructralVariant(std::vector<std::string> &alleles, const char* v
         }
     } else 
     {
-        for (auto &a: alleles) 
-            output<<a;
+        // for (auto &a: alleles) 
+        output<<alleles;
     }
     output<<std::endl;
             
@@ -486,43 +535,39 @@ void VCF::parseRecords()
         // parse record
         variant = Variant(line);
 
-        if (variant.QUAL < opts->qual)
-            continue;
+        if (variant.QUAL < opts->qual) continue;
 
-        //std::string alleles("?", strains.size()); // not easy to do inplace replacement
+        std::string alleles(strains.size(), '?'); // allele pattern
         
         std::vector<std::string> alts = split(variant.ALT, ',');
         std::vector<int> hasAlt(alts.size(), 0); // number of alternates
         std::vector<int> sampleAlts(strains.size(), 0); // sample is alt or not
 
-        if (alts.size() > 1) // only allow 1 alternate
+        if (variant.TYPE == 1 && alts.size() > 1) // snp only allow 1 alternate
             continue;
         // string find not found, skip
         // std::unordered_map<std::string, std::string> INFO = variant.getINFO();
-        std::vector<std::string> alleles(strains.size(),"?");  
-        if (variant.isSNP && std::strcmp(opts->variantType, "SNV") == 0)
+
+        if (variant.TYPE == 1 && std::strcmp(opts->variantType, "SNV") == 0)
         {
             bool ret = parseSNP(alleles, alts, hasAlt);
-            if (!ret)
-                continue;
+            if (!ret) continue;
             int numGoodAlt = std::accumulate(hasAlt.begin(), hasAlt.end(), 0);
             if (numGoodAlt == 1)
             {
                 writeSNP(alleles);
                 if (opts->plink) writeTPED(alleles);
-
             }
         } 
-        else if (!variant.isSNP && (std::strcmp(opts->variantType, "SV") == 0 || std::strcmp(opts->variantType, "INDEL") == 0 ))
+        else if ( variant.TYPE > 1 && (std::strcmp(opts->variantType, "SV") == 0 || std::strcmp(opts->variantType, "INDEL") == 0 ))
         {
 
             bool ret = parseStructralVariant(alleles, alts, hasAlt);
-            if (!ret)
-                continue;
+            if (!ret) continue;
             int numGoodAlt = std::accumulate(hasAlt.begin(), hasAlt.end(), 0);
             if (numGoodAlt == 1)
             {
-                writeStructralVariant(alleles, opts->variantType);
+                writeStructralVariant(alleles);
                 if (opts->plink) writeTPED(alleles);
             }
         } 

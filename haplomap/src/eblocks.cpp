@@ -229,7 +229,21 @@ void readAlleleInfoCompact(char *fname, char* refgenome)
   {
     std::cout<<"Reference Genome is found: "<<refgenome<<std::endl;
   }
-   
+  /// check input strains can be found in the database
+  for (int j = 0; j < strainAbbrevs.size(); j++)
+  {
+    int idx = allStrains.hasIndex(strainAbbrevs.eltOf(j));
+    if (idx < 0) 
+    {
+      std::cerr<<"Fatal error: "<<strainAbbrevs.eltOf(j)<< " is not found in the variant database!"<<std::endl;
+      std::cerr<<"--> Variant database: "<<fname<<std::endl;
+      std::cerr<<"--> Variant database has names: "<<std::endl;;
+      allStrains.dump();
+      std::exit(1);
+    }
+
+  }
+
   // read the lines with the SNP info
   while ((numtoks = rdr.getLine()) >= 0)
   {

@@ -55,7 +55,7 @@ struct VCFOptions
 class Variant {
 
 public:
-    bool isSNP;
+    int TYPE; // snv: 1, indel: 2, sv: 3, unknown: 0
     std::string CHROM;
     int POS;
     std::string ID;
@@ -75,7 +75,8 @@ public:
 
 private:
     void parseFORMAT(const std::vector<std::string> & rec);
-    bool issnp();
+    bool isSNP();
+    bool isSV(); // is structral variant ?
     float max(const std::string & fmt);  
 };
 
@@ -91,14 +92,14 @@ public:
     void parseRecords();
     void parseHeader();
     void checkSamples();
-    bool parseStructralVariant(std::vector<std::string> & alleles, 
+    bool parseStructralVariant(std::string& alleles, 
                            std::vector<std::string>& alts, std::vector<int>& hasAlt);
-    bool parseSNP(std::vector<std::string> & alleles, 
+    bool parseSNP(std::string& alleles, 
                            std::vector<std::string>& alts, std::vector<int>& hasAlt);
-    void writeSNP(std::vector<std::string> &alleles);
-    void writeTPED(std::vector<std::string> &alleles);
+    void writeSNP(std::string& alleles);
+    void writeTPED(std::string& alleles);
     void writeTFAM();
-    void writeStructralVariant(std::vector<std::string> &alleles, const char* varType);
+    void writeStructralVariant(std::string& alleles);
 
 private:
     std::string line;
@@ -113,6 +114,8 @@ private:
     // read input file
     std::istream* input;
     VCFOptions* opts;
+    char getAllele(std::string& alleles, int i) { return alleles[i]; }
+    void setAllele(std::string& alleles, int i, char a) { alleles[i] = a; }
 };
 
 #endif

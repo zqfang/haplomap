@@ -136,10 +136,30 @@ build/bin/haplomap ghmap -p ${HOME}/data/test_traits.txt \
 By default. Output result are gene-summrized (see `haplomap ghmap --help`).   
 Recommend adding `-a` flag, which will output gene-oriented format results.
 
-**NOTE 2:** strain order in (-p) should keep the same to the (-b). That's, eblocks (-s)
+**NOTE 2:** strain order in (-p) should keep the same to the eblocks (-s)
+
 
 ## Input
 see `example` folder for test cases.
+
+### convert
+vcf file from variant calling tool.
+vcf must be genotyped (has the GT field)
+
+**Encoding**
+1. SNV: A->A, T->T, G->G, C->C
+2. INDEL/SV: 
+   - reference: A
+   - deletion: G
+   - duplication or tanderm duplication: G
+   - insertion: G
+   - inversion: G
+   - breakend: G
+
+
+### annotate
+
+For SVs, must contain SVTYPE, and SVLEN
 
 ### eblocks:
 - Strain file (-s): 

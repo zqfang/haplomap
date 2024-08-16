@@ -173,7 +173,7 @@ EblockOptions *parseEblockOptions(int argc, char **argv)
     if (argc == 1)
     {
         std::cout<<usage<<std::endl;
-        exit(1);
+        std::exit(1);
     }
 
     // isn't there some way to do this automatically based on above info?
@@ -181,7 +181,7 @@ EblockOptions *parseEblockOptions(int argc, char **argv)
     {
         std::cerr << usage << std::endl;
         std::cerr << "Required arg missing: strains file name (-s)" << std::endl;
-        exit(1);
+        std::exit(1);
     }
     else if (NULL == opts->allelesFileName)
     {
@@ -229,11 +229,11 @@ int main_eblocks(int argc, char **argv)
   // Can't do this earlier because numStrains is used in constructor.
   snpVec.reserve(approxNumSNPs);
 
-  // FIXME: Add option for "compact SNP file"
+  // read variant database
   beginPhase("reading compact alleles file");
   readAlleleInfoCompact(opts->allelesFileName, opts->refStrainName);
   endPhase();
-  std::string chr = chromosomes.eltOf(0);
+  // std::string chr = chromosomes.eltOf(0);
   // if no gene names file specified, don't read it, omit gene names.
   if (opts->genesFileName)
   {

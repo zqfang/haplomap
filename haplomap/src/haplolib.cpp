@@ -208,10 +208,12 @@ std::string SNPInfo::allelesToPattern(void)
   map[(int)'G'] = '?';
   map[(int)'T'] = '?';
   map[(int)'?'] = '?';
+  map[(int)'N'] = '?'; // ref allele, used in indel or sv
   map[(int)'D'] = '?'; // deletion
-  map[(int)'U'] = '?'; // duplication
-  map[(int)'I'] = '?'; // insertion
+  map[(int)'U'] = '?'; // duplication, or tanderm duplication
+  map[(int)'S'] = '?'; // insertion
   map[(int)'V'] = '?'; // inversion
+  map[(int)'K'] = '?'; // breakend
   // update Ref if defined
   int eqclass = 0;
   if (this->ref != '?')

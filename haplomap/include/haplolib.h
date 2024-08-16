@@ -68,12 +68,12 @@ public:
     std::string name;
     int chrIdx;   // chromosome index
     int position; // location on chromosome
-    char ref;
+    char ref; // reference allele char
     // string of alleles "ACGTD?" "D" is deletion, "?" is unspecified.
     char *alleles;
     // string of haplotype numbers (not printable).
     char *pattern;
-    std::map<std::string, std::string> geneCodonMap; // Map gene names to codons
+    std::map<std::string, std::string> geneCodonMap; // Map gene names to codons/annotations
     bool frozen;                      // when true, pattern is uniquified and should not be changed.
     bool used;                        // Is this SNP in a chosen block?
     bool qMarks;                      //Are there any unkowns in this SNP?
