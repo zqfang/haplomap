@@ -18,23 +18,13 @@ See [variant calling](../workflows/README.md) in the workflow folder using GATK,
 
 Note: You need to use Ensemble-vep to annotate your VCF files.
 
-the required flags: `--variant_class`, `--symbol`, `--individual_zyg all`, `--tab`
+the required flags: `--variant_class`, `--symbol`, `--individual_zyg all`, `--tab`, `--fasta`
 
 This code snap works for haplomap
 ```shell
-## ensembl-vep version 101
-bcftools view -f .,PASS ${vcf} | \
-        vep --fasta ${reference} ${genome_build} \
-        --format vcf --fork ${threads} --hgvs --force_overwrite \
-        --uniprot --domains --symbol --regulatory --distance 1000 --biotype \
-        --gene_phenotype MGI --check_existing  --pubmed --numbers \
-        --offline --cache --variant_class \
-        --gencode_basic --no_intergenic --individual all \
-        -o ${output} --tab --compress_output gzip \
-
-## for SV: https://useast.ensembl.org/info/docs/tools/vep/vep_formats.html#sv
+## For SV input format: https://useast.ensembl.org/info/docs/tools/vep/vep_formats.html#sv
 ## ensembl-vep version 111
-bcftools view -f PASS ${vcf} | \
+bcftools view -f .,PASS ${vcf} | \
           vep -a GRCm38 --species mus_musculus --refseq --cache --cache_version 102 \
           --offline --compress_output gzip -o ${output} --tab \
           --fork 16 --offline --uniprot --cache --format vcf \
@@ -42,7 +32,7 @@ bcftools view -f PASS ${vcf} | \
           --plugin phenotypes --symbol --canonical --variant_class \
           --nearest gene --regulatory --distance 5000 \
           --individual_zyg all --no_check_variants_order \
-          --max_sv_size 100000 
+          --max_sv_size 100000 --fasta GRCm38.fa 
 ```
 
 
@@ -122,6 +112,7 @@ python scripts/annotateSNPs.py test_strains.txt chr18.txt \
 build/bin/haplomap eblocks -a ${HOME}/data/SNPS/chr18.txt \
                      -g ${HOME}/data/chr18.annotation.txt \
                      -s ${HOME}/TMPDATA/test_strains.txt \
+                     -p ${HOME}/TMPDATA/test.SNPs.vb.txt \
                      -o ${HOME}/TMPDATA/test.SNPs.hb.txt
 ```
 

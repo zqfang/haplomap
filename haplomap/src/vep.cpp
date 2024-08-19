@@ -135,10 +135,24 @@ void VarirantEeffectPredictor::readHeader(char *inFileName, char *delemiter)
     {
         this->hasIND = false;
     }
-    if (columns.find("VARIANT_CLASS") == columns.end())
+    // required column from VEP
+    std::vector<std::string> req = {"Uploaded_variation", "Location", "Allele", "Feature",
+                                    "Consequence","Amino_acids", "Codons", "ZYG", 
+                                    "IMPACT", "VARIANT_CLASS", "SYMBOL"};
+    for (auto & r: req)
     {
-        std::cerr<<"VARIANT_CLASS column is missing, please re-run vep with `--variant_class`\n";
-        std::exit(1);
+        if (columns.find(r) == columns.end())
+        {
+            std::cerr<<"column: "<<r<<" is missing, please re-run vep\n";
+            std::cerr<<"An example vep command: \n\n"
+                       "bcftools view -f .,PASS ${vcf} | "
+                       "vep -a GRCm38 --species mus_musculus --refseq --cache --cache_version 102  "
+                       "--offline --compress_output gzip -o ${output} --tab --fasta GRCm38.fa "
+                       "--fork 16 --offline --cache --format vcf --individual_zyg all "
+                       "--force_overwrite -overlaps --regulatory "
+                       "--symbol --canonical --variant_class "<<std::endl;
+            std::exit(1);
+        }
     }
 
 }
@@ -157,20 +171,21 @@ std::string VarirantEeffectPredictor::set_key(std::string location, std::string 
     std::string key;
     std::string chrom = location.substr(tok0, tok1);
 
-    /// For ensembl-vep results, the coordinates (chrStart) of
-    /// indel, deletion need to -1 to get original position in vcf.
-    /// SNV, insertion stay the same to position in vcf
+    /// For ensembl-vep cooridnates, the coordinates (chrStart) of indel, deletion 
+    /// need to -1 to match to original coordinates in vcf, since VEP trim 1 preceding base. 
+    /// SNV, insertion stay the same to coordinates in vcf
+    /// ref here for details: https://useast.ensembl.org/info/docs/tools/vep/vep_formats.html
+
     /// The quick trick to handle these cases is whether the location string contains "-"
-    if (tok2 == std::string::npos) // no match found
-    {
-        start = std::stoi(location.substr(tok1 + 1, sz-tok1)); // (pos, len)
+    if (tok2 == std::string::npos) // no match found, it's a snv
+    {  // (pos, len)
+        start = std::stoi(location.substr(tok1 + 1, sz-tok1));
         end = start; 
         if (var_class == "indel") start --; // indel (dup) with "chr:start" format need to minus 1 
     }
     else
-    {
-        // NOTE: need to minius 1, since VEP made pos+1 in their annotatoin
-        start = std::stoi(location.substr(tok1 + 1, tok2 - tok1)) - 1; 
+    {   // '-' is found, means it's a indel or SV
+        start = std::stoi(location.substr(tok1 + 1, tok2 - tok1)) - 1; // match to original cooridnates in vcf
         if (var_class == "insertion") start ++; // only insertion case are stay the same pos as original vcf
         end = std::stoi(location.substr(tok2 + 1, sz - tok2)); // empty string if snp
     }
