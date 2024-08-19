@@ -136,7 +136,7 @@ void VarirantEeffectPredictor::readHeader(char *inFileName, char *delemiter)
         this->hasIND = false;
     }
     // required column from VEP
-    std::vector<std::string> req = {"Uploaded_variation", "Location", "Allele", "Feature",
+    std::vector<std::string> req = {"Location", "Allele", "Feature",
                                     "Consequence","Amino_acids", "Codons", "ZYG", 
                                     "IMPACT", "VARIANT_CLASS", "SYMBOL"};
     for (auto & r: req)
