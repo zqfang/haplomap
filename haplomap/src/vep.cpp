@@ -205,7 +205,7 @@ std::string VarirantEeffectPredictor::set_key(std::string location, std::string 
 
     if (var_class == "snv")
     {
-        key = "SNP_" + chrom + "_" + std::to_string(start);
+        key = "SNP_" + key;
     }
     else if ((var_class == "indel") ||
                 ((var_class == "insertion") && var_len < 50) ||  
