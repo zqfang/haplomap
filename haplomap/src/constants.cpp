@@ -1,15 +1,22 @@
 
 #include "constants.h"
 
-std::unordered_map<std::string, std::string> CODONs = {{"TTT", "F"}, {"TTC", "F"}, {"TCT", "S"}, {"TCC", "S"}, {"TAT", "Y"}, {"TAC", "Y"}, {"TGT", "C"}, {"TGC", "C"}, 
-          {"TTA", "L"}, {"TCA", "S"}, {"TAA", "X"}, {"TGA", "X"}, {"TTG", "L"}, {"TCG", "S"}, {"TAG", "X"}, {"TGG", "W"}, 
-          {"CTT", "L"}, {"CTC", "L"}, {"CCT", "P"}, {"CCC", "P"}, {"CAT", "H"}, {"CAC", "H"}, {"CGT", "R"}, {"CGC", "R"}, 
-          {"CTA", "L"}, {"CTG", "L"}, {"CCA", "P"}, {"CCG", "P"}, {"CAA", "Q"}, {"CAG", "Q"}, {"CGA", "R"}, {"CGG", "R"}, {"ATT", "I"}, 
-          {"ATC", "I"}, {"ACT", "T"}, {"ACC", "T"}, {"AAT", "N"}, {"AAC", "N"}, {"AGT", "S"}, {"AGC", "S"}, {"ATA", "I"}, {"ACA", "T"}, 
-          {"AAA", "K"}, {"AGA", "R"}, {"ATG", "M"}, {"ACG", "T"}, {"AAG", "K"}, {"AGG", "R"}, {"GTT", "V"}, {"GTC", "V"}, {"GCT", "A"}, 
-          {"GCC", "A"}, {"GAT", "D"}, {"GAC", "D"}, {"GGT", "G"}, {"GGC", "G"}, {"GTA", "V"}, {"GTG", "V"}, {"GCA", "A"}, {"GCG", "A"}, 
-          {"GAA", "E"}, {"GAG", "E"}, {"GGA", "G"}, {"GGG", "G"}};
+std::unordered_map<std::string, std::string> CODONs = {
+    {"TTT", "F"}, {"TTC", "F"}, {"TCT", "S"}, {"TCC", "S"}, {"TAT", "Y"}, {"TAC", "Y"}, {"TGT", "C"}, {"TGC", "C"}, 
+    {"TTA", "L"}, {"TCA", "S"}, {"TAA", "X"}, {"TGA", "X"}, {"TTG", "L"}, {"TCG", "S"}, {"TAG", "X"}, {"TGG", "W"}, 
+    {"CTT", "L"}, {"CTC", "L"}, {"CCT", "P"}, {"CCC", "P"}, {"CAT", "H"}, {"CAC", "H"}, {"CGT", "R"}, {"CGC", "R"}, 
+    {"CTA", "L"}, {"CTG", "L"}, {"CCA", "P"}, {"CCG", "P"}, {"CAA", "Q"}, {"CAG", "Q"}, {"CGA", "R"}, {"CGG", "R"}, 
+    {"ATT", "I"}, {"ATC", "I"}, {"ACT", "T"}, {"ACC", "T"}, {"AAT", "N"}, {"AAC", "N"}, {"AGT", "S"}, {"AGC", "S"}, 
+    {"ATA", "I"}, {"ACA", "T"}, {"AAA", "K"}, {"AGA", "R"}, {"ATG", "M"}, {"ACG", "T"}, {"AAG", "K"}, {"AGG", "R"}, 
+    {"GTT", "V"}, {"GTC", "V"}, {"GCT", "A"}, {"GCC", "A"}, {"GAT", "D"}, {"GAC", "D"}, {"GGT", "G"}, {"GGC", "G"}, 
+    {"GTA", "V"}, {"GTG", "V"}, {"GCA", "A"}, {"GCG", "A"}, {"GAA", "E"}, {"GAG", "E"}, {"GGA", "G"}, {"GGG", "G"}};
 
+std::unordered_map<std::string, int> CHROMOSOMES = {
+    {"1", 1}, {"2", 2}, {"3", 3},{"4", 4},{"5", 5},{"6", 6},
+    {"7", 7},{"8", 8},{"9", 9},{"10", 10},{"11", 11},{"12", 12},
+    {"13", 13},{"14", 14},{"15", 15},{"16", 16},{"17", 17},{"18", 18},
+    {"19", 19},{"20", 20},{"21", 21},{"22", 22},{"23", 23},
+    {"X", 97}, {"Y", 98}, {"M", 99}};
  
 /// see the variant impact coding here: 
 /// https://useast.ensembl.org/info/genome/variation/prediction/predicted_data.html

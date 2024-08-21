@@ -3,6 +3,7 @@
 //
 
 #include "vcf.h"
+#include "constants.h"
 
 
 Variant::Variant(std::string record)
@@ -11,7 +12,7 @@ Variant::Variant(std::string record)
 
     CHROM = rec[0];
     size_t tok0 = CHROM.find_first_not_of("chr");
-    CHROM = CHROM.substr(tok0, CHROM.size());
+    CHROM = CHROM.substr(tok0, CHROM.size() - tok0);
     POS = std::stoi(rec[1]);
     ID = rec[2];
     REF = rec[3];
@@ -26,7 +27,7 @@ Variant::Variant(std::string record)
         TYPE = 1; // snv
     } else if (this->isSV()) {
         TYPE = 3; // sv
-    } else if (REF.size() != ALT.size() ){
+    } else if ( this->isINDEL() ||  REF.size() != ALT.size() ) {
         TYPE = 2; // indel
     }
     parseFORMAT(rec);
@@ -119,6 +120,13 @@ bool Variant::isSNP()
 bool Variant::isSV()
 {
     if (this->INFO.find("SVTYPE=") != std::string::npos)
+        return true;
+    return false;
+}
+
+bool Variant::isINDEL()
+{
+    if (this->INFO.find("INDEL") != std::string::npos)
         return true;
     return false;
 }
@@ -536,9 +544,13 @@ void VCF::parseRecords()
         variant = Variant(line);
 
         if (variant.QUAL < opts->qual) continue;
+        if (CHROMOSOMES.find(variant.CHROM) == CHROMOSOMES.end()) 
+        {
+            std::cerr<<"chrom "<< variant.CHROM<< "is not recognized. Skip line: # "<<lineNum<<std::endl;
+            continue;
+        }
 
-        std::string alleles(strains.size(), '?'); // allele pattern
-        
+        std::string alleles(strains.size(), '?'); // allele pattern        
         std::vector<std::string> alts = split(variant.ALT, ',');
         std::vector<int> hasAlt(alts.size(), 0); // number of alternates
         std::vector<int> sampleAlts(strains.size(), 0); // sample is alt or not

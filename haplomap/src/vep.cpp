@@ -199,6 +199,12 @@ std::string VarirantEeffectPredictor::set_key(std::string location, std::string 
         if (var_class == "insertion") end = start;
     }
 
+    std::string _vc = var_class.substr(0,3);
+    this->upcase(_vc);
+    key = chrom + "_" 
+          + std::to_string(start) + "_" 
+          + std::to_string(end) + "_" 
+          + _vc;
 
     if (var_class == "snv")
     {
@@ -212,16 +218,11 @@ std::string VarirantEeffectPredictor::set_key(std::string location, std::string 
         /// So, defined 1 bp del or ins as Indels for downstream analysis
         /// see docs: https://ensembl.org/info/genome/variation/prediction/classification.html
         /// we force var_len < 50 bp to be indels
-        key = "INDEL_" + chrom + "_" + std::to_string(start);
+        key = "INDEL_" + key;
     }
     else
     {
-        std::string _svtype = var_class.substr(0,3);
-        this->upcase(_svtype);
-        key = "SV_" + chrom + "_" 
-                    + std::to_string(start) + "_" 
-                    + std::to_string(end) + "_" 
-                    + _svtype;
+        key = "SV_" + key;
     }
     return key;
 
@@ -246,6 +247,15 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
         // skip header
         if (rdr.getCurrentLineNum() < 1)
             continue;
+        location = rdr.getToken(columns["Location"]);
+        size_t tok0 = location.find_first_not_of("chr");
+        location = location.substr(tok0, location.size() - tok0);
+        std::string chrom = location.substr(0,  location.find_first_of(":"));
+        if (CHROMOSOMES.find(chrom) == CHROMOSOMES.end())
+        {
+            std::cerr<<"chrom "<< chrom << "is not recognized. Skip location: "<<location;
+            continue;
+        }
         /// FIXME: since vep 111, sv's insertion may become a sequences, e.g. tagttga...
         _varclass = rdr.getToken(columns["VARIANT_CLASS"]);
         this->lowercase(_varclass);
@@ -267,9 +277,7 @@ void VarirantEeffectPredictor::readVEP(char *inVEPName, char *delemiter, char* v
         /// aggregate results groupby location and transcript
         /// FIXME: what if transcript_id is '-'
         transcript_id = rdr.getToken(columns["Feature"]); 
-        location = rdr.getToken(columns["Location"]);
-        size_t tok0 = location.find_first_not_of("chr");
-        location = location.substr(tok0, location.size());
+
         key = this->set_key(location, _varclass, _varType);
         // std::cout<<"Current keys: "<<key<<" <-->  "<<transcript_id<<std::endl;
         // std::cout<<rdr.getCurrentLineString()<<"\n\n"<<std::endl;
