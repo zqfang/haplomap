@@ -383,15 +383,22 @@ GhmapWriter::GhmapWriter(char *outputFileName, char *datasetName, bool categoric
     // use datasetname to specify the codon flag explicity
     std::string dn(_dataset_name);
     upcase(dn);
-    if ((dn.find("INDEL") != std::string::npos) || (dn.find("_SV") != std::string::npos))
-    {
-        os << "##CodonFlag\t0:Low\t1:Moderate\t2:High\t-1:Modifier" << std::endl;
-    }
-    else
+    std::string flag;
+    if ((dn.find("SNP") != std::string::npos) || (dn.find("_SNV") != std::string::npos))
     {
         // Non-Coding -> (INTRONIC,intergenic,5PRIME_UTR,3PRIME_UTR)
-        os << "##CodonFlag\t0:Synonymous\t1:Non-Synonymous\t2:Splicing\t3:Stop\t-1:Non-Coding" << std::endl;
+       flag = "##CodonFlag\t3:Stop\t2:Splicing\t1:Non-Synonymous\t0:Synonymous\t-1:Non-Coding";
+    } else if ((dn.find("INDEL") != std::string::npos) || (dn.find("_SV") != std::string::npos)) 
+    {
+        flag = "##CodonFlag:\t2:High\t1:Moderate\t0:Low\t-1:Modifier";
+    } 
+    else 
+    {
+        flag =  "##CodonFlag:\t0:Low\t1:Moderate\t2:High\t-1:Modifier\t"
+                "$$ If SNP, should be "
+                "{ 3:Stop 2:Splicing 1:Non-Synonymous 0:Synonymous -1:Non-Coding } $$";
     }
+    os <<flag<<std::endl;
 }
 
 GhmapWriter::~GhmapWriter()
