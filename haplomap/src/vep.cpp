@@ -201,10 +201,7 @@ std::string VarirantEeffectPredictor::set_key(std::string location, std::string 
 
     std::string _vc = var_class.substr(0,3);
     this->upcase(_vc);
-    key = chrom + "_" 
-          + std::to_string(start) + "_" 
-          + std::to_string(end) + "_" 
-          + _vc;
+    key = chrom + "_" + std::to_string(start);
 
     if (var_class == "snv")
     {
@@ -222,7 +219,7 @@ std::string VarirantEeffectPredictor::set_key(std::string location, std::string 
     }
     else
     {
-        key = "SV_" + key;
+        key = "SV_" + key + "_"  + std::to_string(end) + "_"  + _vc;
     }
     return key;
 
