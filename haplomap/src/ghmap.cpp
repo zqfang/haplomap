@@ -394,7 +394,7 @@ GhmapWriter::GhmapWriter(char *outputFileName, char *datasetName, bool categoric
     } 
     else 
     {
-        flag =  "##CodonFlag:\t0:Low\t1:Moderate\t2:High\t-1:Modifier\t"
+        flag =  "##CodonFlag:\t2:High\t1:Moderate\t0:Low\t-1:Modifier\t"
                 "$$ If SNP, should be "
                 "{ 3:Stop 2:Splicing 1:Non-Synonymous 0:Synonymous -1:Non-Coding } $$";
     }
