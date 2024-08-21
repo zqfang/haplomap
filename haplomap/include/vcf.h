@@ -77,6 +77,7 @@ private:
     void parseFORMAT(const std::vector<std::string> & rec);
     bool isSNP();
     bool isSV(); // is structral variant ?
+    bool isINDEL();
     float max(const std::string & fmt);  
 };
 
