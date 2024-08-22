@@ -14,6 +14,7 @@ std::unordered_map<std::string, GeneSummary *> geneTable; // for gene-oriented i
 std::vector<BlockSummary *> blocks;                       // global vector of all blocks.
 std::vector<std::string> geneExprHeader;
 int traceFStat = false;
+int codonFlag = 0; // 0: combined mode (snp+indel+sv), 1: impact score only, 2: SNP codon score only 
 
 // std::unordered_map<std::string, int> PRIOR // from constants.h;
 // std::unordered_map<std::string, int> CSQs // from constants.h
@@ -143,6 +144,8 @@ int BlockSummary::updateCodonScore(std::string str)
         if (pos == std::string::npos)
             break;
         endpos = str.find(">", pos + 1);
+        // mark and update codon type
+        codonFlag = 2; // means this annotation is SNP
         int aa1 = str[pos - 1] - 'A';
         int aa2 = str[endpos + 5] - 'A';
 
@@ -205,6 +208,8 @@ int BlockSummary::updateCodonScore(std::string str)
             tokstart = dpos + 1; // don't care if it overflows
         }
     }
+    // annotation type is only impact score
+    codonFlag = std::max(codonFlag, 1);
 
     return flag_max;
 }
@@ -375,7 +380,7 @@ GhmapWriter::GhmapWriter(char *outputFileName, char *datasetName, bool categoric
     os = std::ofstream(outputFileName);
     if (!os.is_open())
     {
-        std::cout << "Open of file \"" << outputFileName << "\" failed: ";
+        std::cerr << "Open of file \"" << outputFileName << "\" failed: ";
         std::exit(1);
     }
     os << "##" << _dataset_name << "\t"
@@ -384,11 +389,11 @@ GhmapWriter::GhmapWriter(char *outputFileName, char *datasetName, bool categoric
     std::string dn(_dataset_name);
     upcase(dn);
     std::string flag;
-    if ((dn.find("SNP") != std::string::npos) || (dn.find("_SNV") != std::string::npos))
+    if ((dn.find("SNP") != std::string::npos) || (dn.find("_SNV") != std::string::npos) || codonFlag == 2)
     {
         // Non-Coding -> (INTRONIC,intergenic,5PRIME_UTR,3PRIME_UTR)
        flag = "##CodonFlag\t3:Stop\t2:Splicing\t1:Non-Synonymous\t0:Synonymous\t-1:Non-Coding";
-    } else if ((dn.find("INDEL") != std::string::npos) || (dn.find("_SV") != std::string::npos)) 
+    } else if ((dn.find("INDEL") != std::string::npos) || (dn.find("_SV") != std::string::npos) || codonFlag == 1 ) 
     {
         flag = "##CodonFlag:\t2:High\t1:Moderate\t0:Low\t-1:Modifier";
     } 
