@@ -45,7 +45,7 @@ std::shared_ptr<VEPOptions> parseVEPOptions(int argc, char **argv)
                         "    -c,  --csq             Output a annotation with impact score and sample names.\n"
                         "    -s,  --samples         Only write annotation for the input samples (e.g. eblocks -s).\n"
                         "    -t,  --type            Select variant type: [snp|indel|sv|all]. Default: all\n"
-                        "    -p,  --prioritize      Whether aggregate variant annotation by max impact score. Default: false"
+                        "    -p,  --prioritize      Whether aggregate variant annotation by max impact score. Default: false\n"
                         "    -v,  --verbose\n"
                         "    -h,  --help\n"
                         "\nImportant message:\n"

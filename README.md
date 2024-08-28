@@ -15,7 +15,7 @@ Citation:
 
 see what's new  in the [CHANGELOG](./haplomap/CHANGELOG.md).
 
-![HBCGM](./docs/HBCGM.png)
+![HBCGM](./docs/haplomap.png)
 
 ## Dependency 
 Works both on `Linux` and `MacOS`

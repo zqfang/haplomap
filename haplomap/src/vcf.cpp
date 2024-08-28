@@ -275,7 +275,14 @@ bool VCF::parseSNP(std::string & alleles,
 {
     if (variant.REF == "N")
         return false;
+    if (variant.FORMATS.find("GT") == variant.FORMATS.end())
+        return false;
 
+    if (variant.FORMATS.find("PL") == variant.FORMATS.end())
+    {
+        std::cerr<<"`PL` Tag Not Found !!! Please use correct VCF file!"<<std::endl;
+        return false;
+    }
     std::unordered_map<std::string, std::string> INFO = variant.getINFO();
     if (INFO["MQ"].size() < 1 || std::stof(INFO["MQ"]) < opts->mappingQuality)
         return false;
@@ -292,9 +299,9 @@ bool VCF::parseSNP(std::string & alleles,
     } 
     else 
     {
-        std::cerr<<"Variant position "<<variant.CHROM<<":"<<variant.POS
-                    <<"INFO Tag (SB or FS) is not Found ! Skip strand bias filtering"
-                    <<std::endl;
+        // std::cout<<"Variant position "<<variant.CHROM<<":"<<variant.POS
+        //             <<"INFO Tag (SB or FS) is not Found ! Skip strand bias filtering"
+        //             <<std::endl;
         strandBiasPhredPval = 0;
     } 
     if (strandBiasPhredPval >  opts->strandBiasPhredPval)
@@ -325,11 +332,6 @@ bool VCF::parseSNP(std::string & alleles,
                         [](std::string &s) { return std::stoi(s); });
         unsigned int ind = (GTs[0] + 1) * (GTs[0] + 2) / 2 - 1;
 
-        if (variant.FORMATS.find("PL") == variant.FORMATS.end())
-        {
-            std::cerr<<"PL Not Found !!! Please use correct VCF file!"<<std::endl;
-            continue;
-        }
         std::vector<std::string> pls = split(variant.FORMATS["PL"][s], ',');
         // if (pls.size() != (alts.size() + 1) * (alts.size() + 2) / 2)
         // {
